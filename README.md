@@ -18,3 +18,4 @@ Built-in-editor (work in progress) allows for creation and customisation of stor
 ![image](https://github.com/ViciousSquid/Adventure/assets/161540961/f483f47e-8de0-45bb-97ba-5ebf257d1883)
 
 If you can help with this project please get in touch!!
+[https://www.reddit.com/r/learnpython/comments/1bsit6e/python_app_looking_for_collaborators/]
