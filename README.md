@@ -10,7 +10,7 @@ Includes a (work-in-progress) story editor. Stories support images and multiple 
 
 # More info
 
-Run the python app  (**main.py**) , it will scan for stories in the 'stories' folder (stories are json files inside ZIP files) - two examples are included
+Run the python app  (**main.py**) , it will scan for stories in the 'stories' folder (stories are json files inside ZIP files) - examples are included
 Use of the app is via a web browser (host runs at port 5000)
 
 *to connect to the server on the same machine it is running on, use the address* 127.0.0.1:5000
