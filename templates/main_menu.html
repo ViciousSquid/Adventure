@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Main Menu</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head><body>
+    <div class="container">
+        <h1>Main Menu</h1>
+        <h2>Select a Story:</h2>
+        <form action="{{ url_for('new_story') }}" method="post">
+            <select name="story_name">
+                {% for story_name in adventures %}
+                <option value="{{ story_name }}">{{ story_name }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="green-button">Start New Story</button>
+        </form>
+        <br>
+        <a href="{{ url_for('static', filename='editor/index.html') }}" class="blue-button">Story Editor</a>
+    </div>
+</body>
+</html>

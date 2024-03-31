@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Play Story</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+  <div class="container">
+    <h1>{{ adventure.name }}</h1>
+    <div id="story-content">
+      <p>{{ content }}</p>
+    </div>
+    <div id="story-choices">
+      {% for direction in exits %}
+        <form action="{{ url_for('play_action') }}" method="post">
+          <input type="hidden" name="direction" value="{{ direction }}">
+          <button type="submit">{{ direction.capitalize() }}</button>
+        </form>
+      {% endfor %}
+    </div>
+    <div id="action-history">
+      <h3>Action History:</h3>
+      <ul>
+        {% for action in action_history %}
+          <li>{{ action }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    <form action="{{ url_for('save_game') }}" method="post">
+      <button type="submit">Save Game</button>
+    </form>
+  </div>
+</body>
+</html>

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Story Editor</title>
+  <link rel="stylesheet" href="css/editor.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+</head>
+<body>
+  <div class="container">
+<img src="squid.png" alt="" width="219" height="116">
+    <h1>Story Editor</h1> <a href="https://github.com/ViciousSquid/Adventure">https://github.com/ViciousSquid/Adventure</a><br> <br>   <div class="toolbar">
+      <button type="button" id="new-story" class="green-button">New Story</button>
+      <button type="button" id="save-story" class="gray-button"> Save Story</button>
+      <button type="button" id="toggle-view" class="blue-button">Open Graph View</button>
+
+  <script src="{{ url_for('static', filename='modes.js') }}"></script>
+    </div>
+Graph view will open a flowchart of the current story in a new window.<br>
+   To load an existing story, browse for the ZIP below and click the orange button.<br><br>
+
+      <label for="load-story-input">Load Story (ZIP):</label>
+      <input type="file" id="load-story-input" accept=".zip" style="display: none;">
+      <button type="button" id="load-story-button" class="gray-button">Choose File</button>
+      <button type="button" id="load-story" class="orange-button">Load</button>
+<br><br>
+<br>
+    <form id="story-form">
+      <label for="story-name">Story Name:</label>
+      <input type="text" placeholder="No file currently loaded" id="story-name" required>
+
+      <label for="start-room">Start Room:</label>
+      <input type="text" id="start-room" required>
+
+      <h2>Rooms</h2>
+      <div id="room-container">
+        <!-- Rooms will be dynamically added here -->
+      </div>
+
+      <button type="button" id="add-room">Add Room</button>
+    </form>
+  </div>
+
+   <script src="js/editor.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.23.0/cytoscape.min.js"></script>
+</body>
+</html>

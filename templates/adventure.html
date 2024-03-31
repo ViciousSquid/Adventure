@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Adventure Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #333;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #222;
+            border: 10px solid #111;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        h1 {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            margin: 0;
+        }
+
+        img {
+            max-width: 800px;
+            max-height: 600px;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+
+        p {
+            line-height: 1.5;
+        }
+
+        form {
+            text-align: center;
+        }
+
+        button {
+            padding: 10px 20px;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        #toggle-history {
+            background-color: #0047ab;
+        }
+
+        #toggle-history:hover {
+            background-color: #003a87;
+        }
+
+        #action-history {
+            display: none;
+        }
+
+        #action-history ul {
+            list-style-type: none;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>{{ room.name }}</h1>
+        <img src="{{ url_for('serve_image', filename=room.image) }}" alt="Room Image">
+        <p>{{ content }}</p>
+        <h2>Available Exits:</h2>
+        <form method="post" action="{{ url_for('adventure_game') }}">
+            {% for direction in exits %}
+            <button type="submit" name="direction" value="{{ direction }}" style="background-color: {{ button_color }};">{{ direction.capitalize() }}</button>
+            {% endfor %}
+        </form>
+        <button id="toggle-history">Toggle Action History</button>
+        <div id="action-history">
+            <h3>Action History:</h3>
+            <ul>
+                {% for action in action_history %}
+                <li>{{ action }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    <script>
+        const toggleHistoryButton = document.getElementById('toggle-history');
+        const actionHistoryDiv = document.getElementById('action-history');
+
+        toggleHistoryButton.addEventListener('click', () => {
+            actionHistoryDiv.style.display = actionHistoryDiv.style.display === 'none' ? 'block' : 'none';
+        });
+    </script>
+</body>
+</html>
