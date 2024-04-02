@@ -1,7 +1,7 @@
 const JSZip = window.JSZip;
 
 document.getElementById('add-room').addEventListener('click', addRoom);
-document.getElementById('story-form').addEventListener('submit', saveStory);
+document.getElementById('save-story').addEventListener('click', saveStory);
 document.getElementById('load-story-input').addEventListener('change', handleLoadStoryInputChange);
 document.getElementById('load-story-button').addEventListener('click', handleLoadStoryButtonClick);
 document.getElementById('load-story').addEventListener('click', loadStory);
@@ -67,8 +67,8 @@ function removeRoom(event) {
   room.parentNode.removeChild(room);
 }
 
-function saveStory(event) {
-  event.preventDefault();
+function saveStory() {
+  console.log('saveStory function called');
 
   const storyName = document.getElementById('story-name').value;
   const startRoom = document.getElementById('start-room').value;
@@ -95,7 +95,7 @@ function saveStory(event) {
     rooms[roomName] = {
       description,
       exits,
-      image: imageInput.files[0] // Store the selected image file
+      image: imageInput.files[0] || null // Include an empty image field if no file is selected
     };
   });
 
@@ -104,6 +104,17 @@ function saveStory(event) {
     start_room: startRoom,
     rooms
   };
+
+  console.log('Story object:', story);
+
+  // Add logging to check the structure of the story object before sending it to the server
+  console.log('Checking story object structure:');
+  console.log('name:', story.name);
+  console.log('start_room:', story.start_room);
+  console.log('rooms:', Object.keys(story.rooms));
+
+  // Add logging to check the structure of the rooms dictionary
+  console.log('rooms dictionary:', JSON.stringify(story.rooms, null, 2));
 
   fetch('/save_story', {
     method: 'POST',
