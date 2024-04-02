@@ -3,7 +3,8 @@ Design, edit and play **choose-your-own-adventure** stories
 
 ** ** IT'S LIVE HERE:  https://vicioussquid.pythonanywhere.com/  CHECK IT OUT!! ** **
 
-![image](https://github.com/ViciousSquid/Adventure/assets/161540961/955b69b3-17b5-40c7-b32f-c9e6e9116800)
+![image](https://github.com/ViciousSquid/Adventure/assets/161540961/e0f07c34-210e-4908-882d-3874b549c6c7)
+
 
 
 
