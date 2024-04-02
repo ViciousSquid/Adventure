@@ -2,12 +2,20 @@ body {
   font-family: Arial, sans-serif;
   margin: 0;
   padding: 0;
+  display: flex;
+  justify-content: center;
+  background-color: #222222;
+  min-height: 100vh; 
 }
 
 .container {
-  max-width: 1200px;
-  margin: 0 auto;
+  max-width: 800px;
+  width: 100%;
   padding: 20px;
+  text-align: center;
+  background-color: white;
+  box-sizing: border-box;
+  min-height: 100vh; 
 }
 
 .toolbar {
@@ -28,6 +36,7 @@ body {
   padding: 10px 20px;
   border: none;
   cursor: pointer;
+  font-size: 18px;
 }
 
 .gray-button {
@@ -60,4 +69,33 @@ body.dark-mode {
   max-width: 100px;
   max-height: 100px;
   margin-right: 10px;
+}
+
+.sidebar {
+  background-color: #222222; /* Updated sidebar color */
+  width: 200px;
+  height: 100vh;
+  position: fixed;
+  top: 0;
+}
+
+.left-sidebar {
+  left: 0;
+}
+
+.right-sidebar {
+  right: 0;
+}
+
+select {
+  font-size: 16px;
+  height: 40px;
+  width: 300px;
+}
+
+.button-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
 }
