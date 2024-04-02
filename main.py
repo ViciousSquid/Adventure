@@ -1,16 +1,3 @@
-print ("  ____  ___    __ __    ___  ____   ______  __ __  ____     ___  __ ")
-print (" /    ||   \  |  |  |  /  _]|    \ |      ||  |  ||    \   /  _]|  |")
-print ("|  o  ||    \ |  |  | /  [_ |  _  ||      ||  |  ||  D  ) /  [_ |  |")
-print ("|     ||  D  ||  |  ||    _]|  |  ||_|  |_||  |  ||    / |    _]|__|")
-print ("|  _  ||     ||  :  ||   [_ |  |  |  |  |  |  :  ||    \ |   [_  __ ")
-print ("|  |  ||     | \   / |     ||  |  |  |  |  |     ||  .  \|     ||  |")
-print ("|__|__||_____|  \_/  |_____||__|__|  |__|   \__,_||__|\_||_____||__|")
-print ("")
-print ("            https://github.com/ViciousSquid/Adventure")
-print ("")
-print ("* Initialising libraries")
-print ("")
-
 import json
 import zipfile
 from flask import Flask, render_template, request, redirect, url_for, make_response, send_from_directory, jsonify
@@ -19,14 +6,13 @@ from story_editor import story_editor
 import os
 from PIL import Image
 
-
 app = Flask(__name__)
 
 current_adventure = None
 current_room = None
 action_history = []
 
-print ("* Serving webpage via HTTP on port 5000")
+print("* Serving webpage via HTTP on port 5000")
 
 @app.route('/')
 def main_menu():
@@ -42,7 +28,7 @@ def new_story():
     story_name = request.form.get('story_name')
     if story_name in ADVENTURES:
         current_adventure = story_name
-        print(f"Current adventure set to: {current_adventure}")  # Add this line
+        print(f"Current adventure set to: {current_adventure}")
         adventure = ADVENTURES[current_adventure]
         with zipfile.ZipFile(adventure, 'r') as zip_ref:
             with zip_ref.open('story.json', 'r') as f:
@@ -200,18 +186,44 @@ def load_story():
 
 @app.route('/save_story', methods=['POST'])
 def save_story():
-    story_data = request.get_json()
-    story_name = story_data['name']
-    story_path = os.path.join(STORIES_DIR, f"{story_name}.zip")
+    try:
+        story_data = request.get_json()
+        print("Received story data:", story_data)
 
-    with zipfile.ZipFile(story_path, 'w') as zip_file:
-        zip_file.writestr('story.json', json.dumps(story_data, indent=2))
-        for room_name, room_data in story_data['rooms'].items():
-            if room_data['image']:
-                image_filename = f"room-{room_name}-image.{room_data['image'].filename.split('.')[-1]}"
-                zip_file.writestr(image_filename, room_data['image'].read())
+        # Add logging to check the structure of the story data received from the client
+        print("Checking story data structure:")
+        print("name:", story_data.get('name'))
+        print("start_room:", story_data.get('start_room'))
+        print("rooms keys:", list(story_data.get('rooms', {}).keys()))
 
-    return jsonify({'message': 'Story saved successfully'}), 200
+        for room_name, room_data in story_data.get('rooms', {}).items():
+            print(f"Room '{room_name}' structure:")
+            print("description:", room_data.get('description'))
+            print("exits keys:", list(room_data.get('exits', {}).keys()))
+            print("image:", room_data.get('image'))
+
+        story_name = story_data['name']
+        print("Story name:", story_name)
+        story_path = os.path.join(STORIES_DIR, f"{story_name}.zip")
+
+        with zipfile.ZipFile(story_path, 'w') as zip_file:
+            try:
+                zip_file.writestr('story.json', json.dumps(story_data, indent=2))
+                for room_name, room_data in story_data['rooms'].items():
+                    if room_data['image']:
+                        image_filename = f"room-{room_name}-image.{room_data['image'].filename.split('.')[-1]}"
+                        zip_file.writestr(image_filename, room_data['image'].read())
+            except Exception as e:
+                print("Error writing to ZIP file:", str(e))
+                raise
+
+        return jsonify({'message': 'Story saved successfully'}), 200
+    except KeyError as e:
+        print("Missing required field in story data:", str(e))
+        return jsonify({'message': 'Missing required field in story data'}), 400
+    except Exception as e:
+        print("Error saving story:", str(e))
+        return jsonify({'message': 'Error saving story'}), 500
 
 @app.route('/editor/graph')
 def graph_view():
