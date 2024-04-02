@@ -4,24 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Adventure!</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main_menu.css') }}">
     <style>
-        select {
-            font-size: 16px;
-            height: 40px; /* Adjust the height to match the button */
-        }
-        
         .green-button {
-            font-size: 18px; /* Increase the font size of the button */
+            background-color: green;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Adventure!</h1>
-<b>Choose-your-own-adventure engine</b> by ViciousSquid<br>
-<br>Beta 1.0<br>------------<br>
-	<a href="https://vicioussquid.pythonanywhere.com/">https://vicioussquid.pythonanywhere.com/</a><br><br>
+        <b>Interactive story engine by ViciousSquid</b><br>
+        <br>Beta 0.4<br>------------<br>
+        <a href="https://vicioussquid.pythonanywhere.com/">https://vicioussquid.pythonanywhere.com/</a><br><br>
         <a href="https://github.com/ViciousSquid/Adventure">https://github.com/ViciousSquid/Adventure</a><br><br>
 
         <div class="image-container">
@@ -31,17 +30,18 @@
 
         <h2>Select a Story:</h2>
         <form action="{{ url_for('new_story') }}" method="post">
-            <select name="story_name" style="width: 200px;"> <!-- Add a width to the select element -->
-                {% for story_name in adventures %}
-                <option value="{{ story_name }}">{{ story_name }}</option>
-                {% endfor %}
-            </select>
-            <button type="submit" class="green-button">Start New Story</button>
+            <select name="story_name">
+    {% set sorted_adventures = adventures|sort(attribute='name'|lower) %}
+    {% for story_name in sorted_adventures %}
+    <option value="{{ story_name }}">{{ story_name.replace('_', ' ')|capitalize }}</option>
+    {% endfor %}
+</select>
+            <button type="submit" class="apple-green-button">Start New Story</button>
         </form><br><br>
 
         Create your own story or edit an existing story using the Editor:
         <br><br>
-        <a href="{{ url_for('static', filename='editor/index.html') }}" class="blue-button">Story Editor</a>
+        <a href="{{ url_for('static', filename='editor/index.html') }}" class="orange-button">Story Editor</a>
     </div>
 </body>
 </html>

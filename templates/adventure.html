@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Adventure Game</title>
+    <title>Adventure!</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -78,9 +78,11 @@
 <body>
     <div class="container">
         <h1>{{ room.name }}</h1>
+        {% if room.image and room.image.strip() %}
         <img src="{{ url_for('serve_image', filename=room.image) }}" alt="Room Image">
+        {% endif %}
         <p>{{ content }}</p>
-        <h2>Available Exits:</h2>
+        <h2>What do you do?:</h2>
         <form method="post" action="{{ url_for('adventure_game') }}">
             {% for direction in exits %}
             <button type="submit" name="direction" value="{{ direction }}" style="background-color: {{ button_color }};">{{ direction.capitalize() }}</button>
