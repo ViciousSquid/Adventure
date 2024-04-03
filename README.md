@@ -10,7 +10,7 @@ Design, edit and play **choose-your-own-adventure** stories
 
 ![image](https://github.com/ViciousSquid/Adventure/assets/161540961/55f97e37-01b0-492f-bdf5-e11fa7bb7bf7)
 
-Includes a FULL story editor with load/save support and flowcharts
+Includes a FULL story editor with load/save support (currently buggy) and flowcharts. All of the flowcharts!
 
  Stories support images and multiple choices:
 
