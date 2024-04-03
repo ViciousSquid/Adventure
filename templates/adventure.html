@@ -9,6 +9,7 @@
             color: #fff;
             margin: 0;
             padding: 0;
+            position: relative;
         }
 
         .container {
@@ -79,6 +80,14 @@
             list-style-type: none;
             padding: 0;
         }
+
+        .new-branch-message {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            font-size: 12px;
+            color: #999;
+        }
     </style>
 </head>
 <body>
@@ -106,6 +115,9 @@
                 {% endfor %}
             </ul>
         </div>
+        {% if new_branch_message %}
+        <div class="new-branch-message">{{ new_branch_message }}</div>
+        {% endif %}
     </div>
     <script>
         const toggleHistoryButton = document.getElementById('toggle-history');
