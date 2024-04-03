@@ -76,7 +76,7 @@ def adventure_game():
     revisit_count = room.get('revisit_count', 0)
     if room_visit_count >= revisit_count:
         # Add additional content or options from the story.json file
-        additional_content = room.get('revisit_content', "You have unlocked a new branch")
+        additional_content = room.get('revisit_content', "")
         content += "\n" + additional_content
 
     return render_template('adventure.html', content=content, exits=exits, room=room, show_map=show_map, action_history=action_history, button_color=button_color, story_title=story_title)
