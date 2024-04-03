@@ -1,6 +1,7 @@
 # Story file format and features
 
 Stories are standard curly-brace json files packaged inside ZIP files.
+
 Story MUST be named **'story.json'** and contain at least the following **required flags**
 
 # required flags
