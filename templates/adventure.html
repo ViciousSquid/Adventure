@@ -21,7 +21,13 @@
             position: relative;
         }
 
-        h1 {
+        .story-title {
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        h2 {
             position: absolute;
             top: 20px;
             left: 20px;
@@ -77,20 +83,23 @@
 </head>
 <body>
     <div class="container">
-        <h1>{{ room.name }}</h1>
+        <h1 class="story-title">{{ story_title }}</h1>
+        <h2>{{ room.name }}</h2>
         {% if room.image and room.image.strip() %}
         <img src="{{ url_for('serve_image', filename=room.image) }}" alt="Room Image">
         {% endif %}
-        <p>{{ content }}</p>
-        <h2>What do you do?:</h2>
+        {% for paragraph in content.split('\n') %}
+        <p>{{ paragraph }}</p>
+        {% endfor %}
+        <h3></h3>
         <form method="post" action="{{ url_for('adventure_game') }}">
             {% for direction in exits %}
             <button type="submit" name="direction" value="{{ direction }}" style="background-color: {{ button_color }};">{{ direction.capitalize() }}</button>
             {% endfor %}
         </form>
-        <button id="toggle-history">Toggle Action History</button>
+        <button id="toggle-history">Toggle Choice History</button>
         <div id="action-history">
-            <h3>Action History:</h3>
+            <h3>History:</h3>
             <ul>
                 {% for action in action_history %}
                 <li>{{ action }}</li>
