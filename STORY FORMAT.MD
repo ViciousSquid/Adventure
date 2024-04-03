@@ -64,8 +64,11 @@ Here is a secion of a story that uses this feature:
       },
       ...
 
+# Revisits
+
 In this example, if ** "revisit_count" ** is 2 for this room then ** "revisit_content" ** will be displayed to the player. Some rooms in this story trigger additional content when they are revisited for the third time. This is in keeping with the multi-dimensional narrative of this particular story.
 This will be expanded upon in future released.
+Full functionality for these tags is working in the engine but not in the editor yet - you'll have to manually add them.
 
 # Images 
 
