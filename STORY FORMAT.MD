@@ -1,6 +1,6 @@
 # Story file format and features
 
-Stories are standrad curly-brace json files.
+Stories are standard curly-brace json files.
 They MUST be named 'story'json' and must contain at least the following:
 
 **"name"** - Name of the story (displayed when playing)
