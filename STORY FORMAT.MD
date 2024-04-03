@@ -1,7 +1,9 @@
 # Story file format and features
 
-Stories are standard curly-brace json files.
-They MUST be named 'story'json' and must contain at least the following:
+Stories are standard curly-brace json files packaged inside ZIP files.
+They MUST be named **'story.json'** and contain at least the following:
+
+# required flags
 
 **"name"** - Name of the story (displayed when playing)
 
@@ -16,7 +18,7 @@ They MUST be named 'story'json' and must contain at least the following:
 **"exits"** - links from a page to other pages - the engine assumes up to four per room but is not hard-coded and adding more should work (untested)
 
 
-# EXAMPLE:
+# Example json:
 
 
 ```
@@ -35,7 +37,9 @@ They MUST be named 'story'json' and must contain at least the following:
 ...
 ```
 
-Additional (optional) tags are also available:
+# Additional flags 
+
+In addition to the required flags above, "special" ioptional flags are also available:
 
 **"image"** - Path to an image file stored inside the story ZIP (see below)
 
@@ -47,12 +51,12 @@ Additional (optional) tags are also available:
 The Adventure! engine features a basic **STATE MACHINE** which can keep track of the players history and thus allows for unlocking of additional narratives when conditions are met (for example, players might see a hidden message upon visiting a previous room a second or third time, etc
 Here is a secion of a story that uses this feature:
 
-# EXAMPLE: 
+# Example json: 
 
 
 ```
 {
-  "name": "NAME", #
+  "name": "cosmic_paradox", #
   "button_color": "#0047ab",
   "start_room": "prologue",
   "rooms": {
@@ -64,11 +68,14 @@ Here is a secion of a story that uses this feature:
       },
       ...
 
-# Revisits
+# Revisit_count and Revisit_content
 
-In this example, if ** "revisit_count" ** is 2 for this room then ** "revisit_content" ** will be displayed to the player. Some rooms in this story trigger additional content when they are revisited for the third time. This is in keeping with the multi-dimensional narrative of this particular story.
-This will be expanded upon in future released.
-Full functionality for these tags is working in the engine but not in the editor yet - you'll have to manually add them.
+In the **Cosmic Paradox** story, if ** "revisit_count" ** is 2 for this room (prologue) then ** "revisit_content" ** will be displayed to the player. 
+Some rooms in this story trigger additional content when they are revisited for the third time. This is in keeping with the multi-dimensional narrative of this particular story.
+This will be expanded upon in future releases of Adventure!
+
+Processing of these tags is fully functional in the player but not in the editor yet - you'll have to manually add them.
+Download the **Cosmic Paradox** story and examine the code.
 
 # Images 
 
