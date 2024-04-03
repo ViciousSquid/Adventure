@@ -95,7 +95,7 @@ function saveStory() {
     rooms[roomName] = {
       description,
       exits,
-      image: imageInput.files[0] || null // Include an empty image field if no file is selected
+      image: imageInput.files[0] ? `room-${roomName}-image.${imageInput.files[0].name.split('.').pop()}` : null
     };
   });
 
@@ -107,34 +107,49 @@ function saveStory() {
 
   console.log('Story object:', story);
 
-  // Add logging to check the structure of the story object before sending it to the server
-  console.log('Checking story object structure:');
-  console.log('name:', story.name);
-  console.log('start_room:', story.start_room);
-  console.log('rooms:', Object.keys(story.rooms));
+  const formData = new FormData();
+  formData.append('story', JSON.stringify(story));
 
-  // Add logging to check the structure of the rooms dictionary
-  console.log('rooms dictionary:', JSON.stringify(story.rooms, null, 2));
+  roomElements.forEach((roomElement, index) => {
+    const imageInput = roomElement.querySelector(`#room-image-${index}`);
+    if (imageInput.files[0]) {
+      const roomName = roomElement.querySelector(`#room-name-${index}`).value;
+      const imageFile = imageInput.files[0];
+      formData.append(`room-${roomName}-image`, imageFile);
+    }
+  });
 
   fetch('/save_story', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(story)
+    body: formData
   })
-  .then(response => response.json())
-  .then(data => {
-    if (data.message === 'Story saved successfully') {
-      alert('Story saved successfully!');
-      updateGraphView(story);
+  .then(response => {
+    if (response.ok) {
+      // Story saved successfully, initiate the download
+      return response.blob();
     } else {
-      alert('Error saving the story. Please try again.');
+      return response.json().then(data => {
+        throw new Error(data.error || 'Error saving the story');
+      });
     }
+  })
+  .then(blob => {
+    // Create a temporary URL for the downloaded file
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${storyName}.zip`; // Set the download attribute
+    document.body.appendChild(a); // Append to the document body
+    a.click(); // Trigger the download
+    document.body.removeChild(a); // Remove the anchor element
+    window.URL.revokeObjectURL(url); // Revoke the temporary URL
+
+    alert('Story was downloaded!');
+    updateGraphView(story);
   })
   .catch(error => {
     console.error('Error:', error);
-    alert('An error occurred while saving the story. Please try again later.');
+    alert(`An error occurred while saving the story: ${error.message}`);
   });
 }
 
