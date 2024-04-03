@@ -1,11 +1,12 @@
 import json
 import zipfile
-from flask import Flask, render_template, request, redirect, url_for, make_response, send_from_directory, jsonify
+from flask import Flask, render_template, request, redirect, url_for, make_response, send_from_directory, jsonify, send_file
 from adventures import ADVENTURES, STORIES_DIR
 from story_editor import story_editor
 import os
 from PIL import Image
 from collections import Counter
+import io
 
 app = Flask(__name__)
 
@@ -200,43 +201,30 @@ def load_story():
 @app.route('/save_story', methods=['POST'])
 def save_story():
     try:
-        story_data = request.get_json()
+        story_data = json.loads(request.form['story'])
         print("Received story data:", story_data)
-
-        # Add logging to check the structure of the story data received from the client
-        print("Checking story data structure:")
-        print("name:", story_data.get('name'))
-        print("start_room:", story_data.get('start_room'))
-        print("rooms keys:", list(story_data.get('rooms', {}).keys()))
-
-        for room_name, room_data in story_data.get('rooms', {}).items():
-            print(f"Room '{room_name}' structure:")
-            print("description:", room_data.get('description'))
-            print("exits keys:", list(room_data.get('exits', {}).keys()))
-            print("image:", room_data.get('image'))
 
         story_name = story_data['name']
         print("Story name:", story_name)
-        story_path = os.path.join(STORIES_DIR, f"{story_name}.zip")
 
-        with zipfile.ZipFile(story_path, 'w') as zip_file:
-            try:
-                zip_file.writestr('story.json', json.dumps(story_data, indent=2))
-                for room_name, room_data in story_data['rooms'].items():
-                    if room_data['image']:
-                        image_filename = f"room-{room_name}-image.{room_data['image'].filename.split('.')[-1]}"
-                        zip_file.writestr(image_filename, room_data['image'].read())
-            except Exception as e:
-                print("Error writing to ZIP file:", str(e))
-                raise
+        # Create a BytesIO object to hold the zip file data
+        zip_buffer = io.BytesIO()
 
-        return jsonify({'message': 'Story saved successfully'}), 200
-    except KeyError as e:
-        print("Missing required field in story data:", str(e))
-        return jsonify({'message': 'Missing required field in story data'}), 400
+        with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
+            zip_file.writestr('story.json', json.dumps(story_data, indent=2))
+            for room_name, room_data in story_data['rooms'].items():
+                if room_data['image']:
+                    image_file = request.files[f"room-{room_name}-image"]
+                    zip_file.writestr(room_data['image'], image_file.read())
+
+        # Move the buffer pointer to the beginning
+        zip_buffer.seek(0)
+
+        # Send the zip file as a response for download
+        return send_file(zip_buffer, as_attachment=True, download_name=f"story_{story_name}.zip", mimetype="application/zip")
     except Exception as e:
-        print("Error saving story:", str(e))
-        return jsonify({'message': 'Error saving story'}), 500
+        print("Error saving the story:", str(e))
+        return jsonify({'error': 'An error occurred while saving the story.'}), 500
 
 @app.route('/editor/graph')
 def graph_view():
