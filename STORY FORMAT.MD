@@ -4,10 +4,15 @@ Stories are standrad curly-brace json files.
 They MUST be named 'story'json' and must contain at least the following:
 
 **"name"** - Name of the story (displayed when playing)
+
 **"button_color"** - hex color for choice buttons
+
 **"start_room"** - initial story location
+
 **"rooms"** - lists every 'page' of the story
+
 **"description"** - self-explanatory
+
 **"exits"** - links from a page to other pages - the engine assumes up to four per room but is not hard-coded and adding more should work (untested)
 
 
@@ -33,8 +38,11 @@ They MUST be named 'story'json' and must contain at least the following:
 Additional (optional) tags are also available:
 
 **"image"** - Path to an image file stored inside the story ZIP (see below)
+
 **"revisit_count"** - if the player is in this location for the Nth time, display additional content
+
 **"revisit_content"** - The additional content to be displayed and/or actions to be performed
+
 
 The Adventure! engine features a basic **STATE MACHINE** which can keep track of the players history and thus allows for unlocking of additional narratives when conditions are met (for example, players might see a hidden message upon visiting a previous room a second or third time, etc
 Here is a secion of a story that uses this feature:
