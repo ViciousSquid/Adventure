@@ -66,7 +66,8 @@ def adventure_game():
     content = room['description']
     exits = [direction for direction, room_name in room['exits'].items() if room_name]
     show_map = room.get('show_map', True)
-    return render_template('adventure.html', content=content, exits=exits, room=room, show_map=show_map, action_history=action_history, button_color=button_color)
+    story_title = story_data['name']  # Retrieve the story title from the story data
+    return render_template('adventure.html', content=content, exits=exits, room=room, show_map=show_map, action_history=action_history, button_color=button_color, story_title=story_title)
 
 @app.route('/play')
 def play_story():
