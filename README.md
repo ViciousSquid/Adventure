@@ -17,6 +17,8 @@ Beta 0.4
 * Six example story packages are included
 * Story packages support images, multiple endings and conditional flags (revisiting locations can unlock additional content etc)
 
+[[Story format is detailed in a seperate document](STORY FORMAT.MD)](https://github.com/ViciousSquid/Adventure/blob/main/STORY%20FORMAT.MD)
+
 
 
 ![image](https://github.com/ViciousSquid/Adventure/assets/161540961/3994d423-3e86-4089-a569-8fcc62105fe9)
