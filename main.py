@@ -5,6 +5,7 @@ from adventures import ADVENTURES, STORIES_DIR
 from story_editor import story_editor
 import os
 from PIL import Image
+from collections import Counter
 
 app = Flask(__name__)
 
@@ -50,7 +51,10 @@ def adventure_game():
         with zip_ref.open('story.json', 'r') as f:
             story_data = json.load(f)
     room = story_data['rooms'][current_room]
-    button_color = story_data.get('button_color', '#4CAF50')  # Default color if not specified in the story
+    button_color = story_data.get('button_color', '#4CAF50')
+
+    # Count the number of times the player has visited the current room
+    room_visit_count = Counter(action_history)[current_room]
 
     if request.method == 'POST':
         direction = request.form.get('direction')
@@ -59,14 +63,22 @@ def adventure_game():
             if next_room:
                 current_room = next_room
                 room = story_data['rooms'][current_room]
-                action_history.append(direction)
+                action_history.append(current_room)
             else:
                 return render_template('adventure.html', content="You can't go that way.", room=room, action_history=action_history, button_color=button_color)
 
     content = room['description']
     exits = [direction for direction, room_name in room['exits'].items() if room_name]
     show_map = room.get('show_map', True)
-    story_title = story_data['name']  # Retrieve the story title from the story data
+    story_title = story_data['name']
+
+    # Check if the player has visited the current room enough times to unlock a new branch
+    revisit_count = room.get('revisit_count', 0)
+    if room_visit_count >= revisit_count:
+        # Add additional content or options from the story.json file
+        additional_content = room.get('revisit_content', "You have unlocked a new branch")
+        content += "\n" + additional_content
+
     return render_template('adventure.html', content=content, exits=exits, room=room, show_map=show_map, action_history=action_history, button_color=button_color, story_title=story_title)
 
 @app.route('/play')
@@ -99,7 +111,7 @@ def play_action():
         next_room = room['exits'].get(direction, None)
         if next_room:
             current_room = next_room
-            action_history.append(direction)
+            action_history.append(current_room)
             room = story_data['rooms'][current_room]
             content = room['description']
             exits = [direction for direction, room_name in room['exits'].items() if room_name]
