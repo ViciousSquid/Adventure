@@ -98,8 +98,12 @@ Images within stories are fully supported. Paths are relative to the story.json 
 
 
 The example above would display prologue.jpg from the /images folder inside the story ZIP
+
 Please do not include huge or uncompressed images in story archives.
+
 If images are larger than 800x600 they will be scaled down to that size automatically.
+
+
 
 
 -- MORE COMING SOON --
