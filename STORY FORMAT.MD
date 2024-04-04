@@ -70,8 +70,11 @@ Here is a secion of a story that uses this feature:
       "exits": {
         "examine": "examine_device",
         "ignore": "ignore_device"
-      },
-      ...
+      }
+
+...
+
+```
 
 # Revisit_count and Revisit_content
 
