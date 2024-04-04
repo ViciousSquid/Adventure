@@ -13,7 +13,7 @@ Beta 0.4
 
 
 
-* Includes a story editor with load/save support (currently buggy buggy!) and flowcharts. so many flowcharts...
+* Includes a story editor with full load/save support and a flowchart generator (updates in real-time)
 * Six example story packages are included
 * Story packages support images, multiple endings and conditional flags (revisiting locations can unlock additional content etc)
 
