@@ -85,15 +85,13 @@ This will be expanded upon in future releases of Adventure!
 Processing of these tags is fully functional in the player but not in the editor yet - you'll have to manually add them.
 Download the **Cosmic Paradox** story and examine the code.
 
-# Images 
+# Image flag 
 
 Images within stories are fully supported. Paths are relative to the story.json and live inside the ZIP archive:
 
 
 ```
 "image": "images/prologue.jpg",
-
-
 ```
 
 
