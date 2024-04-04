@@ -4,14 +4,105 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Adventure!</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/main_menu.css') }}">
+    
     <style>
-        .green-button {
-            background-color: green;
-            color: white;
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            background-color: #222222;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        body::before,
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            width: 10%;
+            background-color: #222222;
+            z-index: -1;
+        }
+
+        body::before {
+            left: 0;
+        }
+
+        body::after {
+            right: 0;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            padding: 20px;
+            text-align: center;
+            background-color: white;
+            box-sizing: border-box;
+            min-height: 100vh;
+        }
+
+        .apple-green-button,
+        .orange-button,
+        .custom-button {
+            width: 300px;
             padding: 10px 20px;
             border: none;
             cursor: pointer;
+            font-size: 18px;
+            height: 50px;
+            margin-bottom: 10px;
+        }
+
+        .apple-green-button {
+            background-color: #008000;
+            color: white;
+        }
+
+        .orange-button {
+            background-color: #E3963E;
+            color: white;
+            text-decoration: none;
+        }
+
+        .custom-button {
+            background-color: #1e65ff;
+            color: white;
+        }
+
+        .button-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .story-select {
+            text-align: center;
+        }
+
+        .orange-link {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 300px;
+            padding: 10px;
+            background-color: #750080;
+            color: white;
+            text-decoration: none;
+            box-sizing: border-box;
+            font-size: 18px;
+            line-height: 30px;
+        }
+
+        select {
+            font-size: 18px;
+            height: 50px;
+            width: 300px;
         }
     </style>
 </head>
@@ -19,7 +110,7 @@
     <div class="container">
         <h1>Adventure!</h1>
         <b>Interactive story engine by ViciousSquid</b><br>
-        <br>Beta 0.4<br>------------<br>
+        <br>Beta 1.0<br>------------<br>
         <a href="https://vicioussquid.pythonanywhere.com/">https://vicioussquid.pythonanywhere.com/</a><br><br>
         <a href="https://github.com/ViciousSquid/Adventure">https://github.com/ViciousSquid/Adventure</a><br><br>
 
@@ -28,19 +119,39 @@
         </div>
         <br><br>
 
-        <h2>Select a Story:</h2>
-        <form action="{{ url_for('new_story') }}" method="post">
-            <select name="story_name">
-    {% set sorted_adventures = adventures|sort(attribute='name'|lower) %}
-    {% for story_name in sorted_adventures %}
-    <option value="{{ story_name }}">{{ story_name.replace('_', ' ')|capitalize }}</option>
-    {% endfor %}
-</select>
-            <button type="submit" class="apple-green-button">Start New Story</button>
-        </form><br><br>
-        Create your own story or edit an existing story using the Editor:
-        <br><br>
-        <a href="{{ url_for('static', filename='editor/index.html') }}" class="orange-button">Story Editor</a>
+        <div class="button-container">
+            <div class="story-select">
+                <h2>Select a Story:</h2>
+                <form action="{{ url_for('new_story') }}" method="post">
+                    <select name="story_name">
+                        <option value="Cosmic_paradox" selected>Cosmic Paradox</option>
+                        {% set sorted_adventures = adventures|sort(attribute='name'|lower) %}
+                        {% for story_name in sorted_adventures %}
+                            {% if story_name != 'Cosmic_paradox' %}
+                                <option value="{{ story_name }}">{{ story_name.replace('_', ' ')|capitalize }}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select><br>
+                    <button type="submit" class="apple-green-button">Start New Story</button>
+                </form>
+            </div>
+            <form id="upload-form" action="{{ url_for('upload_story') }}" method="post" enctype="multipart/form-data">
+                <input type="file" name="story_file" id="story-file" accept=".zip" style="display: none;">
+                <button type="button" id="upload-button" class="custom-button">Upload Story</button>
+            </form>
+                       <div class="button-container">
+                <a href="{{ url_for('static', filename='editor/index.html') }}" class="orange-link">Story Editor</a>
+            </div>
+        </div>
     </div>
+    <script>
+        document.getElementById('upload-button').addEventListener('click', function() {
+            document.getElementById('story-file').click();
+        });
+
+        document.getElementById('story-file').addEventListener('change', function() {
+            document.getElementById('upload-form').submit();
+        });
+    </script>
 </body>
 </html>
