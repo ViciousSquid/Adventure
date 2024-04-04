@@ -12,11 +12,11 @@ Story MUST be named **'story.json'** and contain at least the following **requir
 
 **"start_room"** - initial story location
 
-**"rooms"** - lists every 'page' of the story
+**"rooms"** -  every 'page' of a story book
 
 **"description"** - self-explanatory
 
-**"exits"** - links from a page to other pages - the engine assumes up to four per room but is not hard-coded and adding more should work (untested)
+**"exits"** - links from a page to other pages - the editor allows up to 4 per room but is not hard-coded and adding more should work (untested)
 
 
 # Example json:
