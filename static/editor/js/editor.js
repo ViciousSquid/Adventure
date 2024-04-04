@@ -1,5 +1,9 @@
 const JSZip = window.JSZip;
 
+document.getElementById('story-name').addEventListener('input', function (event) {
+  this.value = this.value.replace(/\s+/g, '_');
+});
+
 document.getElementById('add-room').addEventListener('click', addRoom);
 document.getElementById('save-story').addEventListener('click', saveStory);
 document.getElementById('load-story-input').addEventListener('change', handleLoadStoryInputChange);
@@ -7,6 +11,7 @@ document.getElementById('load-story-button').addEventListener('click', handleLoa
 document.getElementById('load-story').addEventListener('click', loadStory);
 document.getElementById('toggle-view').addEventListener('click', toggleView);
 document.getElementById('new-story').addEventListener('click', createNewStory);
+document.getElementById('load-button').addEventListener('click', toggleLoadPopup);
 
 let roomCounter = 0;
 let loadedStory = null;
@@ -29,25 +34,28 @@ function addRoom(event) {
 
     <label for="room-image-${roomCounter}">Room Image:</label>
     <input type="file" id="room-image-${roomCounter}" accept="image/*">
+    <button type="button" class="clear-image" data-room-index="${roomCounter}">Clear Image</button>
 
-    <div class="room-thumbnail-container"></div>
+    <div class="room-thumbnail-container">
+      <img id="room-thumbnail-${roomCounter}" class="room-thumbnail" src="" alt="" style="display: none; max-width: 128px; max-height: 128px;">
+    </div>
 
-    <div class="exits">
-      <label for="exit-1-${roomCounter}">Exit 1:</label>
+    <div class="Choices">
+      <label for="exit-1-${roomCounter}">Choice 1:</label>
       <input class="exit-input" type="text" id="exit-1-${roomCounter}">
-      <input class="exit-input" type="text" id="room-ref-1-${roomCounter}">
+      <input class="exit-input" type="text" id="room-ref-1-${roomCounter}" placeholder="Leads to">
 <br>
-      <label for="exit-2-${roomCounter}">Exit 2:</label>
+      <label for="exit-2-${roomCounter}">Choice 2:</label>
       <input class="exit-input" type="text" id="exit-2-${roomCounter}">
-      <input class="exit-input" type="text" id="room-ref-2-${roomCounter}">
+      <input class="exit-input" type="text" id="room-ref-2-${roomCounter}" placeholder="Leads to">
 <br>
-      <label for="exit-3-${roomCounter}">Exit 3:</label>
+      <label for="exit-3-${roomCounter}">Choice 3:</label>
       <input class="exit-input" type="text" id="exit-3-${roomCounter}">
-      <input class="exit-input" type="text" id="room-ref-3-${roomCounter}">
+      <input class="exit-input" type="text" id="room-ref-3-${roomCounter}" placeholder="Leads to">
 <br>
-      <label for="exit-4-${roomCounter}">Exit 4:</label>
+      <label for="exit-4-${roomCounter}">Choice 4:</label>
       <input class="exit-input" type="text" id="exit-4-${roomCounter}">
-      <input class="exit-input" type="text" id="room-ref-4-${roomCounter}">
+      <input class="exit-input" type="text" id="room-ref-4-${roomCounter}" placeholder="Leads to">
     </div>
 
 
@@ -57,14 +65,30 @@ function addRoom(event) {
 
   roomContainer.appendChild(roomDiv);
 
+  roomDiv.querySelector(`#room-name-${roomCounter}`).addEventListener('input', function (event) {
+    this.value = this.value.replace(/\s+/g, '_');
+  });
+
+  for (let i = 1; i <= 4; i++) {
+    roomDiv.querySelector(`#exit-${i}-${roomCounter}`).addEventListener('input', function (event) {
+      this.value = this.value.replace(/\s+/g, '_');
+    });
+  }
+
   roomDiv.querySelector('.remove-room').addEventListener('click', removeRoom);
+  roomDiv.querySelector(`#room-image-${roomCounter}`).addEventListener('change', handleImageUpload);
+  roomDiv.querySelector('.clear-image').addEventListener('click', handleClearImage);
 
   roomCounter++;
+
+  updateGraphView(getStoryData());
 }
 
 function removeRoom(event) {
   const room = event.target.parentNode;
   room.parentNode.removeChild(room);
+
+  updateGraphView(getStoryData());
 }
 
 function saveStory() {
@@ -72,19 +96,29 @@ function saveStory() {
 
   const storyName = document.getElementById('story-name').value;
   const startRoom = document.getElementById('start-room').value;
-  const rooms = {};
-
   const roomContainer = document.getElementById('room-container');
   const roomElements = roomContainer.querySelectorAll('.room');
 
+  if (storyName.trim() === '') {
+    alert('SAVE ERROR: Story has no title');
+    return;
+  }
+
+  if (roomElements.length === 0) {
+    alert('SAVE ERROR: Story must have at least one room.');
+    return;
+  }
+
+  const rooms = {};
+
   roomElements.forEach((roomElement, index) => {
-    const roomName = roomElement.querySelector(`#room-name-${index}`).value;
+    const roomName = roomElement.querySelector(`#room-name-${index}`).value.replace(/\s+/g, '_');
     const description = roomElement.querySelector(`#room-description-${index}`).value;
     const imageInput = roomElement.querySelector(`#room-image-${index}`);
     const exits = {};
 
     for (let i = 1; i <= 4; i++) {
-      const exitName = roomElement.querySelector(`#exit-${i}-${index}`).value;
+      const exitName = roomElement.querySelector(`#exit-${i}-${index}`).value.replace(/\s+/g, '_');
       const exitRef = roomElement.querySelector(`#room-ref-${i}-${index}`).value;
 
       if (exitName && exitRef) {
@@ -92,10 +126,17 @@ function saveStory() {
       }
     }
 
+    let imageName = null;
+    if (imageInput.files[0]) {
+      const extension = imageInput.files[0].name.split('.').pop();
+      const roomNameFormatted = roomName.replace(/\s+/g, '_');
+      imageName = `${generateRandomString()}_${roomNameFormatted}.${extension}`;
+    }
+
     rooms[roomName] = {
       description,
       exits,
-      image: imageInput.files[0] ? `room-${roomName}-image.${imageInput.files[0].name.split('.').pop()}` : null
+      image: imageName
     };
   });
 
@@ -110,47 +151,86 @@ function saveStory() {
   const formData = new FormData();
   formData.append('story', JSON.stringify(story));
 
-  roomElements.forEach((roomElement, index) => {
+  const imageResizePromises = roomElements.map((roomElement, index) => {
     const imageInput = roomElement.querySelector(`#room-image-${index}`);
     if (imageInput.files[0]) {
-      const roomName = roomElement.querySelector(`#room-name-${index}`).value;
+      const roomName = roomElement.querySelector(`#room-name-${index}`).value.replace(/\s+/g, '_');
       const imageFile = imageInput.files[0];
-      formData.append(`room-${roomName}-image`, imageFile);
-    }
-  });
+      const imageName = rooms[roomName].image;
 
-  fetch('/save_story', {
-    method: 'POST',
-    body: formData
-  })
-  .then(response => {
-    if (response.ok) {
-      // Story saved successfully, initiate the download
-      return response.blob();
-    } else {
-      return response.json().then(data => {
-        throw new Error(data.error || 'Error saving the story');
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = function () {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+
+          let width = img.width;
+          let height = img.height;
+
+          if (width > 512 || height > 384) {
+            const aspectRatio = width / height;
+            if (width > 512) {
+              width = 512;
+              height = Math.round(width / aspectRatio);
+            }
+            if (height > 384) {
+              height = 384;
+              width = Math.round(height * aspectRatio);
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          ctx.drawImage(img, 0, 0, width, height);
+
+          canvas.toBlob((blob) => {
+            const resizedImageFile = new File([blob], imageName, { type: imageFile.type });
+            formData.append(`room-${imageName}`, resizedImageFile);
+            resolve();
+          }, imageFile.type);
+        };
+        img.src = URL.createObjectURL(imageFile);
       });
+    } else {
+      return Promise.resolve();
     }
-  })
-  .then(blob => {
-    // Create a temporary URL for the downloaded file
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${storyName}.zip`; // Set the download attribute
-    document.body.appendChild(a); // Append to the document body
-    a.click(); // Trigger the download
-    document.body.removeChild(a); // Remove the anchor element
-    window.URL.revokeObjectURL(url); // Revoke the temporary URL
-
-    alert('Story was downloaded!');
-    updateGraphView(story);
-  })
-  .catch(error => {
-    console.error('Error:', error);
-    alert(`An error occurred while saving the story: ${error.message}`);
   });
+
+  Promise.all(imageResizePromises)
+    .then(() => {
+      return fetch('/save_story', {
+        method: 'POST',
+        body: formData
+      });
+    })
+    .then(response => {
+      if (response.ok) {
+        // Story saved successfully, initiate the download
+        return response.blob();
+      } else {
+        return response.json().then(data => {
+          throw new Error(data.error || 'Error saving the story');
+        });
+      }
+    })
+    .then(blob => {
+      // Create a temporary URL for the downloaded file
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${storyName}.zip`; // Set the download attribute
+      document.body.appendChild(a); // Append to the document body
+      a.click(); // Trigger the download
+      document.body.removeChild(a); // Remove the anchor element
+      window.URL.revokeObjectURL(url); // Revoke the temporary URL
+
+      alert('Story was downloaded!');
+      updateGraphView(story);
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert(`An error occurred while saving the story: ${error.message}`);
+    });
 }
 
 function handleLoadStoryInputChange(event) {
@@ -207,14 +287,12 @@ function loadStoryIntoEditor(story, zip) {
     roomElement.querySelector(`#room-description-${roomIndex}`).value = room.description;
 
     // Load the room image thumbnail
-    const thumbnailContainer = roomElement.querySelector('.room-thumbnail-container');
+    const thumbnailElement = roomElement.querySelector(`#room-thumbnail-${roomIndex}`);
     if (room.image) {
       zip.file(room.image).async('blob').then((imageBlob) => {
         const imageUrl = URL.createObjectURL(imageBlob);
-        const thumbnailElement = document.createElement('img');
         thumbnailElement.src = imageUrl;
-        thumbnailElement.classList.add('room-thumbnail');
-        thumbnailContainer.appendChild(thumbnailElement);
+        thumbnailElement.style.display = 'block';
       });
     }
 
@@ -226,11 +304,13 @@ function loadStoryIntoEditor(story, zip) {
       exitIndex++;
     }
   }
+
+  updateGraphView(story);
 }
 
 function toggleView() {
   if (!loadedStory) {
-    alert('Please load a story before opening the graph view.');
+    alert('ERROR: Flowchart requires a loaded story or at least one room to be created.');
     return;
   }
 
@@ -250,7 +330,40 @@ function createNewStory() {
     // Reset the loaded story
     loadedStory = null;
     roomCounter = 0;
+
+    updateGraphView(getStoryData());
   }
+}
+
+function getStoryData() {
+  const storyName = document.getElementById('story-name').value;
+  const startRoom = document.getElementById('start-room').value;
+  const roomContainer = document.getElementById('room-container');
+  const roomElements = roomContainer.querySelectorAll('.room');
+
+  const rooms = {};
+
+  roomElements.forEach((roomElement, index) => {
+    const roomName = roomElement.querySelector(`#room-name-${index}`).value;
+    const exits = {};
+
+    for (let i = 1; i <= 4; i++) {
+      const exitName = roomElement.querySelector(`#exit-${i}-${index}`).value;
+      const exitRef = roomElement.querySelector(`#room-ref-${i}-${index}`).value;
+
+      if (exitName && exitRef) {
+        exits[exitName] = exitRef;
+      }
+    }
+
+    rooms[roomName] = { exits };
+  });
+
+  return {
+    name: storyName,
+    start_room: startRoom,
+    rooms
+  };
 }
 
 function updateGraphView(story) {
@@ -271,5 +384,59 @@ function updateGraphView(story) {
   }
 
   localStorage.setItem('storyData', JSON.stringify(storyData));
-  window.open('graph.html', '_blank');
+
+  // Check if the graph view window is already open
+  if (window.graphViewWindow && !window.graphViewWindow.closed) {
+    window.graphViewWindow.updateGraph(storyData);
+  }
+}
+
+function toggleLoadPopup() {
+  const loadPopup = document.getElementById('load-popup');
+  const loadButton = document.getElementById('load-button');
+
+  if (loadPopup.style.display === 'none') {
+    loadPopup.style.display = 'block';
+    loadButton.textContent = 'Load ↑';
+  } else {
+    loadPopup.style.display = 'none';
+    loadButton.textContent = 'Load ↓';
+  }
+}
+
+function handleImageUpload(event) {
+  const roomIndex = event.target.id.split('-')[2];
+  const thumbnailElement = document.querySelector(`#room-thumbnail-${roomIndex}`);
+  const file = event.target.files[0];
+
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      thumbnailElement.src = e.target.result;
+      thumbnailElement.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  } else {
+    thumbnailElement.src = '';
+    thumbnailElement.style.display = 'none';
+  }
+}
+
+function handleClearImage(event) {
+  const roomIndex = event.target.getAttribute('data-room-index');
+  const imageInput = document.querySelector(`#room-image-${roomIndex}`);
+  const thumbnailElement = document.querySelector(`#room-thumbnail-${roomIndex}`);
+
+  imageInput.value = '';
+  thumbnailElement.src = '';
+  thumbnailElement.style.display = 'none';
+}
+
+function generateRandomString(length = 8) {
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  for (let i = 0; i < length; i++) {
+      result += characters.charAt(Math.floor(Math.random() * characters.length));
+  }
+  return result;
 }
