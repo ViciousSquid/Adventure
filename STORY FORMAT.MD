@@ -35,8 +35,6 @@ Story MUST be named **'story.json'** and contain at least the following **requir
           "look_out_window": "surprise_visitor"
         }
 
-...
-
 ```
 
 
@@ -71,8 +69,6 @@ Here is a secion of a story that uses this feature:
         "examine": "examine_device",
         "ignore": "ignore_device"
       }
-
-...
 
 ```
 
