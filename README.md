@@ -6,7 +6,8 @@ Beta 0.4
 
 ** ** IT'S LIVE HERE:  https://vicioussquid.pythonanywhere.com/  CHECK IT OUT!! ** **
 
-![image](https://github.com/ViciousSquid/Adventure/assets/161540961/e6a8600b-de7c-47a7-86a1-ef6ca472c7ee)
+![image](https://github.com/ViciousSquid/Adventure/assets/161540961/835df9e4-af52-4059-8773-510c022a6ccf)
+
 
 
 
@@ -14,7 +15,8 @@ Beta 0.4
 
 
 * Includes a story editor with full load/save support and a flowchart generator (updates in real-time)
-* Six example story packages are included
+* Stories can be uploaded and played via main menu
+* Six example stories are included
 * Story packages support images, multiple endings and conditional flags (revisiting locations can unlock additional content etc)
 
 [[Story format is detailed in a seperate document](STORY FORMAT.MD)](https://github.com/ViciousSquid/Adventure/blob/main/STORY%20FORMAT.MD)
