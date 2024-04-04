@@ -1,14 +1,16 @@
 import json
 import zipfile
-from flask import Flask, render_template, request, redirect, url_for, make_response, send_from_directory, jsonify, send_file
-from adventures import ADVENTURES, STORIES_DIR
+from flask import Flask, render_template, request, redirect, url_for, make_response, send_from_directory, jsonify, send_file, flash, session
+from adventures import load_adventures
 from story_editor import story_editor
 import os
 from PIL import Image
 from collections import Counter
 import io
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
+app.secret_key = 'your_secret_key_here'
 
 current_adventure = None
 current_room = None
@@ -18,20 +20,33 @@ print("* Serving webpage via HTTP on port 5000")
 
 @app.route('/')
 def main_menu():
-    return render_template('main_menu.html', adventures=ADVENTURES)
+    adventures = load_adventures()
+    
+    if 'story_uploaded' in session and session['story_uploaded']:
+        story_name = session['story_uploaded']
+        session.pop('story_uploaded', None)
+        return redirect(url_for('new_story', story_name=story_name))
+    
+    return render_template('main_menu.html', adventures=adventures)
 
 @app.route('/static/<path:filename>')
 def serve_static(filename):
     return send_from_directory('static', filename)
 
-@app.route('/new_story', methods=['POST'])
+@app.route('/new_story', methods=['POST', 'GET'])
 def new_story():
     global current_adventure, current_room, action_history
-    story_name = request.form.get('story_name')
-    if story_name in ADVENTURES:
+    
+    if request.method == 'GET':
+        story_name = request.args.get('story_name')
+    else:
+        story_name = request.form.get('story_name')
+    
+    adventures = load_adventures()
+    if story_name in adventures:
         current_adventure = story_name
         print(f"Current adventure set to: {current_adventure}")
-        adventure = ADVENTURES[current_adventure]
+        adventure = adventures[current_adventure]
         with zipfile.ZipFile(adventure, 'r') as zip_ref:
             with zip_ref.open('story.json', 'r') as f:
                 story_data = json.load(f)
@@ -47,7 +62,8 @@ def adventure_game():
     if current_adventure is None:
         return redirect(url_for('main_menu'))
 
-    adventure = ADVENTURES[current_adventure]
+    adventures = load_adventures()
+    adventure = adventures[current_adventure]
     with zipfile.ZipFile(adventure, 'r') as zip_ref:
         with zip_ref.open('story.json', 'r') as f:
             story_data = json.load(f)
@@ -87,7 +103,8 @@ def play_story():
     if current_adventure is None:
         return redirect(url_for('main_menu'))
 
-    adventure = ADVENTURES[current_adventure]
+    adventures = load_adventures()
+    adventure = adventures[current_adventure]
     with zipfile.ZipFile(adventure, 'r') as zip_ref:
         with zip_ref.open('story.json', 'r') as f:
             story_data = json.load(f)
@@ -102,7 +119,8 @@ def play_action():
     if current_adventure is None:
         return redirect(url_for('main_menu'))
 
-    adventure = ADVENTURES[current_adventure]
+    adventures = load_adventures()
+    adventure = adventures[current_adventure]
     with zipfile.ZipFile(adventure, 'r') as zip_ref:
         with zip_ref.open('story.json', 'r') as f:
             story_data = json.load(f)
@@ -148,12 +166,14 @@ def load_game():
         current_adventure = data['name']
     else:
         # Assume the JSON data represents an adventure directly
-        current_adventure = next(iter(ADVENTURES))  # Get the first adventure name
-        with zipfile.ZipFile(ADVENTURES[current_adventure], 'r') as zip_ref:
+        adventures = load_adventures()
+        current_adventure = next(iter(adventures))  # Get the first adventure name
+        with zipfile.ZipFile(adventures[current_adventure], 'r') as zip_ref:
             with zip_ref.open('story.json', 'r') as f:
                 data = json.load(f)
 
-    with zipfile.ZipFile(ADVENTURES[current_adventure], 'r') as zip_ref:
+    adventures = load_adventures()
+    with zipfile.ZipFile(adventures[current_adventure], 'r') as zip_ref:
         with zip_ref.open('story.json', 'r') as f:
             story_data = json.load(f)
     current_room = story_data['start_room']
@@ -186,9 +206,10 @@ def editor_route():
 def load_story():
     global current_adventure, current_room, action_history
     story_name = request.form.get('story_name')
-    if story_name in ADVENTURES:
+    adventures = load_adventures()
+    if story_name in adventures:
         current_adventure = story_name
-        adventure = ADVENTURES[current_adventure]
+        adventure = adventures[current_adventure]
         with zipfile.ZipFile(adventure, 'r') as zip_ref:
             with zip_ref.open('story.json', 'r') as f:
                 story_data = json.load(f)
@@ -235,15 +256,16 @@ def serve_thumbnail(filename):
     if current_adventure is None:
         return redirect(url_for('main_menu'))
 
-    adventure = ADVENTURES[current_adventure]
+    adventures = load_adventures()
+    adventure = adventures[current_adventure]
     with zipfile.ZipFile(adventure, 'r') as zip_ref:
         try:
-            thumbnail_path = os.path.join(STORIES_DIR, f'thumbnail_{filename}')
+            thumbnail_path = os.path.join('stories', f'thumbnail_{filename}')
             if not os.path.exists(thumbnail_path):
                 # Generate the thumbnail on the fly
-                image_path = os.path.join(STORIES_DIR, filename)
+                image_path = os.path.join('stories', filename)
                 generate_thumbnail(image_path, thumbnail_path)
-            return send_from_directory(STORIES_DIR, f'thumbnail_{filename}')
+            return send_from_directory('stories', f'thumbnail_{filename}')
         except werkzeug.exceptions.NotFound:
             return redirect(url_for('main_menu'))
 
@@ -252,12 +274,35 @@ def serve_image(filename):
     if current_adventure is None:
         return redirect(url_for('main_menu'))
 
-    adventure = ADVENTURES[current_adventure]
+    adventures = load_adventures()
+    adventure = adventures[current_adventure]
     with zipfile.ZipFile(adventure, 'r') as zip_ref:
         try:
-            return send_from_directory(STORIES_DIR, filename)
+            return send_from_directory('stories', filename)
         except werkzeug.exceptions.NotFound:
             return redirect(url_for('main_menu'))
+
+@app.route('/upload_story', methods=['POST'])
+def upload_story():
+    if 'story_file' not in request.files:
+        flash('No file part')
+        return redirect(request.url)
+
+    story_file = request.files['story_file']
+    if story_file.filename == '':
+        flash('No selected file')
+        return redirect(request.url)
+
+    if story_file and story_file.filename.endswith('.zip'):
+        filename = secure_filename(story_file.filename)
+        story_file.save(os.path.join('stories', filename))
+        flash('Story uploaded successfully')
+        story_name = os.path.splitext(filename)[0]
+        session['story_uploaded'] = story_name
+    else:
+        flash('Invalid file type. Please upload a ZIP file.')
+
+    return redirect(url_for('main_menu'))
 
 def generate_thumbnail(image_path, thumbnail_path, size=(100, 100)):
     from PIL import Image
@@ -266,4 +311,4 @@ def generate_thumbnail(image_path, thumbnail_path, size=(100, 100)):
     image.save(thumbnail_path)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=False)

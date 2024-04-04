@@ -1,11 +1,14 @@
 import os
 
-ADVENTURES = {}
-STORIES_DIR = 'stories'
+def load_adventures():
+    adventures = {}
+    stories_dir = 'stories'
 
-# Scan the 'stories' folder for story files and populate the ADVENTURES dictionary
+    for filename in os.listdir(stories_dir):
+        if filename.endswith('.zip'):
+            story_name = os.path.splitext(filename)[0]
+            adventures[story_name] = os.path.join(stories_dir, filename)
 
-for filename in os.listdir(STORIES_DIR):
-    if filename.endswith('.zip'):
-        story_name = os.path.splitext(filename)[0]
-        ADVENTURES[story_name] = os.path.join(STORIES_DIR, filename)
+    return adventures
+
+ADVENTURES = load_adventures()
