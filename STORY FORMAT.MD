@@ -89,11 +89,16 @@ Download the **Cosmic Paradox** story and examine the code.
 
 Images within stories are fully supported. Paths are relative to the story.json and live inside the ZIP archive:
 
+
 ```
 "image": "images/prologue.jpg",
 ...
 
+```
+
+
 The example above would display prologue.jpg from the /images folder inside the story ZIP
 If images are larger than 800x600 they will be scaled down automatically.
+
 
 -- MORE COMING SOON --
