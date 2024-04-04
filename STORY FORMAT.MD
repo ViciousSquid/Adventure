@@ -92,7 +92,7 @@ Images within stories are fully supported. Paths are relative to the story.json 
 
 ```
 "image": "images/prologue.jpg",
-...
+
 
 ```
 
