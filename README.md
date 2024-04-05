@@ -11,6 +11,9 @@ Interactive story engine for designing, editing and playing **choose-your-own-ad
 
 
 
+or you can execute python main.py
+and it will serve via HTTP on localhost:5000
+
 
 
 
