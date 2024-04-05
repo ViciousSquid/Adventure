@@ -12,13 +12,12 @@ and it will serve via HTTP on localhost:5000
 ![image](https://github.com/ViciousSquid/Adventure/assets/161540961/835df9e4-af52-4059-8773-510c022a6ccf)
 
 
+* It's completely free!
+* Includes a story editor with full load/save support and a flowchart generator
+* Story files (.zip) can be downloaded and shared
+* Can track room re-visits and trigger extra content
+* Example stories included with multiple endings and more
 
-
-
-* Includes a story editor with full load/save support and a flowchart generator (updates in real-time)
-* Stories can be uploaded and played via main menu
-* Six example stories are included
-* Story packages support images, multiple endings and conditional flags (revisiting locations can unlock additional content etc)
 
 [[Story format is detailed in a seperate document](STORY FORMAT.MD)](https://github.com/ViciousSquid/Adventure/blob/main/STORY%20FORMAT.MD)
 
