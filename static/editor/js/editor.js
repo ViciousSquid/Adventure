@@ -97,7 +97,7 @@ function saveStory() {
   const storyName = document.getElementById('story-name').value;
   const startRoom = document.getElementById('start-room').value;
   const roomContainer = document.getElementById('room-container');
-  const roomElements = roomContainer.querySelectorAll('.room');
+  const roomElements = Array.from(roomContainer.querySelectorAll('.room')); // Convert NodeList to array
 
   if (storyName.trim() === '') {
     alert('SAVE ERROR: Story has no title');
@@ -339,7 +339,7 @@ function getStoryData() {
   const storyName = document.getElementById('story-name').value;
   const startRoom = document.getElementById('start-room').value;
   const roomContainer = document.getElementById('room-container');
-  const roomElements = roomContainer.querySelectorAll('.room');
+  const roomElements = Array.from(roomContainer.querySelectorAll('.room'));
 
   const rooms = {};
 
@@ -426,17 +426,17 @@ function handleClearImage(event) {
   const roomIndex = event.target.getAttribute('data-room-index');
   const imageInput = document.querySelector(`#room-image-${roomIndex}`);
   const thumbnailElement = document.querySelector(`#room-thumbnail-${roomIndex}`);
-
+ 
   imageInput.value = '';
   thumbnailElement.src = '';
   thumbnailElement.style.display = 'none';
-}
-
-function generateRandomString(length = 8) {
+ }
+ 
+ function generateRandomString(length = 8) {
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let result = '';
   for (let i = 0; i < length; i++) {
       result += characters.charAt(Math.floor(Math.random() * characters.length));
   }
   return result;
-}
+ }
