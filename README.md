@@ -17,7 +17,7 @@ and it will serve via HTTP on localhost:5000
 * Story files (.zip) can be downloaded and shared
 * Can track room re-visits and trigger extra content
 * Example stories included with multiple endings and more
-* One image supported per page with 1 example currently included
+* NEW: Image support!
 
 The story editor (/editor/index.html) can run standalone offline
 
