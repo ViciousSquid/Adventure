@@ -8,6 +8,7 @@ import os
 from PIL import Image
 from collections import Counter
 import io
+import werkzeug
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
@@ -242,7 +243,7 @@ def save_story():
                 if room_data['image']:
                     image_filename = room_data['image']
                     for file_name, file_data in request.files.items():
-                        if file_name == image_filename:
+                        if file_name == f"room-{image_filename}":
                             zip_file.writestr(image_filename, file_data.read())
                             break
 
@@ -279,15 +280,18 @@ def serve_thumbnail(filename):
 
 @app.route('/images/<path:filename>')
 def serve_image(filename):
-    if current_adventure is None:
+    adventures = load_adventures()
+    if current_adventure not in adventures:
         return redirect(url_for('main_menu'))
 
-    adventures = load_adventures()
     adventure = adventures[current_adventure]
     with zipfile.ZipFile(adventure, 'r') as zip_ref:
         try:
-            return send_from_directory('stories', filename)
-        except werkzeug.exceptions.NotFound:
+            image_data = zip_ref.read(filename)
+            response = make_response(image_data)
+            response.headers.set('Content-Type', 'image/jpeg')  # Read the image
+            return response
+        except KeyError:
             return redirect(url_for('main_menu'))
 
 @app.route('/upload_story', methods=['POST'])
