@@ -33,7 +33,7 @@ Notable example stories include:
 
 
 
-Flowchart generator is included that will open in a new tab and can be zoomed. Work in progress.
+Flowchart generator is included that will open in a new tab and can be zoomed. Sometimes. (see https://github.com/ViciousSquid/Adventure/issues/3 )
 
 ![image](https://github.com/ViciousSquid/Adventure/assets/161540961/f93d3a95-901a-44d0-abef-deb4d7698ab4)
 
