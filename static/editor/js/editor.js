@@ -129,8 +129,7 @@ function saveStory() {
     let imageName = null;
     if (imageInput.files[0]) {
       const extension = imageInput.files[0].name.split('.').pop();
-      const roomNameFormatted = roomName.replace(/\s+/g, '_');
-      imageName = `${generateRandomString()}_${roomNameFormatted}.${extension}`;
+      imageName = `${generateRandomString()}.${extension}`;
     }
 
     rooms[roomName] = {
@@ -430,13 +429,13 @@ function handleClearImage(event) {
   imageInput.value = '';
   thumbnailElement.src = '';
   thumbnailElement.style.display = 'none';
- }
- 
- function generateRandomString(length = 8) {
+}
+
+function generateRandomString(length = 8) {
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let result = '';
   for (let i = 0; i < length; i++) {
-      result += characters.charAt(Math.floor(Math.random() * characters.length));
+    result += characters.charAt(Math.floor(Math.random() * characters.length));
   }
   return result;
- }
+}
