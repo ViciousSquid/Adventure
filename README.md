@@ -17,8 +17,15 @@ and it will serve via HTTP on localhost:5000
 * Story files (.zip) can be downloaded and shared
 * Can track room re-visits and trigger extra content
 * Example stories included with multiple endings and more
+* One image supported per page with 1 example currently included
 
-The editor (/editor folder) is standalone and uses javascript
+The story editor (/editor/index.html) can run standalone offline
+
+Notable example stories include:
+
+"Cosmic paradox" - A multiverse adventure that can track revisits to a room and unlock additional narrative
+"Three Choices" - A story with images that always offers three choices and has four unique endings
+
 
 
 [[Story format is detailed in a seperate document](STORY FORMAT.MD)](https://github.com/ViciousSquid/Adventure/blob/main/STORY%20FORMAT.MD)
