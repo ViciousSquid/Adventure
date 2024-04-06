@@ -10,9 +10,6 @@ Interactive story engine for designing, editing and playing **choose-your-own-ad
 
 Love Books. Love Reading. You are welcome to make stories and submit them to be considered for this repo source.
 
-![image](https://github.com/ViciousSquid/Adventure/assets/161540961/835df9e4-af52-4059-8773-510c022a6ccf)
-
-
 * It's completely free!
 * Includes a story editor with full load/save support and a flowchart generator
 * Story files (.zip) can be downloaded and shared
@@ -25,6 +22,7 @@ The story editor (/editor/index.html) can run standalone offline
 Notable example stories include:
 
 "Cosmic paradox" - A multiverse adventure that can track revisits to a room and unlock additional narrative
+
 "Three Choices" - A story with images that always offers three choices and has four unique endings
 
 
@@ -40,4 +38,6 @@ Flowchart generator is included that will open in a new tab and can be zoomed. W
 ![image](https://github.com/ViciousSquid/Adventure/assets/161540961/f93d3a95-901a-44d0-abef-deb4d7698ab4)
 
 
-If you can help with this project please get in touch!!
+This is my passion-project and I'd love to hear from contributors!!
+
+https://www.buymeacoffee.com/vicioussquid
