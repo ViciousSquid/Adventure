@@ -30,15 +30,13 @@ Notable example stories include:
 
 [[Story format is detailed in a seperate document](STORY FORMAT.MD)](https://github.com/ViciousSquid/Adventure/blob/main/STORY%20FORMAT.MD)
 
-
-
-![image](https://github.com/ViciousSquid/Adventure/assets/161540961/3994d423-3e86-4089-a569-8fcc62105fe9)
+![image](https://github.com/ViciousSquid/Adventure/assets/161540961/182735f7-e341-48d8-aff6-4880548fd9f4)
 
 
 
+Flowchart generator is included that will open in a new tab and can be zoomed. Work in progress.
 
 ![image](https://github.com/ViciousSquid/Adventure/assets/161540961/f93d3a95-901a-44d0-abef-deb4d7698ab4)
 
 
 If you can help with this project please get in touch!!
-[https://www.reddit.com/r/learnpython/comments/1bsit6e/python_app_looking_for_collaborators/]
