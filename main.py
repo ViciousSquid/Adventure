@@ -7,7 +7,6 @@ import os
 from PIL import Image
 from collections import Counter
 import io
-import werkzeug
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
