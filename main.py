@@ -108,10 +108,12 @@ def play_story():
     with zipfile.ZipFile(adventure, 'r') as zip_ref:
         with zip_ref.open('story.json', 'r') as f:
             story_data = json.load(f)
-    current_room = story_data['start_room']
+    current_room_id = story_data['start_room']
     action_history = []
+    current_room = story_data['rooms'][current_room_id]['name']  # Get the room name
+    room = story_data['rooms'][current_room_id]  # Get the current room data
 
-    return render_template('play.html', adventure=story_data, current_room=current_room, action_history=action_history)
+    return render_template('play.html', adventure=story_data, current_room=current_room, action_history=action_history, content=room['description'], exits=[direction for direction, room_name in room['exits'].items() if room_name])
 
 @app.route('/play_action', methods=['POST'])
 def play_action():
@@ -126,12 +128,14 @@ def play_action():
             story_data = json.load(f)
     direction = request.form.get('direction')
     if direction:
-        room = story_data['rooms'][current_room]
-        next_room = room['exits'].get(direction, None)
-        if next_room:
-            current_room = next_room
-            action_history.append(current_room)
-            room = story_data['rooms'][current_room]
+        current_room_id = current_room
+        room = story_data['rooms'][current_room_id]
+        next_room_id = room['exits'].get(direction, None)
+        if next_room_id:
+            current_room_id = next_room_id
+            action_history.append(current_room_id)
+            current_room = story_data['rooms'][current_room_id]['name']  # Get the new room name
+            room = story_data['rooms'][current_room_id]  # Get the new current room data
             content = room['description']
             exits = [direction for direction, room_name in room['exits'].items() if room_name]
             return render_template('play.html', adventure=story_data, current_room=current_room, action_history=action_history, content=content, exits=exits)
@@ -235,8 +239,11 @@ def save_story():
             zip_file.writestr('story.json', json.dumps(story_data, indent=2))
             for room_name, room_data in story_data['rooms'].items():
                 if room_data['image']:
-                    image_file = request.files[f"room-{room_name}-image"]
-                    zip_file.writestr(room_data['image'], image_file.read())
+                    image_filename = room_data['image']
+                    for file_name, file_data in request.files.items():
+                        if file_name == image_filename:
+                            zip_file.writestr(image_filename, file_data.read())
+                            break
 
         # Move the buffer pointer to the beginning
         zip_buffer.seek(0)
