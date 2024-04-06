@@ -43,19 +43,19 @@ function addRoom(event) {
     <div class="Choices">
       <label for="exit-1-${roomCounter}">Choice 1:</label>
       <input class="exit-input" type="text" id="exit-1-${roomCounter}">
-      <input class="exit-input" type="text" id="room-ref-1-${roomCounter}" placeholder="Leads to">
+      <input class="exit-input" type="text" id="room-ref-1-${roomCounter}" placeholder="Target [roomname]">
 <br>
       <label for="exit-2-${roomCounter}">Choice 2:</label>
       <input class="exit-input" type="text" id="exit-2-${roomCounter}">
-      <input class="exit-input" type="text" id="room-ref-2-${roomCounter}" placeholder="Leads to">
+      <input class="exit-input" type="text" id="room-ref-2-${roomCounter}" placeholder="Target [roomname]">
 <br>
       <label for="exit-3-${roomCounter}">Choice 3:</label>
       <input class="exit-input" type="text" id="exit-3-${roomCounter}">
-      <input class="exit-input" type="text" id="room-ref-3-${roomCounter}" placeholder="Leads to">
+      <input class="exit-input" type="text" id="room-ref-3-${roomCounter}" placeholder="Target [roomname]">
 <br>
       <label for="exit-4-${roomCounter}">Choice 4:</label>
       <input class="exit-input" type="text" id="exit-4-${roomCounter}">
-      <input class="exit-input" type="text" id="room-ref-4-${roomCounter}" placeholder="Leads to">
+      <input class="exit-input" type="text" id="room-ref-4-${roomCounter}" placeholder="Target [roomname]">
     </div>
 
 
@@ -309,7 +309,7 @@ function loadStoryIntoEditor(story, zip) {
 
 function toggleView() {
   if (!loadedStory) {
-    alert('Flowchart requires a loaded story or at least one room to be created.');
+    alert('Flowchart requires a story to be loaded first');
     return;
   }
 
