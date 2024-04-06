@@ -1,3 +1,4 @@
+print("* Init...")
 import json
 import zipfile
 from flask import Flask, render_template, request, redirect, url_for, make_response, send_from_directory, jsonify, send_file, flash, session
@@ -16,7 +17,7 @@ current_adventure = None
 current_room = None
 action_history = []
 
-print("* Serving webpage via HTTP on port 5000")
+print("--- Adventure! ---")
 
 @app.route('/')
 def main_menu():
