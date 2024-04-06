@@ -18,6 +18,8 @@ and it will serve via HTTP on localhost:5000
 * Can track room re-visits and trigger extra content
 * Example stories included with multiple endings and more
 
+The editor (/editor folder) is standalone and uses javascript
+
 
 [[Story format is detailed in a seperate document](STORY FORMAT.MD)](https://github.com/ViciousSquid/Adventure/blob/main/STORY%20FORMAT.MD)
 
