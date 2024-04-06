@@ -6,8 +6,7 @@ Interactive story engine for designing, editing and playing **choose-your-own-ad
 
 ** ** IT'S LIVE HERE:  https://vicioussquid.pythonanywhere.com/  CHECK IT OUT!! ** **
 
-( or you can execute python main.py )
-and it will serve via HTTP on localhost:5000
+( or you can dwonload it, execute python main.py and it will serve via HTTP on localhost:5000 )
 
 ![image](https://github.com/ViciousSquid/Adventure/assets/161540961/835df9e4-af52-4059-8773-510c022a6ccf)
 
