@@ -309,11 +309,15 @@ function loadStoryIntoEditor(story, zip) {
 
 function toggleView() {
   if (!loadedStory) {
-    alert('ERROR: Flowchart requires a loaded story or at least one room to be created.');
+    alert('Flowchart requires a loaded story or at least one room to be created.');
     return;
   }
 
-  updateGraphView(loadedStory);
+  // Open the graph view in a new window
+  window.graphViewWindow = window.open('graph.html', '_blank');
+  window.graphViewWindow.onload = function() {
+    window.graphViewWindow.updateGraph(loadedStory);
+  };
 }
 
 function createNewStory() {
