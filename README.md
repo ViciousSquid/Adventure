@@ -8,7 +8,7 @@ Interactive story engine for designing, editing and playing **choose-your-own-ad
 
 ( or you can download it, execute python main.py and it will serve via HTTP on localhost:5000 )
 
-Please have fun! make stories and submit them!
+Love Books. Love Reading. You are welcome to make stories and submit them to be considered for this repo source.
 
 ![image](https://github.com/ViciousSquid/Adventure/assets/161540961/835df9e4-af52-4059-8773-510c022a6ccf)
 
