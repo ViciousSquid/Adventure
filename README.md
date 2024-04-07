@@ -10,7 +10,3 @@ This is the latest development version
 https://github.com/ViciousSquid/diceroll
 
 This allows (experimental) support for skill checks, saving-throws etc within story.json files
-
-No changes made to editor yet so it remains backwards compatible with main branch (104)
-
-The story editor (/editor/index.html) can run standalone offline
