@@ -43,4 +43,6 @@ Flowchart generator is included that will open in a new tab and can be zoomed. S
 
 This is my passion-project and I'd love to hear from contributors!!
 
+This app makes use of **diceroll API** which I also made: https://github.com/ViciousSquid/diceroll
+
 https://www.buymeacoffee.com/vicioussquid
