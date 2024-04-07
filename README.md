@@ -10,3 +10,4 @@ This is the latest development version
 https://github.com/ViciousSquid/diceroll
 
 This allows (experimental) support for skill checks, saving-throws etc within story.json files
+Focus of this build is to ensure stable integration with the new api
