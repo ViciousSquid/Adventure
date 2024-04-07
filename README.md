@@ -31,15 +31,15 @@ Notable example stories include:
 
 [[Story format is detailed in a seperate document](STORY FORMAT.MD)](https://github.com/ViciousSquid/Adventure/blob/main/STORY%20FORMAT.MD)
 
-![image](https://github.com/ViciousSquid/Adventure/assets/161540961/182735f7-e341-48d8-aff6-4880548fd9f4)
+![image](https://github.com/ViciousSquid/Adventure/assets/161540961/cb68171e-2d97-42d7-a6d3-68463d241ab5)
+
+![image](https://github.com/ViciousSquid/Adventure/assets/161540961/f93d3a95-901a-44d0-abef-deb4d7698ab4)
 
 
 
 Flowchart generator is included that will open in a new tab and can be zoomed. Sometimes. (see https://github.com/ViciousSquid/Adventure/issues/3 )
+![image](https://github.com/ViciousSquid/Adventure/assets/161540961/182735f7-e341-48d8-aff6-4880548fd9f4)
 
-![image](https://github.com/ViciousSquid/Adventure/assets/161540961/f93d3a95-901a-44d0-abef-deb4d7698ab4)
-
-![image](https://github.com/ViciousSquid/Adventure/assets/161540961/cb68171e-2d97-42d7-a6d3-68463d241ab5)
 
 This is my passion-project and I'd love to hear from contributors!!
 
