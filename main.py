@@ -1,6 +1,3 @@
-print("* Init...")
-import json
-import zipfile
 from flask import Flask, render_template, request, redirect, url_for, make_response, send_from_directory, jsonify, send_file, flash, session
 from adventures import load_adventures
 from story_editor import story_editor
@@ -9,7 +6,10 @@ from PIL import Image
 from collections import Counter
 import io
 import werkzeug
+import werkzeug.utils
 from werkzeug.utils import secure_filename
+from diceroll.dice_api import DiceAPI
+from diceroll.diceroll_anim import DiceAnimator
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'
@@ -18,7 +18,8 @@ current_adventure = None
 current_room = None
 action_history = []
 
-print("--- Adventure! ---")
+dice_api = DiceAPI()
+dice_animator = DiceAnimator()
 
 @app.route('/')
 def main_menu():
@@ -47,7 +48,6 @@ def new_story():
     adventures = load_adventures()
     if story_name in adventures:
         current_adventure = story_name
-        print(f"Current adventure set to: {current_adventure}")
         adventure = adventures[current_adventure]
         with zipfile.ZipFile(adventure, 'r') as zip_ref:
             with zip_ref.open('story.json', 'r') as f:
@@ -78,13 +78,26 @@ def adventure_game():
     if request.method == 'POST':
         direction = request.form.get('direction')
         if direction:
-            next_room = room['exits'].get(direction, None)
-            if next_room:
-                current_room = next_room
-                room = story_data['rooms'][current_room]
+            if 'skill_check' in room['exits'][direction]:
+                skill_check = room['exits'][direction]['skill_check']
+                roll_result = dice_api.roll_dice(skill_check['dice_type'])
+                roll_animation = dice_animator.run_animation(skill_check['dice_type'])
+                if roll_result['roll_result'] >= skill_check['target']:
+                    outcome = skill_check['success']
+                else:
+                    outcome = skill_check['failure']
+                current_room = outcome['room']
                 action_history.append(current_room)
+                room = story_data['rooms'][current_room]
+                return render_template('adventure.html', content=outcome['description'], exits=[direction for direction, room_name in room['exits'].items() if room_name], room=room, action_history=action_history, button_color=button_color, roll_result=roll_result, outcome=outcome, roll_animation=roll_animation)
             else:
-                return render_template('adventure.html', content="You can't go that way.", room=room, action_history=action_history, button_color=button_color)
+                next_room = room['exits'].get(direction)
+                if next_room:
+                    current_room = next_room
+                    room = story_data['rooms'][current_room]
+                    action_history.append(current_room)
+                else:
+                    return render_template('adventure.html', content="You can't go that way.", exits=[direction for direction, room_name in room['exits'].items() if room_name], room=room, action_history=action_history, button_color=button_color)
 
     content = room['description']
     exits = [direction for direction, room_name in room['exits'].items() if room_name]
@@ -132,17 +145,29 @@ def play_action():
     if direction:
         current_room_id = current_room
         room = story_data['rooms'][current_room_id]
-        next_room_id = room['exits'].get(direction, None)
-        if next_room_id:
-            current_room_id = next_room_id
+        if 'skill_check' in room['exits'][direction]:
+            skill_check = room['exits'][direction]['skill_check']
+            roll_result = dice_api.roll_dice(skill_check['dice_type'])
+            roll_animation = dice_animator.run_animation(skill_check['dice_type'])
+            if roll_result['roll_result'] >= skill_check['target']:
+                outcome = skill_check['success']
+            else:
+                outcome = skill_check['failure']
+            current_room_id = outcome['room']
             action_history.append(current_room_id)
-            current_room = story_data['rooms'][current_room_id]['name']  # Get the new room name
-            room = story_data['rooms'][current_room_id]  # Get the new current room data
-            content = room['description']
-            exits = [direction for direction, room_name in room['exits'].items() if room_name]
-            return render_template('play.html', adventure=story_data, current_room=current_room, action_history=action_history, content=content, exits=exits)
+            current_room = story_data['rooms'][current_room_id]['name']
+            room = story_data['rooms'][current_room_id]
+            return render_template('play.html', adventure=story_data, current_room=current_room, action_history=action_history, content=outcome['description'], exits=[direction for direction, room_name in room['exits'].items() if room_name], roll_result=roll_result, outcome=outcome, roll_animation=roll_animation)
         else:
-            return render_template('play.html', adventure=story_data, current_room=current_room, action_history=action_history, content="You can't go that way.")
+            next_room_id = room['exits'].get(direction)
+            if next_room_id:
+                current_room_id = next_room_id
+                action_history.append(current_room_id)
+                current_room = story_data['rooms'][current_room_id]['name']
+                room = story_data['rooms'][current_room_id]
+                return render_template('play.html', adventure=story_data, current_room=current_room, action_history=action_history, content=room['description'], exits=[direction for direction, room_name in room['exits'].items() if room_name])
+            else:
+                return render_template('play.html', adventure=story_data, current_room=current_room, action_history=action_history, content="You can't go that way.")
     else:
         return redirect(url_for('play_story'))
 
