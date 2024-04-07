@@ -6,8 +6,8 @@ Interactive story engine for designing, editing and playing **choose-your-own-ad
 
 ** ** IT'S LIVE HERE:  https://vicioussquid.pythonanywhere.com/  CHECK IT OUT!! ** **
 
-( or you can download it, execute python main.py and it will serve via HTTP on localhost:5000 )
-You will be needing **Flask** and ** Pillow** and maybe some other stuff.
+( or you can download it, execute python main.py and it will serve via HTTP on localhost:5000 ) - 
+To do this, you shouldn't need more than **Flask** and ** Pillow** and maybe some other stuff.
 
 Love Books. Love Reading. You are welcome to make stories and submit them to be considered for this repo.
 
