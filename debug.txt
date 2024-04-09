@@ -1,1 +1,2 @@
-debug 
+The presence of this file triggers debug mode: all console output is saved to /logs
+T odisable logging, delete this file.
