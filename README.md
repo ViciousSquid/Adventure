@@ -2,7 +2,7 @@
 
 Interactive story engine for designing, editing and playing **choose-your-own-adventure** stories
 
-                                      Beta 1.0 build 104
+                                      Beta 1.0 build 105
 
 Test server at: 
 # https://vicioussquid.pythonanywhere.com/
