@@ -10,11 +10,7 @@ This is the latest development version
 Please read more about diceroll here:
 https://github.com/ViciousSquid/diceroll
 
-This allows (experimental) support for skill checks, saving-throws etc within story.json files
-
-* Focus of this build is to ensure stable integration with the new api
-* Functionality remains the same as main branch
-* No new content yet, all changes are under-the-hood
+changelog here: https://github.com/ViciousSquid/Adventure/blob/105_diceroll/changelog.md
 
 ```
 New feature: If a file named 'debug.txt' is found in the root, all console output will log to /logs
