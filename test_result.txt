@@ -1,0 +1,5 @@
+Dice Notation: 2d6
+Target Value: 15
+Roll Result: 3
+Roll Details: [2, 1]
+Fail
