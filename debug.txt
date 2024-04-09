@@ -1,1 +1,2 @@
-debug 
+If this file exists in the root folder then debug mode is enabled and all console output is logged in /logs
+To disable logging just delete this file
