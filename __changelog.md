@@ -14,6 +14,9 @@ This allows all-new support for skill checks, saving-throws etc within story.jso
 
 -----
 
-### **Debug mode** If a file named 'debug.txt' is found in the root, all console output will log to /logs
+### **Debug mode** 
+The presence of `debug.txt` triggers debug mode: all console output is saved to /logs
 
-Please include these when error reporting
+* This has been included by default. This means logging on ON by default.
+* To disable logging, delete the `debug.txt` file
+* Please include logs when error reporting
