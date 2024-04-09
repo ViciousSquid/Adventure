@@ -1,3 +1,5 @@
+import re
+
 print("* Init...")
 import json
 import zipfile
@@ -13,19 +15,31 @@ from werkzeug.utils import secure_filename
 import sys
 import datetime
 import os
+import atexit
 
 class Logger(object):
     def __init__(self, log_file):
         self.terminal = sys.stdout
-        self.log = open(log_file, 'w')
+        self.log = open(log_file, 'a')
+        self.ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
 
     def write(self, message):
         self.terminal.write(message)
-        self.log.write(message)
+        cleaned_message = self.ansi_escape.sub('', message)
+        self.log.write(cleaned_message)
+        self.flush()
 
     def flush(self):
         self.terminal.flush()
         self.log.flush()
+
+def close_log_file():
+    if isinstance(sys.stdout, Logger):
+        sys.stdout.log.close()
+    if isinstance(sys.stderr, Logger):
+        sys.stderr.log.close()
+
+atexit.register(close_log_file)
 
 debug_mode = os.path.exists('debug.txt')        #If a file named 'debug.txt' is found in the root, log all console to /logs
 if debug_mode:
@@ -82,6 +96,7 @@ def new_story():
                 story_data = json.load(f)
         current_room = story_data['start_room']
         action_history = []  # Reset action history for new story
+        print(">>Starting a New Game:")
         return redirect(url_for('adventure_game'))
     else:
         return redirect(url_for('main_menu'))
@@ -103,6 +118,9 @@ def adventure_game():
     # Count the number of times the player has visited the current room
     room_visit_count = Counter(action_history)[current_room]
 
+    if len(room['exits']) > 1:
+        print("\033[94m>encountered a choice point\033[0m")
+
     if request.method == 'POST':
         direction = request.form.get('direction')
         if direction:
@@ -113,6 +131,10 @@ def adventure_game():
                 action_history.append(current_room)
             else:
                 return render_template('adventure.html', content="You can't go that way.", room=room, action_history=action_history, button_color=button_color)
+        
+        # Check if the player has reached an ending
+        if not room['exits']:
+            print("\033[92m>Player reached an ending\033[0m")
 
     content = room['description']
     exits = [direction for direction, room_name in room['exits'].items() if room_name]
@@ -233,6 +255,7 @@ def editor_route():
             print("Error: Unable to load story data for the current adventure.")
             return redirect(url_for('main_menu'))
         else:
+            print(">>Editor")
             print("Rendering editor/index.html template")
             return render_template('editor/index.html', story_data=story_data)
 
@@ -249,6 +272,7 @@ def load_story():
                 story_data = json.load(f)
         current_room = story_data['start_room']
         action_history = []
+        print(">>Load story")
         return redirect(url_for('play_story'))
     else:
         return redirect(url_for('main_menu'))
@@ -257,10 +281,23 @@ def load_story():
 def save_story():
     try:
         story_data = json.loads(request.form['story'])
-        print("Received story data:", story_data)
+        print("> Story JSON received from editor.")
 
         story_name = story_data['name']
         print("Story name:", story_name)
+
+        # Save the story JSON data to a file in the /logs folder if logging is enabled
+        if debug_mode:
+            logs_dir = 'logs'
+            if not os.path.exists(logs_dir):
+                os.makedirs(logs_dir)
+
+            current_datetime = datetime.datetime.now().strftime("%d%m_%H%M")
+            story_json_file = os.path.join(logs_dir, f'story_{story_name}_{current_datetime}.json')
+
+            with open(story_json_file, 'w') as file:
+                json.dump(story_data, file, indent=2)
+        print("> The json has been saved to the /logs folder.")
 
         # Create a BytesIO object to hold the zip file data
         zip_buffer = io.BytesIO()
@@ -274,6 +311,7 @@ def save_story():
                         if file_name == f"room-{image_filename}":
                             zip_file.writestr(image_filename, file_data.read())
                             break
+        print("> ZIP was created and sent to the browser window")
 
         # Move the buffer pointer to the beginning
         zip_buffer.seek(0)
@@ -327,6 +365,7 @@ def upload_story():
     if 'story_file' not in request.files:
         flash('No file part')
         return redirect(request.url)
+    print("> Upload a story")
 
     story_file = request.files['story_file']
     if story_file.filename == '':
