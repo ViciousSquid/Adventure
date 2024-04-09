@@ -29,7 +29,6 @@ Notable example stories include:
 
 
 
-[[Story format is detailed in a seperate document](STORY FORMAT.MD)](https://github.com/ViciousSquid/Adventure/blob/main/STORY%20FORMAT.MD)
 
 ![image](https://github.com/ViciousSquid/Adventure/assets/161540961/cb68171e-2d97-42d7-a6d3-68463d241ab5)
 
