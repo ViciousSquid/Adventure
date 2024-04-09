@@ -19,4 +19,5 @@ The presence of `debug.txt` triggers debug mode: all console output is saved to 
 
 * This has been included by default. This means logging on ON by default.
 * To disable logging, delete the `debug.txt` file
+* For production deployment it is recommended that debug mode is disabled.
 * Please include logs when error reporting
