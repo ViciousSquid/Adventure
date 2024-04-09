@@ -18,7 +18,9 @@ Love Books. Love Reading. You are welcome to make stories and submit them to be 
 * Can track room re-visits and trigger extra content
 * Example stories included with multiple endings and more
 * NEW: Image support!
-
+_____
+Please read the changelog: https://github.com/ViciousSquid/Adventure/blob/main/__changelog.md
+_____
 The story editor (/editor/index.html) can run standalone offline
 
 Notable example stories include:
