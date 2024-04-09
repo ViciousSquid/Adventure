@@ -3,7 +3,7 @@
 
 -----
 
-Integration of **dicerollAPI**` :
+Integration of `**dicerollAPI**` :
 Read more about diceroll here: https://github.com/ViciousSquid/diceroll
 
 This allows all-new support for skill checks, saving-throws etc within story.json files
