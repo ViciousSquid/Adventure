@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Adventure!</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+  <style>
+    .action-history-container {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      background-color: white;
+      padding: 10px;
+      border: 1px solid #ccc;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>{{ adventure.name }}</h1>
+    <div id="story-content">
+      <p>{{ content }}</p>
+    </div>
+    {% if room_image %}
+    <div class="room-image">
+      <img src="{{ room_image }}" alt="Room Image" class="room-thumbnail">
+    </div>
+    {% endif %}
+    <div id="story-choices">
+  {% for direction in exits %}
+    <form action="{{ url_for('play_action') }}" method="post">
+      <input type="hidden" name="direction" value="{{ direction }}">
+      <button type="submit">{{ direction.replace('_', ' ').capitalize() }}</button>
+    </form>
+  {% endfor %}
+</div>
+    </div>
+    <div id="action-history-toggle">
+      <button onclick="toggleActionHistory()">Action History</button>
+    </div>
+    <div id="action-history-container" class="action-history-container">
+      <h3>Action History:</h3>
+      <ul>
+        {% for action in action_history %}
+          <li>{{ action }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    <form action="{{ url_for('save_game') }}" method="post">
+      <button type="submit">Save Game</button>
+    </form>
+  </div>
+
+  <script>
+    function toggleActionHistory() {
+      var container = document.getElementById('action-history-container');
+      if (container.style.display === 'none') {
+        container.style.display = 'block';
+      } else {
+        container.style.display = 'none';
+      }
+    }
+  </script>
+</body>
+</html>
