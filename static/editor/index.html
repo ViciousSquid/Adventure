@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adventure Editor</title>
+    <style>
+
+        #help-popup {
+            text-align: left;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            background-color: #222222;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            padding: 20px;
+            text-align: center;
+            background-color: white;
+            box-sizing: border-box;
+            min-height: 100vh;
+        }
+
+        .toolbar {
+            margin-bottom: 20px;
+        }
+
+        .blue-button {
+            background-color: blue;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .purp-button {
+            background-color: #9F2B68;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .green-button {
+            background-color: MediumSeaGreen;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .gray-button {
+            background-color: rgb(48, 48, 48);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .orange-button {
+            background-color: orange;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+        }
+
+        body.light-mode {
+            background-color: white;
+            color: black;
+        }
+
+        body.dark-mode {
+            background-color: black;
+            color: white;
+        }
+
+        .room-thumbnail {
+            max-width: 100px;
+            max-height: 100px;
+            margin-right: 10px;
+        }
+
+        .sidebar {
+            background-color: #222222;
+            width: 200px;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+        }
+
+        .left-sidebar {
+            left: 0;
+        }
+
+        .right-sidebar {
+            right: 0;
+        }
+
+        select {
+            font-size: 16px;
+            height: 40px;
+            width: 300px;
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .add-room-button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+
+        .remove-room-button {
+            background-color: #f44336;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="editor_title.png" alt="" width="479" height="67">
+        <br>
+        <div class="toolbar">
+            <button type="button" id="new-story" class="green-button">New Story</button>
+            <button id="load-button" class="gray-button">Load ↓</button>
+            <button type="button" id="save-story" class="gray-button">Save</button>
+            <button type="button" id="toggle-view" class="gray-button">Flowchart</button>
+                        <button id="help-button" class="blue-button">Help</button>
+        </div>
+        <div id="load-popup" style="display: none;">
+            <label for="load-story-input">Load Story (ZIP):</label>
+            <input type="file" id="load-story-input" accept=".zip" style="display: none;">
+            <button type="button" id="load-story-button" class="gray-button">Choose File</button>
+            <button type="button" id="load-story" class="orange-button">Load</button><br>
+        </div>
+        <div id="help-popup" style="display: none;">
+            <h3>Help:</h3>
+            <p>Welcome to the Adventure Editor! Here you can create and edit interactive story adventures.</p>
+            <p>To get started, you can either load an existing story by clicking the "Load" button and selecting a .zip file, or create a new story by clicking the "New Story" button.</p>
+            <p>Once you have a story loaded or created, you can add rooms to the story by clicking the "Add Room" button. Each room can have its own text, choices, and outcomes.</p>
+            <p>When you're ready, you can save your story by clicking the "Save Story" button, which will download a .zip file containing your story files.</p>
+            <p></p>
+            <p>'Flowchart' will open in a new tab and should update dynamically as changes are made.</p>
+            <p> Stories can be uploaded and played via the Main menu.</p>
+            <p>For more detailed information on file formats and features, please refer to the documentation links provided.</p>
+            <p></p>
+            <p>+ Example stories can be downloaded <a href="https://drive.google.com/drive/folders/1IjVfwGYn7eugHFm07fCJ3i1CSEnVJI89?usp=sharing" target="_blank">here</a></p>
+            <p>+ Story file format and additional features are documented <a href="https://github.com/ViciousSquid/Adventure/blob/main/STORY%20FORMAT.MD" target="_blank">here</a></p>
+            <p></p>
+            <button id="close-popup" class="blue-button">Close Help</button>
+        </div>
+        <div id="load-popup" style="display: none;">
+          <label for="load-story-input">Load Story (ZIP):</label>
+          <input type="file" id="load-story-input" accept=".zip" style="display: none;">
+          <button type="button" id="load-story-button" class="gray-button">Choose File</button>
+          <button type="button" id="load-story" class="orange-button">Load</button><br>
+      </div>
+        <br>Use the Toolbar buttons above to get started, or click 'Help'<br>
+       <br>
+        <form id="story-form">
+            <label for="story-name">Story Name:</label>
+            <input type="text" placeholder="No file currently loaded" id="story-name" required>
+            <label for="start-room">Start Room:</label>
+            <input type="text" id="start-room" required>
+            <h2>Rooms</h2>
+            <div id="room-container">
+                <!-- Rooms will be dynamically added here -->
+            </div>
+            <button type="button" id="add-room" class="add-room-button">Add Room</button>
+            <button type="button" id="remove-room" class="remove-room-button">Remove Room</button>
+        </form>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const helpButton = document.getElementById('help-button');
+            const helpPopup = document.getElementById('help-popup');
+            const closePopupButton = document.getElementById('close-popup');
+
+            helpButton.addEventListener('click', () => {
+                helpPopup.style.display = 'block';
+            });
+
+            closePopupButton.addEventListener('click', () => {
+                helpPopup.style.display = 'none';
+            });
+        });
+    </script>
+    <script src="js/editor.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.23.0/cytoscape.min.js"></script>
+</body>
+</html>
