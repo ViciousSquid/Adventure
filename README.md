@@ -18,4 +18,7 @@ This allows (experimental) support for skill checks, saving-throws etc within st
 
 
 New feature: If a file named 'debug.txt' is found in the root, all console output will log to /logs
-each component: `aventure` and `diceroll` will output its own log.
+
+`adventure` and `diceroll` components eachoutput their own log.
+
+Please include these when error reporting
