@@ -1,6 +1,5 @@
-import re
-
 print("* Init...")
+import re
 import json
 import zipfile
 from flask import Flask, render_template, request, redirect, url_for, make_response, send_from_directory, jsonify, send_file, flash, session
@@ -16,6 +15,10 @@ import sys
 import datetime
 import os
 import atexit
+import ast
+import random
+from diceroll import DiceRoller
+from diceroll_anim import DiceAnimator
 
 class Logger(object):
     def __init__(self, log_file):
@@ -101,6 +104,53 @@ def new_story():
     else:
         return redirect(url_for('main_menu'))
 
+def resolve_skill_check(skill_check, player_roll):
+    success_description = skill_check['success']['description']
+    success_room = skill_check['success']['room']
+    failure_description = skill_check['failure']['description']
+    failure_room = skill_check['failure']['room']
+
+    target_value = skill_check['target']
+
+    # Handle cases where target_value is a dictionary or a string
+    if isinstance(target_value, dict):
+        target_value = resolve_nested_target(target_value)
+    elif isinstance(target_value, str):
+        try:
+            target_value = ast.literal_eval(target_value)
+            target_value = resolve_nested_target(target_value)
+        except (ValueError, SyntaxError):
+            raise ValueError("Invalid target value structure in skill_check.")
+
+    # Check if target_value is an integer after resolving nested structures
+    if not isinstance(target_value, int):
+        raise ValueError("Invalid target value type in skill_check.")
+
+    # Extract the roll result from the player_roll dictionary
+    roll_result = player_roll['roll_result']
+
+    if roll_result >= target_value:
+        return {
+            'description': success_description,
+            'room': success_room
+        }
+    else:
+        return {
+            'description': failure_description,
+            'room': failure_room
+        }
+
+def resolve_nested_target(target_value):
+    if isinstance(target_value, dict):
+        if 'value' in target_value:
+            return target_value['value']
+        elif 'target' in target_value:
+            return target_value['target']
+        else:
+            raise ValueError("Invalid target value structure in skill_check.")
+    else:
+        return target_value
+
 @app.route('/adventure', methods=['GET', 'POST'])
 def adventure_game():
     global current_room, action_history
@@ -119,14 +169,34 @@ def adventure_game():
     room_visit_count = Counter(action_history)[current_room]
 
     if len(room['exits']) > 1:
-        print("\033[94m>encountered a choice point\033[0m")
+        print("\033[94m>choice point\033[0m")
 
     if request.method == 'POST':
         direction = request.form.get('direction')
         if direction:
             next_room = room['exits'].get(direction, None)
-            if next_room:
+            if isinstance(next_room, str):
+                # Simple room transition
                 current_room = next_room
+                room = story_data['rooms'][current_room]
+                action_history.append(current_room)
+            elif isinstance(next_room, dict):
+                # Skill check
+                skill_check = next_room['skill_check']
+                dice_roller = DiceRoller()  # Create an instance of DiceRoller
+                player_roll = dice_roller.roll_dice(skill_check['dice_type'])
+
+                # Trigger the dice roll animation
+                dice_animator = DiceAnimator()
+                dice_color = 'blue'  # Set the desired dice color
+                dice_animator.animate_dice_roll(skill_check['dice_type'], dice_color, dice_roller)
+
+                # Print the dice roll details and result in the console
+                print(f"Dice Type: {skill_check['dice_type']}")
+                print(f"Player Roll: {player_roll}")
+
+                skill_check_result = resolve_skill_check(skill_check, player_roll)
+                current_room = skill_check_result['room']
                 room = story_data['rooms'][current_room]
                 action_history.append(current_room)
             else:
@@ -137,7 +207,7 @@ def adventure_game():
             print("\033[92m>Player reached an ending\033[0m")
 
     content = room['description']
-    exits = [direction for direction, room_name in room['exits'].items() if room_name]
+    exits = [(direction, room_data) for direction, room_data in room['exits'].items() if room_data]
     show_map = room.get('show_map', True)
     story_title = story_data['name']
 

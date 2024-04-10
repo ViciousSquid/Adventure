@@ -6,7 +6,7 @@
 Integration of **`dicerollAPI`** :
 Read more about diceroll here: https://github.com/ViciousSquid/diceroll
 
-This allows all-new support for skill checks, saving-throws etc within story files
+This allows all-new support for skill checks, saving-throws etc within story.json files
 
 * Focus of this build is to ensure stable integration with the new api
 * Functionality remains the same as main branch

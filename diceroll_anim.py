@@ -6,6 +6,7 @@ import time
 import os
 from datetime import datetime
 import pygame
+import ctypes
 
 class DiceAnimator:
     def __init__(self, window_width=200, window_height=200, dice_image_path="dice_imgs"):
@@ -45,8 +46,6 @@ class DiceAnimator:
 
     def initialize_pygame(self):
         pygame.init()
-        self.window = pygame.display.set_mode((self.window_width, self.window_height))
-        pygame.display.set_caption("Dice Roll")
         self.font = pygame.font.Font(None, 36)
 
     def animate_dice_roll(self, dice_notation, dice_color, dice_roller, target=None):
@@ -58,6 +57,17 @@ class DiceAnimator:
             raise ValueError(f"Invalid dice color: {dice_color}. Available colors are: {', '.join(self.dice_sets.keys())}")
 
         self.initialize_pygame()
+
+        # Set the window to be always on top and bring it to the front
+        self.window = pygame.display.set_mode((self.window_width, self.window_height), pygame.HWSURFACE | pygame.NOFRAME)
+        self.window.set_alpha(None)
+        pygame.display.set_caption("Dice Roll")
+        os.environ['SDL_VIDEO_WINDOW_POS'] = f"{(pygame.display.Info().current_w - self.window_width) // 2},{(pygame.display.Info().current_h - self.window_height) // 2}"
+        pygame.display.set_mode((self.window_width, self.window_height), pygame.HWSURFACE | pygame.NOFRAME)
+
+        # Set the window as topmost using ctypes
+        hwnd = pygame.display.get_wm_info()['window']
+        ctypes.windll.user32.SetWindowPos(hwnd, -1, 0, 0, 0, 0, 0x0001 | 0x0002 | 0x0008)
 
         clock = pygame.time.Clock()
         shake_duration = 2.00 / self.animation_speed
@@ -139,6 +149,9 @@ class DiceAnimator:
         pygame.display.flip()
 
         pygame.time.delay(3000)
+
+        # Print roll result with indentation
+        print("\t" + str(roll_result))
 
         return roll_result
 

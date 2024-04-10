@@ -1,9 +1,8 @@
-print ("++dicerollAPI")
-import json
 import random
+import logging
 import re
 from collections import defaultdict
-print (" ")
+
 class DiceRoller:
     def __init__(self, save_rolls=False, save_format="txt"):
         self.last_roll_total = None
@@ -12,6 +11,12 @@ class DiceRoller:
         self.save_rolls = save_rolls
         self.roll_history = []
         self.save_format = save_format
+        self.log_formatter = logging.Formatter('%(asctime)s\t%(message)s', '%Y-%m-%d %H:%M:%S')
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.INFO)
+        file_handler = logging.FileHandler('diceroll.log')
+        file_handler.setFormatter(self.log_formatter)
+        self.logger.addHandler(file_handler)
 
     def roll_dice(self, dice_notation, target=None, success_outcome=None, failure_outcome=None):
         roll_results = []
@@ -27,6 +32,7 @@ class DiceRoller:
                 component_results = [random.randint(1, dice_size) for _ in range(number_of_dice)]
                 roll_results.extend(component_results)
                 roll_sum += sum(component_results)
+                self.logger.info(f"\t{match.group(0)}: {', '.join(map(str, component_results))}")
             elif component.strip():
                 raise ValueError(f"Invalid dice notation: {component}")
 
@@ -55,6 +61,7 @@ class DiceRoller:
 
         self.last_roll_total = roll_sum
         self.last_roll_details = roll_results
+        self.logger.info(f"\tTotal: {roll_sum}")
         return roll_data
 
     def get_last_roll_total(self):
