@@ -53,6 +53,19 @@
         .history-item {
             margin-bottom: 5px;
         }
+
+        #dice-animation-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 9999;
+            width: 200px;
+            height: 200px;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
     </style>
 </head>
 <body>
@@ -84,6 +97,19 @@
         {% endfor %}
     </div>
 
+    <div id="dice-animation-container">
+        {% if animation_html %}
+            {{ animation_html|safe }}
+        {% endif %}
+    </div>
+
+    <form id="roll-form">
+        <input type="hidden" name="dice_notation" value="2d6">
+        <input type="hidden" name="dice_color" value="blue">
+        <input type="hidden" name="target_value" value="10">
+        <button type="button" id="roll-button">Roll Dice</button>
+    </form>
+
     <script>
         const form = document.getElementById('adventure-form');
         const buttons = document.querySelectorAll('.buttons button');
@@ -96,6 +122,68 @@
                 directionInput.value = button.value;
                 form.appendChild(directionInput);
                 form.submit();
+            });
+        });
+
+        const rollButton = document.getElementById('roll-button');
+        const animationContainer = document.getElementById('dice-animation-container');
+
+        rollButton.addEventListener('click', () => {
+            const formData = new FormData(document.getElementById('roll-form'));
+            fetch('/roll', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                console.log('Fetch response:', response);
+                return response.json();
+            })
+            .then(data => {
+                console.log('Received data:', data);
+
+                // Clear the animation container
+                animationContainer.innerHTML = '';
+
+                // Create a canvas element
+                const canvas = document.createElement('canvas');
+                canvas.width = 200;
+                canvas.height = 200;
+                const ctx = canvas.getContext('2d');
+
+                // Function to draw a frame on the canvas
+                function drawFrame(frameIndex) {
+                    const frameDataURI = data.frames[frameIndex];
+                    const frameImage = new Image();
+                    frameImage.onload = () => {
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        ctx.drawImage(frameImage, 0, 0);
+                    };
+                    frameImage.src = frameDataURI;
+                }
+
+                // Animation loop
+                let currentFrame = 0;
+                const animationInterval = setInterval(() => {
+                    drawFrame(currentFrame);
+                    currentFrame = (currentFrame + 1) % data.frames.length;
+                }, 16.67); // Approximately 60 frames per second
+
+                // Add the canvas to the animation container
+                animationContainer.innerHTML = `
+                    <div>
+                        <p>Dice Notation: ${data.dice_notation}</p>
+                        ${canvas.outerHTML}
+                        <p>Roll Result: ${data.roll_result}</p>
+                    </div>
+                `;
+
+                // Stop the animation after the last frame
+                setTimeout(() => {
+                    clearInterval(animationInterval);
+                }, data.frames.length * 16.67);
+            })
+            .catch(error => {
+                console.error('Error:', error);
             });
         });
     </script>
