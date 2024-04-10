@@ -1,8 +1,6 @@
 # Adventure!
 
 Interactive story engine for designing, editing and playing **choose-your-own-adventure** stories
-
-Test server at: 
 ## https://vicioussquid.pythonanywhere.com/
 
 ( or you can download it, execute python main.py and it will serve via HTTP on localhost:5000 )  
@@ -10,6 +8,7 @@ with **Flask** and **Pillow**
 
 * It's completely free!
 * Includes a story editor with full load/save support and a flowchart generator (https://github.com/ViciousSquid/Adventure/issues/3)
+* Supports rolling different kinds of dice for saving throws, skill-checks etc
 * Story files (.zip) can be downloaded and shared
 * Can track room re-visits and trigger extra content
 * Example stories included with multiple endings and more
