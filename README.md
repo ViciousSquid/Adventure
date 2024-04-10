@@ -21,15 +21,14 @@ Love Books. Love Reading. You are welcome to make stories and submit them to be 
 _____
 Please read the changelog: https://github.com/ViciousSquid/Adventure/blob/main/__changelog.md
 _____
-The story editor (/editor/index.html) can run standalone offline
 
 Notable example stories include:
 
-"Cosmic paradox" - A multiverse adventure that can track revisits to a room and unlock additional narrative
+* "Cosmic paradox" - A multiverse adventure that can track revisits to a room and unlock additional narrative
 
-"Three Choices" - A story with images that always offers three choices and has four unique endings
+* "Three Choices" - A story with images that always offers three choices and has four unique endings
 
-
+* "Forgotten Temple" - Roll dice to proceed through points of this story (work in progress)
 
 
 ![image](https://github.com/ViciousSquid/Adventure/assets/161540961/cb68171e-2d97-42d7-a6d3-68463d241ab5)
