@@ -1,130 +1,102 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Adventure!</title>
+    <title>{{ story_title }}</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #333;
-            color: #fff;
-            margin: 0;
-            padding: 0;
-            position: relative;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #222;
-            border: 10px solid #111;
-            box-sizing: border-box;
-            position: relative;
-        }
-
-        .story-title {
-            font-size: 24px;
-            margin-bottom: 20px;
-            text-align: left;
-        }
-
-        h2 {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            margin: 0;
-        }
-
-        img {
-            max-width: 800px;
-            max-height: 600px;
-            height: auto;
-            display: block;
-            margin: 0 auto;
-        }
-
-        p {
-            line-height: 1.5;
-        }
-
-        form {
             text-align: center;
+            padding: 20px;
+            background-color: #f2f2f2;
         }
 
-        button {
+        h1 {
+            color: #333;
+        }
+
+        .content {
+            white-space: pre-wrap;
+            text-align: left;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .buttons {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .buttons button {
+            margin: 5px;
             padding: 10px 20px;
-            color: white;
+            font-size: 16px;
             border: none;
             border-radius: 5px;
+            color: #fff;
             cursor: pointer;
-            margin: 5px;
+            transition: background-color 0.3s ease;
         }
 
-        button:hover {
-            background-color: #45a049;
+        .history {
+            margin-top: 20px;
+            text-align: left;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
-        #toggle-history {
-            background-color: #0047ab;
-        }
-
-        #toggle-history:hover {
-            background-color: #003a87;
-        }
-
-        #action-history {
-            display: none;
-        }
-
-        #action-history ul {
-            list-style-type: none;
-            padding: 0;
-        }
-
-        .new-branch-message {
-            position: absolute;
-            bottom: 10px;
-            right: 10px;
-            font-size: 12px;
-            color: #999;
+        .history-item {
+            margin-bottom: 5px;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1 class="story-title">{{ story_title }}</h1>
-        <h2>{{ room.name }}</h2>
-        {% if room.image and room.image.strip() %}
-        <img src="{{ url_for('serve_image', filename=room.image) }}" alt="Room Image">
-        {% endif %}
-        {% for paragraph in content.split('\n') %}
-        <p>{{ paragraph }}</p>
-        {% endfor %}
-        <h3></h3>
-        <form method="post" action="{{ url_for('adventure_game') }}">
-            {% for direction in exits %}
-            <button type="submit" name="direction" value="{{ direction }}" style="background-color: {{ button_color }};">{{ direction.capitalize() }}</button>
-            {% endfor %}
-        </form>
-        <button id="toggle-history">Toggle Choice History</button>
-        <div id="action-history">
-            <h3>History:</h3>
-            <ul>
-                {% for action in action_history %}
-                <li>{{ action }}</li>
-                {% endfor %}
-            </ul>
-        </div>
-        {% if new_branch_message %}
-        <div class="new-branch-message">{{ new_branch_message }}</div>
-        {% endif %}
-    </div>
-    <script>
-        const toggleHistoryButton = document.getElementById('toggle-history');
-        const actionHistoryDiv = document.getElementById('action-history');
+    <h1>{{ story_title }}</h1>
+    <div class="content">{{ content }}</div>
 
-        toggleHistoryButton.addEventListener('click', () => {
-            actionHistoryDiv.style.display = actionHistoryDiv.style.display === 'none' ? 'block' : 'none';
+    <div class="buttons">
+        {% for direction, room_data in exits %}
+        <button type="submit" name="direction" value="{{ direction }}" style="background-color: {{ button_color }};">{{ direction.capitalize() }}</button>
+        {% endfor %}
+    </div>
+
+    <form id="adventure-form" method="post">
+        <!-- Hidden inputs to maintain state -->
+        <input type="hidden" name="current_room" value="{{ room.name }}">
+        <input type="hidden" name="action_history" value="{{ action_history|join(',') }}">
+    </form>
+
+    {% if show_map %}
+    <div>
+        <img src="{{ url_for('serve_image', filename=room.image) }}" alt="Room Image">
+    </div>
+    {% endif %}
+
+    <div class="history">
+        <h3>Action History:</h3>
+        {% for room_name in action_history %}
+        <div class="history-item">{{ room_name }}</div>
+        {% endfor %}
+    </div>
+
+    <script>
+        const form = document.getElementById('adventure-form');
+        const buttons = document.querySelectorAll('.buttons button');
+
+        buttons.forEach(button => {
+            button.addEventListener('click', () => {
+                const directionInput = document.createElement('input');
+                directionInput.type = 'hidden';
+                directionInput.name = 'direction';
+                directionInput.value = button.value;
+                form.appendChild(directionInput);
+                form.submit();
+            });
         });
     </script>
 </body>
