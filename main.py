@@ -19,6 +19,7 @@ import ast
 import random
 from diceroll import DiceRoller
 from diceroll_anim import DiceAnimator
+from diceroll_api import dicerollAPI
 
 class Logger(object):
     def __init__(self, log_file):
@@ -171,6 +172,11 @@ def adventure_game():
     if len(room['exits']) > 1:
         print("\033[94m>choice point\033[0m")
 
+    content = ""  # Initialize content with a default value
+    skill_check = None  # Initialize skill_check with None
+    player_roll = None  # Initialize player_roll with None
+    animation_html = ""  # Initialize animation_html with an empty string
+
     if request.method == 'POST':
         direction = request.form.get('direction')
         if direction:
@@ -180,6 +186,7 @@ def adventure_game():
                 current_room = next_room
                 room = story_data['rooms'][current_room]
                 action_history.append(current_room)
+                content = room['description']  # Assign the content from the room description
             elif isinstance(next_room, dict):
                 # Skill check
                 skill_check = next_room['skill_check']
@@ -189,24 +196,36 @@ def adventure_game():
                 # Trigger the dice roll animation
                 dice_animator = DiceAnimator()
                 dice_color = 'blue'  # Set the desired dice color
-                dice_animator.animate_dice_roll(skill_check['dice_type'], dice_color, dice_roller)
+                image_base64 = dice_animator.animate_dice_roll(skill_check['dice_type'], dice_color, dice_roller)
 
-                # Print the dice roll details and result in the console
-                print(f"Dice Type: {skill_check['dice_type']}")
-                print(f"Player Roll: {player_roll}")
+                # Create the animation HTML
+                animation_html = f'''
+                    <div id="dice-animation-container">
+                        <div>
+                            <p>Dice Notation: {skill_check['dice_type']}</p>
+                            <img src="data:image/png;base64,{image_base64}" alt="Dice Roll Animation">
+                            <p>Roll Result: {player_roll['roll_result']}</p>
+                        </div>
+                    </div>
+                '''
 
                 skill_check_result = resolve_skill_check(skill_check, player_roll)
                 current_room = skill_check_result['room']
                 room = story_data['rooms'][current_room]
                 action_history.append(current_room)
-            else:
-                return render_template('adventure.html', content="You can't go that way.", room=room, action_history=action_history, button_color=button_color)
-        
-        # Check if the player has reached an ending
-        if not room['exits']:
-            print("\033[92m>Player reached an ending\033[0m")
 
-    content = room['description']
+                content = skill_check_result['description']  # Assign the content based on the skill check result
+            else:
+                content = "You can't go that way."  # Assign the content for invalid direction
+        else:
+            content = room['description']  # Assign the content from the room description
+    else:
+        content = room['description']  # Assign the content from the room description
+
+    # Check if the player has reached an ending
+    if not room['exits']:
+        print("\033[92m>Player reached an ending\033[0m")
+
     exits = [(direction, room_data) for direction, room_data in room['exits'].items() if room_data]
     show_map = room.get('show_map', True)
     story_title = story_data['name']
@@ -218,7 +237,14 @@ def adventure_game():
         additional_content = room.get('revisit_content', "")
         content += "\n" + additional_content
 
-    return render_template('adventure.html', content=content, exits=exits, room=room, show_map=show_map, action_history=action_history, button_color=button_color, story_title=story_title)
+    return render_template('adventure.html', content=content, exits=exits, room=room, show_map=show_map,
+                           action_history=action_history, button_color=button_color, story_title=story_title,
+                           skill_check=skill_check, player_roll=player_roll, animation_html=animation_html)
+
+@app.route('/dice_roll_image')
+def serve_dice_roll_image():
+    image_base64 = session.get('dice_roll_image', '')
+    return f'<img src="data:image/png;base64,{image_base64}" alt="Dice Roll Animation">'
 
 @app.route('/play')
 def play_story():
@@ -265,6 +291,20 @@ def play_action():
             return render_template('play.html', adventure=story_data, current_room=current_room, action_history=action_history, content="You can't go that way.")
     else:
         return redirect(url_for('play_story'))
+
+@app.route('/roll', methods=['POST'])
+def roll_dice():
+    dice_notation = request.form.get('dice_notation')
+    dice_color = request.form.get('dice_color')
+    target_value = request.form.get('target_value')
+
+    dice_roller = dicerollAPI()
+    roll_result = dice_roller.roll_dice(dice_notation, dice_color=dice_color, target_value=int(target_value), animate=False)
+
+    # Get the base64-encoded image of the dice roll animation
+    image_base64 = dice_roller.dice_animator.animate_dice_roll(dice_notation, dice_color, dice_roller)
+
+    return jsonify({'image_base64': image_base64, 'roll_result': str(roll_result['roll_result'])})
 
 @app.route('/save', methods=['POST'])
 def save_game():
