@@ -1,5 +1,5 @@
-* All functions and classes documented: https://github.com/ViciousSquid/diceroll/tree/main/Docs
-* Please refer to `Example1.py`, `Example2.py`, and `Example3_gui.py` for quick feature demos
+* All functions and classes documented: https://github.com/ViciousSquid/Adventure/tree/main/docs in the `functions & classes` folder
+* Please refer to demo files `Example1.py`, `Example2.py`, and `Example3_gui.py` for quick feature overview.
 
 
 
