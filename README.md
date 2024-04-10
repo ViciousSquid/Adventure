@@ -2,8 +2,6 @@
 
 Interactive story engine for designing, editing and playing **choose-your-own-adventure** stories
 
-                                      Beta 1.0 build 105_diceroll
-
 Test server at: 
 ## https://vicioussquid.pythonanywhere.com/
 
