@@ -9,10 +9,12 @@
             padding: 20px;
             background-color: #1b1919;
             position: relative;
+            transition: background-color 0.5s ease;
         }
 
         h1 {
             color: #adadad;
+            transition: color 0.5s ease;
         }
 
         .content {
@@ -24,6 +26,7 @@
             font-size: 20px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             color: #fff;
+            transition: background-color 0.5s ease, color 0.5s ease;
         }
 
         .buttons {
@@ -56,6 +59,7 @@
             padding: 20px;
             border-radius: 5px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.5s ease, color 0.5s ease;
         }
 
         .history-item {
@@ -93,6 +97,7 @@
         .mode-toggle-text {
             margin-left: 5px;
             color: #adadad;
+            transition: color 0.5s ease;
         }
 
         body.light-mode {
@@ -176,7 +181,12 @@
     </div>
 
     <h1>{{ story_title }}</h1>
-    <div class="content">{{ content }}</div>
+    <div class="content">
+        {% set paragraphs = content.split('\n\n') %}
+        {% for paragraph in paragraphs %}
+            <p>{{ paragraph }}</p>
+        {% endfor %}
+    </div>
 
     <div class="buttons">
         {% for direction, room_data in exits %}
@@ -213,6 +223,13 @@
         {% endif %}
     </div>
 
+    <div class="history">
+        <h2>Action History:</h2>
+        {% for item in action_history %}
+            <div class="history-item">{{ item.replace('_', ' ')|capitalize }}</div>
+        {% endfor %}
+    </div>
+
     <script>
         const form = document.getElementById('adventure-form');
         const buttons = document.querySelectorAll('.buttons button');
@@ -231,13 +248,48 @@
         const modeToggleCheckbox = document.getElementById('mode-toggle-checkbox');
         const dyslexicToggleCheckbox = document.getElementById('dyslexic-toggle-checkbox');
 
+        // Load the light mode setting from localStorage
+        const isLightModeEnabled = localStorage.getItem('isLightModeEnabled') === 'true';
+        modeToggleCheckbox.checked = isLightModeEnabled;
+        updateMode(isLightModeEnabled);
+
         modeToggleCheckbox.addEventListener('change', () => {
-            document.body.classList.toggle('light-mode');
-            modeToggleCheckbox.nextElementSibling.textContent = modeToggleCheckbox.checked ? 'Dark Mode' : 'Light Mode';
+            updateMode(modeToggleCheckbox.checked);
+
+            // Store the light mode setting in localStorage
+            localStorage.setItem('isLightModeEnabled', modeToggleCheckbox.checked);
         });
+
+        function updateMode(isLightMode) {
+            const body = document.body;
+            const modeToggleText = modeToggleCheckbox.nextElementSibling;
+            const elements = document.querySelectorAll('.content, h1, .history, .mode-toggle-text');
+
+            modeToggleText.textContent = isLightMode ? 'Dark Mode' : 'Light Mode';
+
+            if (isLightMode) {
+                body.classList.add('light-mode');
+                elements.forEach(element => {
+                    element.classList.add('light-mode');
+                });
+            } else {
+                body.classList.remove('light-mode');
+                elements.forEach(element => {
+                    element.classList.remove('light-mode');
+                });
+            }
+        }
+
+        // Load the dyslexic font setting from localStorage
+        const isDyslexicFontEnabled = localStorage.getItem('isDyslexicFontEnabled') === 'true';
+        dyslexicToggleCheckbox.checked = isDyslexicFontEnabled;
+        document.body.classList.toggle('dyslexic-font', isDyslexicFontEnabled);
 
         dyslexicToggleCheckbox.addEventListener('change', () => {
             document.body.classList.toggle('dyslexic-font');
+
+            // Store the dyslexic font setting in localStorage
+            localStorage.setItem('isDyslexicFontEnabled', dyslexicToggleCheckbox.checked);
         });
     </script>
 </body>
