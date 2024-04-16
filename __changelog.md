@@ -1,4 +1,11 @@
 ### changelog
+
+
+* build 106
+
+Includes the OpenDyslexia font by Abbie Gonzalez: https://antijingoist.itch.io/opendyslexic
+
+
 * build 105
 
 -----

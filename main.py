@@ -4,7 +4,7 @@ import json
 import zipfile
 from flask import Flask, render_template, request, redirect, url_for, make_response, send_from_directory, jsonify, send_file, flash, session
 from adventures import load_adventures
-from story_editor import story_editor
+from editor_stuff import story_editor, save_story, editor_route, load_story, graph_view, serve_thumbnail, serve_image, upload_story, generate_thumbnail
 import os
 from PIL import Image
 from collections import Counter
@@ -81,15 +81,19 @@ def main_menu():
 def serve_static(filename):
     return send_from_directory('static', filename)
 
+@app.route('/fonts/<path:filename>')
+def serve_fonts(filename):
+    return send_from_directory('fonts', filename)
+
 @app.route('/new_story', methods=['POST', 'GET'])
 def new_story():
     global current_adventure, current_room, action_history
-    
+
     if request.method == 'GET':
         story_name = request.args.get('story_name')
     else:
         story_name = request.form.get('story_name')
-    
+
     adventures = load_adventures()
     if story_name in adventures:
         current_adventure = story_name
@@ -190,19 +194,22 @@ def adventure_game():
             elif isinstance(next_room, dict):
                 # Skill check
                 skill_check = next_room['skill_check']
-                dice_roller = DiceRoller()  # Create an instance of DiceRoller
-                player_roll = dice_roller.roll_dice(skill_check['dice_type'])
+                dice_type = skill_check['dice_type']
+                target_value = skill_check['target']
+
+                dice_roller = dicerollAPI()
+                player_roll = dice_roller.roll_dice(dice_type)
 
                 # Trigger the dice roll animation
                 dice_animator = DiceAnimator()
                 dice_color = 'blue'  # Set the desired dice color
-                image_base64 = dice_animator.animate_dice_roll(skill_check['dice_type'], dice_color, dice_roller)
+                image_base64 = dice_animator.animate_dice_roll(dice_type, dice_color, dice_roller)
 
                 # Create the animation HTML
                 animation_html = f'''
                     <div id="dice-animation-container">
                         <div>
-                            <p>Dice Notation: {skill_check['dice_type']}</p>
+                            <p>Dice Notation: {dice_type}</p>
                             <img src="data:image/png;base64,{image_base64}" alt="Dice Roll Animation">
                             <p>Roll Result: {player_roll['roll_result']}</p>
                         </div>
@@ -211,10 +218,10 @@ def adventure_game():
 
                 skill_check_result = resolve_skill_check(skill_check, player_roll)
                 current_room = skill_check_result['room']
+                content = skill_check_result['description']
+
                 room = story_data['rooms'][current_room]
                 action_history.append(current_room)
-
-                content = skill_check_result['description']  # Assign the content based on the skill check result
             else:
                 content = "You can't go that way."  # Assign the content for invalid direction
         else:
@@ -352,152 +359,14 @@ def load_game():
     button_color = story_data.get('button_color', '#4CAF50')
     return render_template('adventure.html', content=content, exits=exits, room=room, show_map=show_map, action_history=action_history, button_color=button_color)
 
-@app.route('/editor', methods=['GET'])
-def editor_route():
-    print("Editor route called")
-    if current_adventure is None:
-        print("Current adventure is None")
-        return redirect(url_for('main_menu'))
-    else:
-        print(f"Current adventure: {current_adventure}")
-        story_data = story_editor(current_adventure)
-        if story_data is None:
-            print("Error: Unable to load story data for the current adventure.")
-            return redirect(url_for('main_menu'))
-        else:
-            print(">>Editor")
-            print("Rendering editor/index.html template")
-            return render_template('editor/index.html', story_data=story_data)
-
-@app.route('/load_story', methods=['POST'])
-def load_story():
-    global current_adventure, current_room, action_history
-    story_name = request.form.get('story_name')
-    adventures = load_adventures()
-    if story_name in adventures:
-        current_adventure = story_name
-        adventure = adventures[current_adventure]
-        with zipfile.ZipFile(adventure, 'r') as zip_ref:
-            with zip_ref.open('story.json', 'r') as f:
-                story_data = json.load(f)
-        current_room = story_data['start_room']
-        action_history = []
-        print(">>Load story")
-        return redirect(url_for('play_story'))
-    else:
-        return redirect(url_for('main_menu'))
-
-@app.route('/save_story', methods=['POST'])
-def save_story():
-    try:
-        story_data = json.loads(request.form['story'])
-        print("> Story JSON received from editor.")
-
-        story_name = story_data['name']
-        print("Story name:", story_name)
-
-        # Save the story JSON data to a file in the /logs folder if logging is enabled
-        if debug_mode:
-            logs_dir = 'logs'
-            if not os.path.exists(logs_dir):
-                os.makedirs(logs_dir)
-
-            current_datetime = datetime.datetime.now().strftime("%d%m_%H%M")
-            story_json_file = os.path.join(logs_dir, f'story_{story_name}_{current_datetime}.json')
-
-            with open(story_json_file, 'w') as file:
-                json.dump(story_data, file, indent=2)
-        print("> The json has been saved to the /logs folder.")
-
-        # Create a BytesIO object to hold the zip file data
-        zip_buffer = io.BytesIO()
-
-        with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
-            zip_file.writestr('story.json', json.dumps(story_data, indent=2))
-            for room_name, room_data in story_data['rooms'].items():
-                if room_data['image']:
-                    image_filename = room_data['image']
-                    for file_name, file_data in request.files.items():
-                        if file_name == f"room-{image_filename}":
-                            zip_file.writestr(image_filename, file_data.read())
-                            break
-        print("> ZIP was created and sent to the browser window")
-
-        # Move the buffer pointer to the beginning
-        zip_buffer.seek(0)
-
-        # Send the zip file as a response for download
-        return send_file(zip_buffer, as_attachment=True, download_name=f"story_{story_name}.zip", mimetype="application/zip")
-    except Exception as e:
-        print("Error saving the story:", str(e))
-        return jsonify({'error': 'An error occurred while saving the story.'}), 500
-
-@app.route('/editor/graph')
-def graph_view():
-    return send_from_directory('static/editor', 'graph.html')
-
-@app.route('/thumbnails/<path:filename>')
-def serve_thumbnail(filename):
-    if current_adventure is None:
-        return redirect(url_for('main_menu'))
-
-    adventures = load_adventures()
-    adventure = adventures[current_adventure]
-    with zipfile.ZipFile(adventure, 'r') as zip_ref:
-        try:
-            thumbnail_path = os.path.join('stories', f'thumbnail_{filename}')
-            if not os.path.exists(thumbnail_path):
-                # Generate the thumbnail on the fly
-                image_path = os.path.join('stories', filename)
-                generate_thumbnail(image_path, thumbnail_path)
-            return send_from_directory('stories', f'thumbnail_{filename}')
-        except werkzeug.exceptions.NotFound:
-            return redirect(url_for('main_menu'))
-
-@app.route('/images/<path:filename>')
-def serve_image(filename):
-    adventures = load_adventures()
-    if current_adventure not in adventures:
-        return redirect(url_for('main_menu'))
-
-    adventure = adventures[current_adventure]
-    with zipfile.ZipFile(adventure, 'r') as zip_ref:
-        try:
-            image_data = zip_ref.read(filename)
-            response = make_response(image_data)
-            response.headers.set('Content-Type', 'image/jpeg')  # Read the image
-            return response
-        except KeyError:
-            return redirect(url_for('main_menu'))
-
-@app.route('/upload_story', methods=['POST'])
-def upload_story():
-    if 'story_file' not in request.files:
-        flash('No file part')
-        return redirect(request.url)
-    print("> Upload a story")
-
-    story_file = request.files['story_file']
-    if story_file.filename == '':
-        flash('No selected file')
-        return redirect(request.url)
-
-    if story_file and story_file.filename.endswith('.zip'):
-        filename = secure_filename(story_file.filename)
-        story_file.save(os.path.join('stories', filename))
-        flash('Story uploaded successfully')
-        story_name = os.path.splitext(filename)[0]
-        session['story_uploaded'] = story_name
-    else:
-        flash('Invalid file type. Please upload a ZIP file.')
-
-    return redirect(url_for('main_menu'))
-
-def generate_thumbnail(image_path, thumbnail_path, size=(100, 100)):
-    from PIL import Image
-    image = Image.open(image_path)
-    image.thumbnail(size)
-    image.save(thumbnail_path)
+# Editor routes
+app.add_url_rule('/editor', methods=['GET'], view_func=editor_route)
+app.add_url_rule('/load_story', methods=['POST'], view_func=load_story)
+app.add_url_rule('/save_story', methods=['POST'], view_func=save_story)
+app.add_url_rule('/editor/graph', 'graph_view', view_func=graph_view)
+app.add_url_rule('/thumbnails/<path:filename>', 'serve_thumbnail', view_func=serve_thumbnail)
+app.add_url_rule('/images/<path:filename>', 'serve_image', view_func=serve_image)
+app.add_url_rule('/upload_story', methods=['POST'], view_func=upload_story)
 
 if __name__ == '__main__':
     app.run(debug=False)
