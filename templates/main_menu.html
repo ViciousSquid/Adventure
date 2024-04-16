@@ -104,15 +104,59 @@
             height: 50px;
             width: 300px;
         }
+
+        .dyslexic-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+        }
+
+        .dyslexic-toggle label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .dyslexic-toggle-text {
+            margin-left: 5px;
+            color: #adadad;
+        }
+
+        @font-face {
+            font-family: 'OpenDyslexic';
+            src: url('/fonts/OpenDyslexic3-Regular.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'OpenDyslexic';
+            src: url('/fonts/OpenDyslexic3-Bold.ttf') format('truetype');
+            font-weight: bold;
+            font-style: normal;
+        }
+
+        body.dyslexic-font,
+        body.dyslexic-font .container,
+        body.dyslexic-font .apple-green-button,
+        body.dyslexic-font .orange-button,
+        body.dyslexic-font .custom-button,
+        body.dyslexic-font .orange-link,
+        body.dyslexic-font select,
+        body.dyslexic-font .dyslexic-toggle-text,
+        body.dyslexic-font option {
+            font-family: 'OpenDyslexic', Arial, sans-serif;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Adventure!</h1>
-        <b>An interactive story engine</b><br>
-        <br>Beta 1.0  build 103<br>++++++++++++++++++++<br>
+        <b>An interactive story engine</b>
+        <br>++++++++++++++++++++<br>
         <a href="https://vicioussquid.pythonanywhere.com/">https://vicioussquid.pythonanywhere.com/</a><br><br>
-        <a href="https://github.com/ViciousSquid/Adventure">https://github.com/ViciousSquid/Adventure</a><br><br>
 
         <div class="image-container">
             <img src="{{ url_for('static', filename='images/book.png') }}" alt="">
@@ -139,12 +183,32 @@
                 <input type="file" name="story_file" id="story-file" accept=".zip" style="display: none;">
                 <button type="button" id="upload-button" class="custom-button">Upload Story</button>
             </form>
-                       <div class="button-container">
+            <div class="button-container">
                 <a href="{{ url_for('static', filename='editor/index.html') }}" class="orange-link">Story Editor</a>
                 <br>
             </div>
+        </div><br><br>
+                <a href="#" id="changelog-link">Please Click here for changelog and credits</a>
+
+        <div id="message-box" class="message-box" style="display: none;">
+            <div class="message-box-content">
+                <h3>Version 105</h3>
+                <p>Last update: 16/04/2024</p>
+                <p>Uses the <a href="https://github.com/ViciousSquid/diceroll" target="_blank">diceroll API</a></p>
+                <p>OpenDyslexia font by Abbie Gonzalez:<a href="https://antijingoist.itch.io/opendyslexic" target="_blank">[link]</a></p>
+                <p><a href="https://buymeacoffee.com/vicioussquid" target="_blank">Please buy me a coffee!</a></p>
+                <button id="close-message-box">Close</button>
+            </div>
+        </div>
+
+        <div class="dyslexic-toggle">
+            <label>
+                <input type="checkbox" id="dyslexic-toggle-checkbox">
+                <span class="dyslexic-toggle-text">Dyslexic Font</span>
+            </label>
         </div>
     </div>
+
     <script>
         document.getElementById('upload-button').addEventListener('click', function() {
             document.getElementById('story-file').click();
@@ -152,6 +216,32 @@
 
         document.getElementById('story-file').addEventListener('change', function() {
             document.getElementById('upload-form').submit();
+        });
+
+        const changelogLink = document.getElementById('changelog-link');
+        const messageBox = document.getElementById('message-box');
+        const closeButton = document.getElementById('close-message-box');
+
+        changelogLink.addEventListener('click', () => {
+            messageBox.style.display = 'flex';
+        });
+
+        closeButton.addEventListener('click', () => {
+            messageBox.style.display = 'none';
+        });
+
+        const dyslexicToggleCheckbox = document.getElementById('dyslexic-toggle-checkbox');
+
+        // Load the dyslexic font setting from localStorage
+        const isDyslexicFontEnabled = localStorage.getItem('isDyslexicFontEnabled') === 'true';
+        dyslexicToggleCheckbox.checked = isDyslexicFontEnabled;
+        document.body.classList.toggle('dyslexic-font', isDyslexicFontEnabled);
+
+        dyslexicToggleCheckbox.addEventListener('change', () => {
+            document.body.classList.toggle('dyslexic-font');
+
+            // Store the dyslexic font setting in localStorage
+            localStorage.setItem('isDyslexicFontEnabled', dyslexicToggleCheckbox.checked);
         });
     </script>
 </body>
