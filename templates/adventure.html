@@ -8,6 +8,7 @@
             text-align: center;
             padding: 20px;
             background-color: #1b1919;
+            position: relative;
         }
 
         h1 {
@@ -17,11 +18,12 @@
         .content {
             white-space: pre-wrap;
             text-align: left;
-            background-color: #fff;
+            background-color: #333;
             padding: 20px;
             border-radius: 5px;
             font-size: 20px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            color: #fff;
         }
 
         .buttons {
@@ -32,6 +34,7 @@
             flex-wrap: wrap;
         }
 
+        .buttons a,
         .buttons button {
             margin: 5px;
             padding: 10px 20px;
@@ -40,7 +43,9 @@
             border-radius: 5px;
             color: #fff;
             cursor: pointer;
-            transition: background-color 0.3s ease;
+            transition: background-color 0.5s ease;
+            text-decoration: none;
+            background-color: {{ button_color }};
         }
 
         .history {
@@ -69,15 +74,124 @@
             justify-content: center;
             align-items: center;
         }
+
+        .mode-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+        }
+
+        .mode-toggle label {
+            display: flex;
+            align-items: center;
+            margin-left: 10px;
+            cursor: pointer;
+        }
+
+        .mode-toggle-text {
+            margin-left: 5px;
+            color: #adadad;
+        }
+
+        body.light-mode {
+            background-color: #fff;
+        }
+
+        body.light-mode h1 {
+            color: #333;
+        }
+
+        body.light-mode .content {
+            background-color: #fff;
+            color: #333;
+        }
+
+        body.light-mode .history {
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        body.light-mode .mode-toggle-text {
+            color: #333;
+        }
+
+        @font-face {
+            font-family: 'OpenDyslexic';
+            src: url('/fonts/OpenDyslexic3-Regular.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'OpenDyslexic';
+            src: url('/fonts/OpenDyslexic3-Bold.ttf') format('truetype');
+            font-weight: bold;
+            font-style: normal;
+        }
+
+        body.dyslexic-font {
+            font-family: 'OpenDyslexic', Arial, sans-serif;
+        }
+
+        body.dyslexic-font .content,
+        body.dyslexic-font .buttons button,
+        body.dyslexic-font .history,
+        body.dyslexic-font #roll-button,
+        body.dyslexic-font .mode-toggle-text {
+            font-family: 'OpenDyslexic', Arial, sans-serif;
+        }
+
+        .main-menu-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            background-color: #555;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+
+        .main-menu-button:hover {
+            background-color: #777;
+        }
     </style>
 </head>
 <body>
+    <a href="{{ url_for('main_menu') }}" class="main-menu-button">Return to Main Menu</a>
+
+    <div class="mode-toggle">
+        <label>
+            <input type="checkbox" id="mode-toggle-checkbox">
+            <span class="mode-toggle-text">Light Mode</span>
+        </label>
+        <label>
+            <input type="checkbox" id="dyslexic-toggle-checkbox">
+            <span class="mode-toggle-text">Dyslexic Font</span>
+        </label>
+    </div>
+
     <h1>{{ story_title }}</h1>
     <div class="content">{{ content }}</div>
 
     <div class="buttons">
         {% for direction, room_data in exits %}
-        <button type="submit" name="direction" value="{{ direction }}" style="background-color: {{ button_color }};">{{ direction.capitalize() }}</button>
+            {% if room_data is mapping and 'skill_check' in room_data %}
+                <form method="post" action="{{ url_for('adventure_game') }}">
+                    <input type="hidden" name="direction" value="{{ direction }}">
+                    <button type="submit" style="background-color: {{ button_color }};">{{ direction.capitalize().replace('_', ' ') }}</button>
+                    <p>Skill Check: {{ room_data.skill_check.dice_type }} >= {{ room_data.skill_check.target }}</p>
+                </form>
+            {% else %}
+                <form method="post" action="{{ url_for('adventure_game') }}">
+                    <input type="hidden" name="direction" value="{{ direction }}">
+                    <button type="submit" style="background-color: {{ button_color }};">{{ direction.capitalize().replace('_', ' ') }}</button>
+                </form>
+            {% endif %}
         {% endfor %}
     </div>
 
@@ -93,25 +207,11 @@
     </div>
     {% endif %}
 
-    <div class="history">
-        <h3>Action History:</h3>
-        {% for room_name in action_history %}
-        <div class="history-item">{{ room_name }}</div>
-        {% endfor %}
-    </div>
-
     <div id="dice-animation-container">
         {% if animation_html %}
             {{ animation_html|safe }}
         {% endif %}
     </div>
-
-    <form id="roll-form">
-        <input type="hidden" name="dice_notation" value="2d6">
-        <input type="hidden" name="dice_color" value="blue">
-        <input type="hidden" name="target_value" value="10">
-        <button type="button" id="roll-button" style="font-size: 20px; background-color: orange;">Roll Dice</button>
-    </form>
 
     <script>
         const form = document.getElementById('adventure-form');
@@ -128,66 +228,16 @@
             });
         });
 
-        const rollButton = document.getElementById('roll-button');
-        const animationContainer = document.getElementById('dice-animation-container');
+        const modeToggleCheckbox = document.getElementById('mode-toggle-checkbox');
+        const dyslexicToggleCheckbox = document.getElementById('dyslexic-toggle-checkbox');
 
-        rollButton.addEventListener('click', () => {
-            const formData = new FormData(document.getElementById('roll-form'));
-            fetch('/roll', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => {
-                console.log('Fetch response:', response);
-                return response.json();
-            })
-            .then(data => {
-                console.log('Received data:', data);
+        modeToggleCheckbox.addEventListener('change', () => {
+            document.body.classList.toggle('light-mode');
+            modeToggleCheckbox.nextElementSibling.textContent = modeToggleCheckbox.checked ? 'Dark Mode' : 'Light Mode';
+        });
 
-                // Clear the animation container
-                animationContainer.innerHTML = '';
-
-                // Create a canvas element
-                const canvas = document.createElement('canvas');
-                canvas.width = 200;
-                canvas.height = 200;
-                const ctx = canvas.getContext('2d');
-
-                // Function to draw a frame on the canvas
-                function drawFrame(frameIndex) {
-                    const frameDataURI = data.frames[frameIndex];
-                    const frameImage = new Image();
-                    frameImage.onload = () => {
-                        ctx.clearRect(0, 0, canvas.width, canvas.height);
-                        ctx.drawImage(frameImage, 0, 0);
-                    };
-                    frameImage.src = frameDataURI;
-                }
-
-                // Animation loop
-                let currentFrame = 0;
-                const animationInterval = setInterval(() => {
-                    drawFrame(currentFrame);
-                    currentFrame = (currentFrame + 1) % data.frames.length;
-                }, 16.67); // Approximately 60 frames per second
-
-                // Add the canvas to the animation container
-                animationContainer.innerHTML = `
-                    <div>
-                        <p>Dice Notation: ${data.dice_notation}</p>
-                        ${canvas.outerHTML}
-                        <p>Roll Result: ${data.roll_result}</p>
-                    </div>
-                `;
-
-                // Stop the animation after the last frame
-                setTimeout(() => {
-                    clearInterval(animationInterval);
-                }, data.frames.length * 16.67);
-            })
-            .catch(error => {
-                console.error('Error:', error);
-            });
+        dyslexicToggleCheckbox.addEventListener('change', () => {
+            document.body.classList.toggle('dyslexic-font');
         });
     </script>
 </body>
