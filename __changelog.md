@@ -1,9 +1,16 @@
 ### changelog
+
+
+* build 106
+
+Includes the OpenDyslexia font by Abbie Gonzalez: https://antijingoist.itch.io/opendyslexic
+
+
 * build 105
 
 -----
 
-Integration of **`dicerollAPI`** :
+Integration of `dicerollAPI` :
 Read more about diceroll here: https://github.com/ViciousSquid/diceroll
 
 This allows all-new support for skill checks, saving-throws etc within story.json files

@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Adventure Editor</title>
     <style>
-
         #help-popup {
             text-align: left;
         }
@@ -126,16 +125,17 @@
             border: none;
             cursor: pointer;
             font-size: 16px;
-            margin-right: 10px;
+            width: 150px;
         }
 
-        .remove-room-button {
+        .remove-room {
             background-color: #f44336;
             color: white;
             padding: 10px 20px;
             border: none;
             cursor: pointer;
             font-size: 16px;
+            width: 150px;
         }
     </style>
 </head>
@@ -148,7 +148,7 @@
             <button id="load-button" class="gray-button">Load ↓</button>
             <button type="button" id="save-story" class="gray-button">Save</button>
             <button type="button" id="toggle-view" class="gray-button">Flowchart</button>
-                        <button id="help-button" class="blue-button">Help</button>
+            <button id="help-button" class="blue-button">Help</button>
         </div>
         <div id="load-popup" style="display: none;">
             <label for="load-story-input">Load Story (ZIP):</label>
@@ -173,13 +173,13 @@
             <button id="close-popup" class="blue-button">Close Help</button>
         </div>
         <div id="load-popup" style="display: none;">
-          <label for="load-story-input">Load Story (ZIP):</label>
-          <input type="file" id="load-story-input" accept=".zip" style="display: none;">
-          <button type="button" id="load-story-button" class="gray-button">Choose File</button>
-          <button type="button" id="load-story" class="orange-button">Load</button><br>
-      </div>
+            <label for="load-story-input">Load Story (ZIP):</label>
+            <input type="file" id="load-story-input" accept=".zip" style="display: none;">
+            <button type="button" id="load-story-button" class="gray-button">Choose File</button>
+            <button type="button" id="load-story" class="orange-button">Load</button><br>
+        </div>
         <br>Use the Toolbar buttons above to get started, or click 'Help'<br>
-       <br>
+        <br>
         <form id="story-form">
             <label for="story-name">Story Name:</label>
             <input type="text" placeholder="No file currently loaded" id="story-name" required>
@@ -190,7 +190,7 @@
                 <!-- Rooms will be dynamically added here -->
             </div>
             <button type="button" id="add-room" class="add-room-button">Add Room</button>
-            <button type="button" id="remove-room" class="remove-room-button">Remove Room</button>
+            <!--<button type="button" id="remove-room" class="remove-room-button">Remove Room</button>-->
         </form>
     </div>
 
@@ -210,6 +210,16 @@
                 helpPopup.style.display = 'none';
             });
         });
+
+        function toggleDiceRollFields(roomIndex, choiceIndex) {
+            const checkbox = document.getElementById(`enable-dice-roll-${choiceIndex}-${roomIndex}`);
+            const diceRollFields = document.getElementById(`dice-roll-fields-${choiceIndex}-${roomIndex}`);
+            if (checkbox.checked) {
+                diceRollFields.style.display = 'block';
+            } else {
+                diceRollFields.style.display = 'none';
+            }
+        }
     </script>
     <script src="js/editor.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.23.0/cytoscape.min.js"></script>

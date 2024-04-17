@@ -25,12 +25,12 @@ function addRoom(event) {
     <h3>Room ${roomCounter + 1}</h3>
     <label for="room-name-${roomCounter}">Room Name:</label>
     <input type="text" id="room-name-${roomCounter}" required>
-<br>
+    <br>
 
     <label for="room-description-${roomCounter}">Description:</label>
-<br>
+    <br>
     <textarea id="room-description-${roomCounter}" rows="10" cols="70" required></textarea>
-<br>
+    <br>
 
     <label for="room-image-${roomCounter}">Room Image:</label>
     <input type="file" id="room-image-${roomCounter}" accept="image/*">
@@ -43,24 +43,33 @@ function addRoom(event) {
     <div class="Choices">
       <label for="exit-1-${roomCounter}">Choice 1:</label>
       <input class="exit-input" type="text" id="exit-1-${roomCounter}">
-      <input class="exit-input" type="text" id="room-ref-1-${roomCounter}" placeholder="Target [roomname]">
-<br>
+      <input class="exit-input" type="text" id="room-ref-1-${roomCounter}" placeholder="Target_[roomname]">
+      <br>
       <label for="exit-2-${roomCounter}">Choice 2:</label>
       <input class="exit-input" type="text" id="exit-2-${roomCounter}">
-      <input class="exit-input" type="text" id="room-ref-2-${roomCounter}" placeholder="Target [roomname]">
-<br>
+      <input class="exit-input" type="text" id="room-ref-2-${roomCounter}" placeholder="Target_[roomname]">
+      <br>
       <label for="exit-3-${roomCounter}">Choice 3:</label>
       <input class="exit-input" type="text" id="exit-3-${roomCounter}">
-      <input class="exit-input" type="text" id="room-ref-3-${roomCounter}" placeholder="Target [roomname]">
-<br>
+      <input class="exit-input" type="text" id="room-ref-3-${roomCounter}" placeholder="Target_[roomname]">
+      <br>
       <label for="exit-4-${roomCounter}">Choice 4:</label>
       <input class="exit-input" type="text" id="exit-4-${roomCounter}">
-      <input class="exit-input" type="text" id="room-ref-4-${roomCounter}" placeholder="Target [roomname]">
+      <input class="exit-input" type="text" id="room-ref-4-${roomCounter}" placeholder="Target_[roomname]">
+      <br>
+      <input type="checkbox" id="enable-dice-roll-${roomCounter}" onchange="toggleDiceRollFields(${roomCounter})">
+      <label for="enable-dice-roll-${roomCounter}">Enable Dice Roll</label>
+      <br>
+      <div id="dice-roll-fields-${roomCounter}" style="display: none;">
+        <label for="dice-roll-${roomCounter}">Dice Roll:</label>
+        <input class="dice-roll-input" type="text" id="dice-roll-${roomCounter}" placeholder="Dice notation (e.g., 2d6)">
+        <input class="dice-roll-input" type="text" id="dice-target-${roomCounter}" placeholder="Target value">
+        <br>
+      </div>
     </div>
 
-
     <button type="button" class="remove-room">Remove Room</button>
-<br>
+    <br>
   `;
 
   roomContainer.appendChild(roomDiv);
@@ -71,6 +80,13 @@ function addRoom(event) {
 
   for (let i = 1; i <= 4; i++) {
     roomDiv.querySelector(`#exit-${i}-${roomCounter}`).addEventListener('input', function (event) {
+      this.value = this.value.replace(/\s+/g, '_');
+    });
+  }
+
+  // Add event listener for room reference input fields
+  for (let i = 1; i <= 4; i++) {
+    roomDiv.querySelector(`#room-ref-${i}-${roomCounter}`).addEventListener('input', function (event) {
       this.value = this.value.replace(/\s+/g, '_');
     });
   }
@@ -116,25 +132,42 @@ function saveStory() {
     const description = roomElement.querySelector(`#room-description-${index}`).value;
     const imageInput = roomElement.querySelector(`#room-image-${index}`);
     const exits = {};
+    const diceRolls = {};
 
     for (let i = 1; i <= 4; i++) {
       const exitName = roomElement.querySelector(`#exit-${i}-${index}`).value.replace(/\s+/g, '_');
       const exitRef = roomElement.querySelector(`#room-ref-${i}-${index}`).value;
+      const diceRollCheckbox = roomElement.querySelector(`#enable-dice-roll-${i}-${index}`);
+      const diceNotation = roomElement.querySelector(`#dice-roll-${i}-${index}`).value;
+      const targetValue = roomElement.querySelector(`#dice-target-${i}-${index}`).value;
 
       if (exitName && exitRef) {
         exits[exitName] = exitRef;
       }
+
+      if (diceRollCheckbox.checked && diceNotation && targetValue) {
+        diceRolls[exitName] = {
+          dice_notation: diceNotation,
+          target_value: parseInt(targetValue)
+        };
+      } else {
+        diceRolls[exitName] = {
+          dice_notation: "",
+          target_value: ""
+        };
+      }
     }
 
-    let imageName = null;
+    let imageName = "";
     if (imageInput.files[0]) {
       const extension = imageInput.files[0].name.split('.').pop();
       imageName = `${generateRandomString()}.${extension}`;
     }
 
     rooms[roomName] = {
-      description,
-      exits,
+      description: description || "",
+      exits: exits,
+      dice_rolls: diceRolls,
       image: imageName
     };
   });
@@ -283,7 +316,7 @@ function loadStoryIntoEditor(story, zip) {
     const roomIndex = roomCounter - 1;
 
     roomElement.querySelector(`#room-name-${roomIndex}`).value = roomName;
-    roomElement.querySelector(`#room-description-${roomIndex}`).value = room.description;
+    roomElement.querySelector(`#room-description-${roomIndex}`).value = room.description || "";
 
     // Load the room image thumbnail
     const thumbnailElement = roomElement.querySelector(`#room-thumbnail-${roomIndex}`);
@@ -293,6 +326,9 @@ function loadStoryIntoEditor(story, zip) {
         thumbnailElement.src = imageUrl;
         thumbnailElement.style.display = 'block';
       });
+    } else {
+      thumbnailElement.src = '';
+      thumbnailElement.style.display = 'none';
     }
 
     let exitIndex = 1;
@@ -300,6 +336,21 @@ function loadStoryIntoEditor(story, zip) {
       const exitRef = room.exits[exitName];
       roomElement.querySelector(`#exit-${exitIndex}-${roomIndex}`).value = exitName;
       roomElement.querySelector(`#room-ref-${exitIndex}-${roomIndex}`).value = exitRef;
+
+      const diceRoll = room.dice_rolls && room.dice_rolls[exitName];
+      if (diceRoll) {
+        const diceRollCheckbox = roomElement.querySelector(`#enable-dice-roll-${exitIndex}-${roomIndex}`);
+        diceRollCheckbox.checked = true;
+        roomElement.querySelector(`#dice-roll-${exitIndex}-${roomIndex}`).value = diceRoll.dice_notation || "";
+        roomElement.querySelector(`#dice-target-${exitIndex}-${roomIndex}`).value = diceRoll.target_value || "";
+        toggleDiceRollFields(roomIndex, exitIndex);
+      } else {
+        const diceRollCheckbox = roomElement.querySelector(`#enable-dice-roll-${exitIndex}-${roomIndex}`);
+        diceRollCheckbox.checked = false;
+        roomElement.querySelector(`#dice-roll-${exitIndex}-${roomIndex}`).value = "";
+        roomElement.querySelector(`#dice-target-${exitIndex}-${roomIndex}`).value = "";
+      }
+
       exitIndex++;
     }
   }
@@ -349,17 +400,36 @@ function getStoryData() {
   roomElements.forEach((roomElement, index) => {
     const roomName = roomElement.querySelector(`#room-name-${index}`).value;
     const exits = {};
+    const diceRolls = {};
 
     for (let i = 1; i <= 4; i++) {
       const exitName = roomElement.querySelector(`#exit-${i}-${index}`).value;
       const exitRef = roomElement.querySelector(`#room-ref-${i}-${index}`).value;
+      const diceRollCheckbox = roomElement.querySelector(`#enable-dice-roll-${i}-${index}`);
+      const diceNotation = roomElement.querySelector(`#dice-roll-${i}-${index}`).value;
+      const targetValue = roomElement.querySelector(`#dice-target-${i}-${index}`).value;
 
       if (exitName && exitRef) {
         exits[exitName] = exitRef;
       }
+
+      if (diceRollCheckbox.checked && diceNotation && targetValue) {
+        diceRolls[exitName] = {
+          dice_notation: diceNotation,
+          target_value: parseInt(targetValue)
+        };
+      } else {
+        diceRolls[exitName] = {
+          dice_notation: "",
+          target_value: ""
+        };
+      }
     }
 
-    rooms[roomName] = { exits };
+    rooms[roomName] = {
+      exits,
+      dice_rolls: diceRolls
+    };
   });
 
   return {
@@ -429,7 +499,7 @@ function handleClearImage(event) {
   const roomIndex = event.target.getAttribute('data-room-index');
   const imageInput = document.querySelector(`#room-image-${roomIndex}`);
   const thumbnailElement = document.querySelector(`#room-thumbnail-${roomIndex}`);
- 
+
   imageInput.value = '';
   thumbnailElement.src = '';
   thumbnailElement.style.display = 'none';
@@ -442,4 +512,14 @@ function generateRandomString(length = 8) {
     result += characters.charAt(Math.floor(Math.random() * characters.length));
   }
   return result;
+}
+
+function toggleDiceRollFields(roomIndex, choiceIndex) {
+  const checkbox = document.getElementById(`enable-dice-roll-${choiceIndex}-${roomIndex}`);
+  const diceRollFields = document.getElementById(`dice-roll-fields-${choiceIndex}-${roomIndex}`);
+  if (checkbox.checked) {
+    diceRollFields.style.display = 'block';
+  } else {
+    diceRollFields.style.display = 'none';
+  }
 }

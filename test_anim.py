@@ -1,4 +1,4 @@
-from diceroll_api import dicerollAPI, DiceColor
+from dicerollAPI.diceroll_api import dicerollAPI, DiceColor
 
 def main():
     # Create an instance of the dicerollAPI class
