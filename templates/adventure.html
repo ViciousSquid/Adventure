@@ -51,6 +51,11 @@
             background-color: {{ button_color }};
         }
 
+        #roll-dice-button {
+            font-size: 30px;
+            padding: 20px 40px;
+        }
+
         .history {
             margin-top: 20px;
             text-align: left;
@@ -164,6 +169,13 @@
         .main-menu-button:hover {
             background-color: #777;
         }
+
+        .room-image {
+            display: block;
+            margin: 0 auto;
+            max-width: 100%;
+            height: auto;
+        }
     </style>
 </head>
 <body>
@@ -181,6 +193,13 @@
     </div>
 
     <h1>{{ story_title }}</h1>
+
+    {% if show_map %}
+    <div class="room-image">
+        <img src="{{ url_for('serve_image', filename=room.image) }}" alt="Room Image">
+    </div>
+    {% endif %}
+
     <div class="content">
         {% set paragraphs = content.split('\n\n') %}
         {% for paragraph in paragraphs %}
@@ -213,12 +232,6 @@
         <input type="hidden" name="current_room" value="{{ room.name }}">
         <input type="hidden" name="action_history" value="{{ action_history|join(',') }}">
     </form>
-
-    {% if show_map %}
-    <div>
-        <img src="{{ url_for('serve_image', filename=room.image) }}" alt="Room Image">
-    </div>
-    {% endif %}
 
     <div id="dice-animation-container">
         {% if animation_html %}

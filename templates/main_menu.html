@@ -180,6 +180,7 @@
             </div>
             <form id="upload-form" action="{{ url_for('upload_story') }}" method="post" enctype="multipart/form-data">
                 <input type="file" name="story_file" id="story-file" accept=".zip" style="display: none;">
+                <input type="hidden" name="zipData" id="zip-data">
                 <button type="button" id="upload-button" class="custom-button">Upload Story</button>
             </form>
             <div class="button-container">
@@ -213,8 +214,17 @@
             document.getElementById('story-file').click();
         });
 
-        document.getElementById('story-file').addEventListener('change', function() {
-            document.getElementById('upload-form').submit();
+        document.getElementById('story-file').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                const zipData = e.target.result;
+                document.getElementById('zip-data').value = zipData;
+                document.getElementById('upload-form').submit();
+            };
+
+            reader.readAsDataURL(file);
         });
 
         const changelogLink = document.getElementById('changelog-link');
