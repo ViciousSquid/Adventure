@@ -1,9 +1,11 @@
 from flask import render_template, request, redirect, url_for, make_response, jsonify, session
 from main import app, current_adventure, current_room, action_history, load_adventures
 from dicerollAPI.diceroll_api import dicerollAPI
+from .editor_stuff import story_editor
 from dicerollAPI.diceroll_anim import DiceAnimator
 from collections import Counter
 import zipfile
+import os
 import json
 import ast
 
@@ -36,6 +38,29 @@ def new_story():
         story_name = request.args.get('story_name')
     else:
         story_name = request.form.get('story_name')
+
+    if 'story_uploaded' in session and session['story_uploaded']:
+        story_name = session['story_uploaded']
+        temp_file_path = session['story_zip_file_path']
+
+        # Read the ZIP file data from the temporary file
+        with open(temp_file_path, 'rb') as f:
+            story_zip_data = f.read()
+
+        with zipfile.ZipFile(io.BytesIO(story_zip_data)) as zip_ref:
+            with zip_ref.open('story.json', 'r') as f:
+                story_data = json.load(f)
+        current_adventure = story_name
+        current_room = story_data['start_room']
+        action_history = []  # Reset action history for new story
+        print(">>Starting a New Game:")
+
+        # Remove the temporary file and clear the session data
+        os.remove(temp_file_path)
+        session.pop('story_uploaded', None)
+        session.pop('story_zip_file_path', None)
+
+        return redirect(url_for('adventure_game'))
 
     adventures = load_adventures()
     if story_name in adventures:
@@ -128,15 +153,9 @@ def adventure_game():
     if request.method == 'POST':
         direction = request.form.get('direction')
         if direction:
-            next_room = room['exits'].get(direction, None)
-            if isinstance(next_room, str):
-                # Simple room transition
-                current_room = next_room
-                room = story_data['rooms'][current_room]
-                action_history.append(current_room)
-                content = room['description']
-            elif isinstance(next_room, dict):
-                # Skill check
+            next_room = room['exits'].get(direction)
+            if isinstance(next_room, dict) and 'skill_check' in next_room:
+                # Nested skill check
                 skill_check = next_room['skill_check']
                 dice_type = skill_check['dice_type']
                 target_value = skill_check['target']
@@ -161,6 +180,12 @@ def adventure_game():
                     # Display the room description and the "Roll Dice" button
                     content = room['description']
                     roll_dice_button = f'<form method="post"><input type="hidden" name="direction" value="{direction}"><button type="submit" name="roll_dice">Roll Dice</button></form>'
+            elif isinstance(next_room, str):
+                # Simple room transition
+                current_room = next_room
+                room = story_data['rooms'][current_room]
+                action_history.append(current_room)
+                content = room['description']
             else:
                 content = "You can't go that way."
         else:
