@@ -1,14 +1,15 @@
 ### changelog
 
 
-* build 106
-
-Includes the OpenDyslexia font by Abbie Gonzalez: https://antijingoist.itch.io/opendyslexic
-
-
-* build 105
-
+### build 106 - 19/04/2024
 -----
+* Editor has been completely rewritten to support skill checks and saving-throws.
+* Backwards compatibility with old story files (pre 106) has been retained.
+* Includes the OpenDyslexia font by Abbie Gonzalez: https://antijingoist.itch.io/opendyslexic
+-----
+
+### build 105
+
 
 Integration of `dicerollAPI` :
 Read more about diceroll here: https://github.com/ViciousSquid/diceroll
