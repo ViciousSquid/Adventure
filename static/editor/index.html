@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Story Editor</title>
+  <style>
+    /* General Styles */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar {
+      width: 100%;
+      background-color: #333333;
+      color: #ffffff;
+      padding: 20px;
+      display: flex;
+      align-items: center;
+    }
+
+    .image-placeholder {
+      width: 50px;
+      height: 50px;
+      background-color: #333333;
+      margin-right: 20px;
+    }
+
+    .button-container {
+      display: flex;
+    }
+
+    .main-content {
+      padding: 20px;
+    }
+
+    h1, h2 {
+      color: #333;
+    }
+
+    /* Form Styles */
+    form {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+
+    input[type="text"],
+    input[type="color"],
+    textarea {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+      margin-bottom: 10px;
+    }
+
+    input[type="color"] {
+      width: 40px; /* Square size */
+      height: 40px; /* Square size */
+      padding: 0; /* Remove padding to make the square */
+    }
+
+    textarea {
+      height: 150px; /* Increase the height of textarea elements */
+    }
+
+    /* Styles for story name and start room inputs */
+    #storyName,
+    #startRoom {
+      max-width: 300px; /* Adjust the width as needed */
+    }
+
+    /* Button Styles */
+    button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-right: 10px;
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+
+    button.add-exit {
+      background-color: #007bff; /* Blue color */
+      color: #ffffff; /* White text color */
+    }
+
+    button.add-exit:hover {
+      background-color: #0056b3; /* Darker shade on hover */
+    }
+
+    button.remove-room {
+      background-color: #dc3545; /* Red color */
+      color: #ffffff; /* White text color */
+    }
+
+    button.remove-room:hover {
+      background-color: #c82333; /* Darker shade on hover */
+    }
+
+    /* Room Container Styles */
+    .room-container {
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+
+    .room-container:nth-child(odd) {
+      background-color: #f0f0f0; /* Lighter background for odd numbered rooms */
+    }
+
+    .room-container:nth-child(even) {
+      background-color: #ffffff; /* White background for even numbered rooms */
+    }
+
+    .room-image-container {
+      margin-bottom: 10px;
+    }
+
+    .room-thumbnail {
+      max-width: 100px;
+      max-height: 100px;
+      object-fit: cover;
+      margin-top: 10px;
+    }
+
+    .exits-container {
+      margin-top: 10px;
+    }
+
+    .exit-container,
+    .skill-check-container {
+      margin-bottom: 10px;
+      padding: 10px;
+      background-color: #f5f5f5;
+    }
+
+    .mode-toggle {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      display: flex;
+      align-items: center;
+    }
+
+    .mode-toggle label {
+      display: flex;
+      align-items: center;
+      margin-left: 10px;
+      cursor: pointer;
+    }
+
+    .mode-toggle-text {
+      margin-left: 5px;
+      color: #adadad;
+      transition: color 0.5s ease;
+    }
+
+    body.light-mode {
+      background-color: #fff;
+    }
+
+    body.light-mode h1, body.light-mode h2, body.light-mode label {
+      color: #333;
+    }
+
+    body.light-mode .room-container {
+      background-color: #f0f0f0;
+    }
+
+    body.light-mode .room-container:nth-child(odd) {
+      background-color: #ffffff;
+    }
+
+    body.light-mode .mode-toggle-text {
+      color: #333;
+    }
+
+    @font-face {
+      font-family: 'OpenDyslexic';
+      src: url('/fonts/OpenDyslexic3-Regular.ttf') format('truetype');
+      font-weight: normal;
+      font-style: normal;
+    }
+
+    @font-face {
+      font-family: 'OpenDyslexic';
+      src: url('/fonts/OpenDyslexic3-Bold.ttf') format('truetype');
+      font-weight: bold;
+      font-style: normal;
+    }
+
+    body.dyslexic-font {
+      font-family: 'OpenDyslexic', Arial, sans-serif;
+    }
+
+    body.dyslexic-font input,
+    body.dyslexic-font textarea,
+    body.dyslexic-font button,
+    body.dyslexic-font .mode-toggle-text {
+      font-family: 'OpenDyslexic', Arial, sans-serif;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="sidebar">
+      <div class="image-placeholder"></div>
+      <div class="button-container">
+        <button type="button" id="newStoryButton">New Story</button>
+        <button type="button" id="loadStoryButton">Load Story</button>
+        <button type="submit" id="saveStoryButton">Save Story</button>
+        <button type="button" id="flowchartButton">Flowchart</button>
+      </div>
+    </div>
+
+    <div class="main-content">
+      <h1>Story Editor (beta)</h1>
+
+      <form id="storyForm">
+        <label for="storyName">Story Name:</label>
+        <input type="text" id="storyName" name="storyName" required>
+
+        <label for="buttonColor">Button theme:</label>
+        <input type="color" id="buttonColor" name="buttonColor">
+
+        <label for="startRoom">Start Room:</label>
+        <input type="text" id="startRoom" name="startRoom" required>
+
+        <h2>Rooms</h2>
+        <div id="roomsContainer">
+          <!-- Room inputs will be dynamically added here -->
+        </div>
+        <button type="button" id="addRoomButton">Add Room</button>
+      </form>
+    </div>
+
+    <div class="mode-toggle">
+      <label>
+        <input type="checkbox" id="mode-toggle-checkbox">
+        <span class="mode-toggle-text">Light Mode</span>
+      </label>
+      <label>
+        <input type="checkbox" id="dyslexic-toggle-checkbox">
+        <span class="mode-toggle-text">Dyslexic Font</span>
+      </label>
+    </div>
+
+  </div>
+
+  <script src="main.js"></script>
+  <script src="lib/jszip.min.js"></script>
+  <script>
+    // Add event listener to the new story button
+    document.getElementById('newStoryButton').addEventListener('click', function() {
+      const confirmNew = window.confirm('Are you sure you want to create a new story? All unsaved changes will be lost.');
+      if (confirmNew) {
+        // Clear the form and room containers
+        document.getElementById('storyForm').reset();
+        document.getElementById('roomsContainer').innerHTML = '';
+      }
+    });
+
+    const modeToggleCheckbox = document.getElementById('mode-toggle-checkbox');
+    const dyslexicToggleCheckbox = document.getElementById('dyslexic-toggle-checkbox');
+
+    // Load the light mode setting from localStorage
+    const isLightModeEnabled = localStorage.getItem('isLightModeEnabled') === 'true';
+    modeToggleCheckbox.checked = isLightModeEnabled;
+    updateMode(isLightModeEnabled);
+
+    modeToggleCheckbox.addEventListener('change', () => {
+      updateMode(modeToggleCheckbox.checked);
+      // Store the light mode setting in localStorage
+      localStorage.setItem('isLightModeEnabled', modeToggleCheckbox.checked);
+    });
+
+    function updateMode(isLightMode) {
+      const body = document.body;
+      const modeToggleText = modeToggleCheckbox.nextElementSibling;
+      modeToggleText.textContent = isLightMode ? 'Dark Mode' : 'Light Mode';
+      if (isLightMode) {
+        body.classList.add('light-mode');
+      } else {
+        body.classList.remove('light-mode');
+      }
+    }
+
+    // Load the dyslexic font setting from localStorage
+    const isDyslexicFontEnabled = localStorage.getItem('isDyslexicFontEnabled') === 'true';
+    dyslexicToggleCheckbox.checked = isDyslexicFontEnabled;
+    document.body.classList.toggle('dyslexic-font', isDyslexicFontEnabled);
+
+    dyslexicToggleCheckbox.addEventListener('change', () => {
+      document.body.classList.toggle('dyslexic-font');
+      // Store the dyslexic font setting in localStorage
+      localStorage.setItem('isDyslexicFontEnabled', dyslexicToggleCheckbox.checked);
+    });
+  </script>
+</body>
+</html>
