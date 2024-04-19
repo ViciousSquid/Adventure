@@ -43,15 +43,66 @@ function addRoom() {
   roomImagePreviewContainer.classList.add('room-image-preview');
   roomContainer.appendChild(roomImagePreviewContainer);
 
+  const clearImageButton = document.createElement('button');
+  clearImageButton.type = 'button';
+  clearImageButton.textContent = 'Clear Image';
+  clearImageButton.style.backgroundColor = '#444444'; // Dark grey color
+  clearImageButton.style.color = '#ffffff'; // White text color
+  clearImageButton.addEventListener('click', () => {
+    roomImageInput.value = '';
+    roomImagePreviewContainer.innerHTML = '';
+  });
+  roomContainer.appendChild(clearImageButton);
+
   roomImageInput.addEventListener('change', (event) => {
     const file = event.target.files[0];
     if (file) {
       const reader = new FileReader();
       reader.onload = () => {
-        const imagePreview = document.createElement('img');
+        const imagePreview = new Image();
+        imagePreview.onload = () => {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+
+          // Calculate the aspect ratio of the original image
+          const aspectRatio = imagePreview.width / imagePreview.height;
+
+          // Calculate the dimensions of the thumbnail while maintaining the aspect ratio
+          let thumbnailWidth, thumbnailHeight;
+          if (aspectRatio > 1) {
+            thumbnailWidth = 100;
+            thumbnailHeight = 100 / aspectRatio;
+          } else {
+            thumbnailWidth = 100 * aspectRatio;
+            thumbnailHeight = 100;
+          }
+
+          // Set the canvas dimensions to the thumbnail size
+          canvas.width = 100;
+          canvas.height = 100;
+
+          // Draw the resized image on the canvas
+          ctx.drawImage(
+            imagePreview,
+            0,
+            0,
+            imagePreview.width,
+            imagePreview.height,
+            0,
+            0,
+            thumbnailWidth,
+            thumbnailHeight
+          );
+
+          // Create a new image element and set its source to the thumbnail data URL
+          const thumbnailImage = new Image();
+          thumbnailImage.src = canvas.toDataURL();
+
+          // Add the thumbnail image to the preview container
+          roomImagePreviewContainer.innerHTML = '';
+          roomImagePreviewContainer.appendChild(thumbnailImage);
+        };
         imagePreview.src = reader.result;
-        roomImagePreviewContainer.innerHTML = '';
-        roomImagePreviewContainer.appendChild(imagePreview);
       };
       reader.readAsDataURL(file);
     } else {
@@ -193,20 +244,6 @@ function saveStoryAsJsonFile(storyJson) {
     .catch((error) => {
       console.error('Error saving story:', error);
     });
-}
-
-function updateMode(isLightMode) {
-  const body = document.body;
-  const modeToggleText = modeToggleCheckbox.nextElementSibling;
-  modeToggleText.textContent = isLightMode ? 'Dark Mode' : 'Light Mode';
-
-  // Remove the light-mode class from the body if it exists
-  body.classList.remove('light-mode');
-
-  // Add or remove the light-mode class based on the isLightMode value
-  if (isLightMode) {
-    body.classList.add('light-mode');
-  }
 }
 
 // Function to load story from ZIP file
@@ -513,3 +550,17 @@ saveStoryButton.addEventListener('click', () => {
   // Save the story as a JSON file
   saveStoryAsJsonFile(storyJson);
 });
+
+function updateMode(isLightMode) {
+  const body = document.body;
+  const modeToggleText = modeToggleCheckbox.nextElementSibling;
+  modeToggleText.textContent = isLightMode ? 'Dark Mode' : 'Light Mode';
+
+  // Remove the light-mode class from the body if it exists
+  body.classList.remove('light-mode');
+
+  // Add or remove the light-mode class based on the isLightMode value
+  if (isLightMode) {
+    body.classList.add('light-mode');
+  }
+}
