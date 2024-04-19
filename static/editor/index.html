@@ -111,6 +111,15 @@
       background-color: #c82333; /* Darker shade on hover */
     }
 
+    button#addRoomButton {
+      background-color: #28a745; /* Green color */
+      color: #ffffff; /* White text color */
+    }
+
+    button#addRoomButton:hover {
+      background-color: #1e7e34; /* Darker shade on hover */
+    }
+
     /* Room Container Styles */
     .room-container {
       border: 1px solid #ccc;
@@ -266,10 +275,6 @@
 
     <div class="mode-toggle">
       <label>
-        <input type="checkbox" id="mode-toggle-checkbox">
-        <span class="mode-toggle-text">Light Mode</span>
-      </label>
-      <label>
         <input type="checkbox" id="dyslexic-toggle-checkbox">
         <span class="mode-toggle-text">Dyslexic Font</span>
       </label>
@@ -277,8 +282,6 @@
 
     <div id="userManualContainer">
       <pre>
-**Story Editor User Manual**
-
 **Creating a New Story**
 ------------------------
 
@@ -304,10 +307,15 @@
 4.  If the exit requires a skill check, click the "Add Skill Check" button.
 
     *   Enter the dice type (e.g., "1d20") in the "Skill Check Dice Type" field.
+
     *   Enter the target value for the skill check in the "Skill Check Target" field.
+
     *   Provide a description for the success scenario in the "Success Description" textarea.
+
     *   Enter the name of the room to go to on success in the "Success Room" field.
+
     *   Provide a description for the failure scenario in the "Failure Description" textarea.
+
     *   Enter the name of the room to go to on failure in the "Failure Room" field.
 
 **Removing Rooms**
@@ -319,7 +327,7 @@ To remove a room, click the "Remove Room" button within the room container. You'
 ------------------
 
 1.  Click the "Save Story" button in the sidebar.
-2.  The story will be saved as a ZIP file containing the story data in JSON format and any room images you've included.
+2.  The story will be saved as a ZIP file containing any room images you've included.
 3.  Choose a location on your computer to save the ZIP file.
 
 **Loading a Story**
