@@ -1,4 +1,12 @@
 // Get the necessary elements
+const helpButton = document.getElementById('helpButton');
+const userManualContainer = document.getElementById('userManualContainer');
+
+// Add event listener for the "Help" button
+helpButton.addEventListener('click', () => {
+  userManualContainer.style.display = userManualContainer.style.display === 'none' ? 'block' : 'none';
+});
+
 const storyForm = document.getElementById('storyForm');
 const roomsContainer = document.getElementById('roomsContainer');
 const addRoomButton = document.getElementById('addRoomButton');
