@@ -273,9 +273,10 @@ function loadStoryFromZip() {
                   return Promise.resolve(null);
                 })
             ),
+            zip.file('summary.txt')?.async('string') || Promise.resolve(null), // Load summary.txt if it exists
           ]);
         })
-        .then(([jsonString, imageData]) => {
+        .then(([jsonString, imageData, summaryText]) => {
           const storyData = JSON.parse(jsonString);
           storyData.rooms = Object.entries(storyData.rooms).reduce((rooms, [roomName, roomData], index) => {
             if (imageData[index]) {
@@ -285,6 +286,12 @@ function loadStoryFromZip() {
             return rooms;
           }, {});
           populateEditorFields(storyData);
+
+          // Set the summary field value
+          const summaryInput = document.getElementById('summary');
+          if (summaryInput) {
+            summaryInput.value = summaryText || '';
+          }
         })
         .catch((error) => {
           console.error('Error loading story:', error);
