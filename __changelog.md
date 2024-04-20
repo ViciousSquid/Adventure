@@ -4,7 +4,9 @@
 ### build 106 - 19/04/2024
 -----
 * Editor has been completely rewritten to support skill checks and saving-throws.
+* Example story `dice roll test` can be loaded into the editor
 * Backwards compatibility with old story files (pre 106) has been retained.
+* Added 'summary' field which will appear on main menu in future update.
 * Includes the OpenDyslexia font by Abbie Gonzalez: https://antijingoist.itch.io/opendyslexic
 -----
 
