@@ -216,6 +216,7 @@ storyForm.addEventListener('submit', (event) => {
 function saveStoryAsJsonFile(storyJson) {
   const storyName = document.getElementById('storyName').value || 'untitled_story';
   const storyFileName = `${storyName.replace(/\s+/g, '_')}.zip`;
+  const summaryText = document.getElementById('summary').value;
 
   const zip = new JSZip();
   const jsonString = JSON.stringify(storyJson, null, 2);
@@ -231,6 +232,9 @@ function saveStoryAsJsonFile(storyJson) {
     }
     return Promise.resolve();
   });
+
+  // Add the summary.txt file to the ZIP
+  zip.file('summary.txt', summaryText);
 
   Promise.all(imagePromises)
     .then(() => zip.generateAsync({ type: 'blob' }))
