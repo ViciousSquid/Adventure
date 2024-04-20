@@ -22,37 +22,48 @@ function addRoom() {
   const roomContainer = document.createElement('div');
   roomContainer.classList.add('room-container');
 
+  const roomSidebar = document.createElement('div');
+  roomSidebar.classList.add('room-sidebar');
+  roomContainer.appendChild(roomSidebar);
+
+  const roomContent = document.createElement('div');
+  roomContent.classList.add('room-content');
+  roomContainer.appendChild(roomContent);
+
   const roomNameInput = document.createElement('input');
-  roomNameInput.type = 'text';
-  roomNameInput.name = 'roomName[]';
-  roomNameInput.placeholder = 'Room Name';
-  roomContainer.appendChild(roomNameInput);
+roomNameInput.type = 'text';
+roomNameInput.name = 'roomName[]';
+roomNameInput.placeholder = 'Room Name';
+roomNameInput.maxLength = 25;
+roomNameInput.addEventListener('input', () => {
+  const roomIndex = Array.from(roomsContainer.children).indexOf(roomContainer) + 1;
+  roomNameInput.value = replaceSpacesWithUnderscores(roomNameInput.value);
+  const roomNameWithSpaces = roomNameInput.value.replace(/_/g, ' ');
+  roomSidebar.textContent = roomNameWithSpaces ? roomNameWithSpaces : `Room ${roomIndex}`;
+
+  const lineHeight = parseInt(window.getComputedStyle(roomSidebar).lineHeight);
+  const numLines = Math.ceil(roomSidebar.textContent.length / 14);
+  const newHeight = numLines * lineHeight + 20; // Add 20px for padding
+
+  roomSidebar.style.height = `${newHeight}px`;
+  roomContainer.style.minHeight = `${newHeight}px`;
+});
+roomContent.appendChild(roomNameInput);
 
   const roomDescriptionInput = document.createElement('textarea');
   roomDescriptionInput.name = 'roomDescription[]';
   roomDescriptionInput.placeholder = 'Room Description';
-  roomContainer.appendChild(roomDescriptionInput);
+  roomContent.appendChild(roomDescriptionInput);
 
   const roomImageInput = document.createElement('input');
   roomImageInput.type = 'file';
   roomImageInput.name = 'roomImage[]';
   roomImageInput.accept = 'image/*';
-  roomContainer.appendChild(roomImageInput);
+  roomContent.appendChild(roomImageInput);
 
   const roomImagePreviewContainer = document.createElement('div');
   roomImagePreviewContainer.classList.add('room-image-preview');
-  roomContainer.appendChild(roomImagePreviewContainer);
-
-  const clearImageButton = document.createElement('button');
-  clearImageButton.type = 'button';
-  clearImageButton.textContent = 'Clear Image';
-  clearImageButton.style.backgroundColor = '#444444'; // Dark grey color
-  clearImageButton.style.color = '#ffffff'; // White text color
-  clearImageButton.addEventListener('click', () => {
-    roomImageInput.value = '';
-    roomImagePreviewContainer.innerHTML = '';
-  });
-  roomContainer.appendChild(clearImageButton);
+  roomContent.appendChild(roomImagePreviewContainer);
 
   roomImageInput.addEventListener('change', (event) => {
     const file = event.target.files[0];
@@ -110,9 +121,18 @@ function addRoom() {
     }
   });
 
-  const exitsContainer = document.createElement('div');
-  exitsContainer.classList.add('exits-container');
-  roomContainer.appendChild(exitsContainer);
+  const roomButtons = document.createElement('div');
+  roomButtons.classList.add('room-buttons');
+  roomContent.appendChild(roomButtons);
+
+  const clearImageButton = document.createElement('button');
+  clearImageButton.type = 'button';
+  clearImageButton.textContent = 'Clear Image';
+  clearImageButton.addEventListener('click', () => {
+    roomImageInput.value = '';
+    roomImagePreviewContainer.innerHTML = '';
+  });
+  roomButtons.appendChild(clearImageButton);
 
   const addExitButton = document.createElement('button');
   addExitButton.type = 'button';
@@ -123,16 +143,24 @@ function addRoom() {
     exitContainer.classList.add('exit-container');
 
     const exitNameInput = document.createElement('input');
-    exitNameInput.type = 'text';
-    exitNameInput.name = 'exitName[]';
-    exitNameInput.placeholder = 'Exit Name';
-    exitContainer.appendChild(exitNameInput);
+exitNameInput.type = 'text';
+exitNameInput.name = 'exitName[]';
+exitNameInput.placeholder = 'Exit Name';
+exitNameInput.maxLength = 20;
+exitNameInput.addEventListener('input', () => {
+  exitNameInput.value = replaceSpacesWithUnderscores(exitNameInput.value);
+});
+exitContainer.appendChild(exitNameInput);
 
-    const exitDestinationInput = document.createElement('input');
-    exitDestinationInput.type = 'text';
-    exitDestinationInput.name = 'exitDestination[]';
-    exitDestinationInput.placeholder = 'Exit Destination';
-    exitContainer.appendChild(exitDestinationInput);
+const exitDestinationInput = document.createElement('input');
+exitDestinationInput.type = 'text';
+exitDestinationInput.name = 'exitDestination[]';
+exitDestinationInput.placeholder = 'Exit Destination';
+exitDestinationInput.maxLength = 20;
+exitDestinationInput.addEventListener('input', () => {
+  exitDestinationInput.value = replaceSpacesWithUnderscores(exitDestinationInput.value);
+});
+exitContainer.appendChild(exitDestinationInput);
 
     const addSkillCheckButton = document.createElement('button');
     addSkillCheckButton.type = 'button';
@@ -179,8 +207,12 @@ function addRoom() {
     });
 
     exitContainer.appendChild(addSkillCheckButton);
+    const exitsContainer = document.createElement('div');
+    exitsContainer.classList.add('exits-container');
     exitsContainer.appendChild(exitContainer);
+    roomContent.appendChild(exitsContainer);
   });
+  roomButtons.appendChild(addExitButton);
 
   const removeRoomButton = document.createElement('button');
   removeRoomButton.type = 'button';
@@ -192,9 +224,8 @@ function addRoom() {
       roomContainer.remove();
     }
   });
+  roomButtons.appendChild(removeRoomButton);
 
-  roomContainer.appendChild(addExitButton);
-  roomContainer.appendChild(removeRoomButton);
   roomsContainer.appendChild(roomContainer);
 }
 
@@ -250,58 +281,6 @@ function saveStoryAsJsonFile(storyJson) {
     });
 }
 
-// Function to load story from ZIP file
-function loadStoryFromZip() {
-  const fileInput = document.createElement('input');
-  fileInput.type = 'file';
-  fileInput.accept = '.zip';
-  fileInput.addEventListener('change', (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      JSZip.loadAsync(file)
-        .then((zip) => {
-          return Promise.all([
-            zip.file('story.json').async('string'),
-            Promise.all(
-              Object.keys(zip.files)
-                .filter((fileName) => fileName !== 'story.json')
-                .map((fileName) => {
-                  const fileExtension = fileName.split('.').pop().toLowerCase();
-                  if (fileExtension === 'jpg' || fileExtension === 'jpeg' || fileExtension === 'png') {
-                    return zip.file(fileName).async('base64');
-                  }
-                  return Promise.resolve(null);
-                })
-            ),
-            zip.file('summary.txt')?.async('string') || Promise.resolve(null), // Load summary.txt if it exists
-          ]);
-        })
-        .then(([jsonString, imageData, summaryText]) => {
-          const storyData = JSON.parse(jsonString);
-          storyData.rooms = Object.entries(storyData.rooms).reduce((rooms, [roomName, roomData], index) => {
-            if (imageData[index]) {
-              roomData.image = imageData[index];
-            }
-            rooms[roomName] = roomData;
-            return rooms;
-          }, {});
-          populateEditorFields(storyData);
-
-          // Set the summary field value
-          const summaryInput = document.getElementById('summary');
-          if (summaryInput) {
-            summaryInput.value = summaryText || '';
-          }
-        })
-        .catch((error) => {
-          console.error('Error loading story:', error);
-        });
-    }
-  });
-  fileInput.click();
-}
-
-// Function to populate editor fields with loaded story data
 function populateEditorFields(storyData) {
   // Clear existing fields
   roomsContainer.innerHTML = '';
@@ -316,6 +295,8 @@ function populateEditorFields(storyData) {
     addRoom();
     const roomContainer = roomsContainer.lastElementChild;
     roomContainer.querySelector('input[name="roomName[]"]').value = roomName;
+    const roomSidebar = roomContainer.querySelector('.room-sidebar');
+    roomSidebar.textContent = roomName.replace(/_/g, ' ');
     roomContainer.querySelector('textarea[name="roomDescription[]"]').value = roomData.description || '';
 
     // Display thumbnail if room has an image
@@ -333,7 +314,8 @@ function populateEditorFields(storyData) {
     for (const [exitName, exitData] of Object.entries(roomData.exits)) {
       const addExitButton = roomContainer.querySelector('.add-exit');
       addExitButton.click();
-      const exitContainer = roomContainer.querySelector('.exits-container').lastElementChild;
+      const exitContainers = roomContainer.querySelectorAll('.exit-container');
+      const exitContainer = exitContainers[exitContainers.length - 1];
       exitContainer.querySelector('input[name="exitName[]"]').value = exitName;
 
       if (typeof exitData === 'string') {
@@ -341,7 +323,8 @@ function populateEditorFields(storyData) {
       } else if (typeof exitData === 'object' && exitData.skill_check) {
         const addSkillCheckButton = exitContainer.querySelector('button');
         addSkillCheckButton.click();
-        const skillCheckContainer = exitContainer.querySelector('.skill-check-container');
+        const skillCheckContainers = exitContainer.querySelectorAll('.skill-check-container');
+        const skillCheckContainer = skillCheckContainers[skillCheckContainers.length - 1];
         skillCheckContainer.querySelector('input[name="skillCheckDiceType[]"]').value = exitData.skill_check.dice_type || '';
         skillCheckContainer.querySelector('input[name="skillCheckTarget[]"]').value = exitData.skill_check.target || '';
         skillCheckContainer.querySelector('textarea[name="successDescription[]"]').value = exitData.skill_check.success.description || '';
@@ -351,6 +334,61 @@ function populateEditorFields(storyData) {
       }
     }
   }
+}
+
+// Function to load story from ZIP file
+function loadStoryFromZip() {
+  const fileInput = document.createElement('input');
+  fileInput.type = 'file';
+  fileInput.accept = '.zip';
+  fileInput.addEventListener('change', (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      JSZip.loadAsync(file)
+        .then((zip) => {
+          return Promise.all([
+            zip.file('story.json').async('string'),
+            Promise.all(
+              Object.keys(zip.files)
+                .filter((fileName) => fileName !== 'story.json')
+                .map((fileName) => zip.file(fileName).async('base64'))
+            ),
+            zip.file('summary.txt')?.async('string') || Promise.resolve(null), // Load summary.txt if it exists
+          ]);
+        })
+        .then(([jsonString, imageData, summaryText]) => {
+          const storyData = JSON.parse(jsonString);
+          Object.entries(storyData.rooms).forEach(([roomName, roomData], index) => {
+            if (roomData.image) {
+              const imageFileName = `room_${index + 1}.${roomData.image.split('.').pop()}`;
+              const imageIndex = Object.keys(zip.files).indexOf(imageFileName);
+              if (imageIndex !== -1) {
+                roomData.image = imageData[imageIndex];
+              }
+            }
+          });
+          populateEditorFields(storyData);
+
+          // Set the summary field value
+          const summaryInput = document.getElementById('summary');
+          if (summaryInput) {
+            summaryInput.value = summaryText || '';
+          }
+
+          // Reattach event listener for save button
+          const saveStoryButton = document.getElementById('saveStoryButton');
+          saveStoryButton.addEventListener('click', () => {
+            const editorData = getStoryData();
+            const storyJson = generateJsonFromEditorData(editorData);
+            saveStoryAsJsonFile(storyJson);
+          });
+        })
+        .catch((error) => {
+          console.error('Error loading story:', error);
+        });
+    }
+  });
+  fileInput.click();
 }
 
 // Utility functions
@@ -367,29 +405,55 @@ function getStoryData() {
   const rooms = {};
 
   roomContainers.forEach((roomContainer) => {
-    const roomName = roomContainer.querySelector('input[name="roomName[]"]').value;
-    const roomDescription = roomContainer.querySelector('textarea[name="roomDescription[]"]').value;
+    const roomNameInput = roomContainer.querySelector('input[name="roomName[]"]');
+    const roomName = roomNameInput ? roomNameInput.value : '';
+
+    const roomDescriptionInput = roomContainer.querySelector('textarea[name="roomDescription[]"]');
+    const roomDescription = roomDescriptionInput ? roomDescriptionInput.value : '';
+
     const roomImageInput = roomContainer.querySelector('input[name="roomImage[]"]');
-    const roomImageFile = roomImageInput.files[0];
+    const roomImageFile = roomImageInput && roomImageInput.files[0] ? roomImageInput.files[0] : null;
+
     const exits = {};
 
     const exitContainers = roomContainer.querySelectorAll('.exit-container');
     exitContainers.forEach((exitContainer) => {
-      const exitName = exitContainer.querySelector('input[name="exitName[]"]').value;
-      const exitDestination = exitContainer.querySelector('input[name="exitDestination[]"]').value;
+      const exitNameInput = exitContainer.querySelector('input[name="exitName[]"]');
+      const exitName = exitNameInput ? exitNameInput.value : '';
+
+      const exitDestinationInput = exitContainer.querySelector('input[name="exitDestination[]"]');
+      const exitDestination = exitDestinationInput ? exitDestinationInput.value : '';
 
       const skillCheckContainer = exitContainer.querySelector('.skill-check-container');
       if (skillCheckContainer) {
+        const skillCheckDiceTypeInput = skillCheckContainer.querySelector('input[name="skillCheckDiceType[]"]');
+        const diceType = skillCheckDiceTypeInput ? skillCheckDiceTypeInput.value : '';
+
+        const skillCheckTargetInput = skillCheckContainer.querySelector('input[name="skillCheckTarget[]"]');
+        const target = skillCheckTargetInput ? parseInt(skillCheckTargetInput.value) : 0;
+
+        const successDescriptionInput = skillCheckContainer.querySelector('textarea[name="successDescription[]"]');
+        const successDescription = successDescriptionInput ? successDescriptionInput.value : '';
+
+        const successRoomInput = skillCheckContainer.querySelector('input[name="successRoom[]"]');
+        const successRoom = successRoomInput ? successRoomInput.value : '';
+
+        const failureDescriptionInput = skillCheckContainer.querySelector('textarea[name="failureDescription[]"]');
+        const failureDescription = failureDescriptionInput ? failureDescriptionInput.value : '';
+
+        const failureRoomInput = skillCheckContainer.querySelector('input[name="failureRoom[]"]');
+        const failureRoom = failureRoomInput ? failureRoomInput.value : '';
+
         const skillCheckData = {
-          dice_type: skillCheckContainer.querySelector('input[name="skillCheckDiceType[]"]').value,
-          target: parseInt(skillCheckContainer.querySelector('input[name="skillCheckTarget[]"]').value),
+          dice_type: diceType,
+          target: target,
           success: {
-            description: skillCheckContainer.querySelector('textarea[name="successDescription[]"]').value,
-            room: skillCheckContainer.querySelector('input[name="successRoom[]"]').value
+            description: successDescription,
+            room: successRoom
           },
           failure: {
-            description: skillCheckContainer.querySelector('textarea[name="failureDescription[]"]').value,
-            room: skillCheckContainer.querySelector('input[name="failureRoom[]"]').value
+            description: failureDescription,
+            room: failureRoom
           }
         };
         exits[exitName] = { skill_check: skillCheckData };
@@ -471,96 +535,6 @@ function generateJsonFromEditorData(editorData) {
 
   return jsonData;
 }
-
-// Get the "Save Story" button element
-const saveStoryButton = document.getElementById('saveStoryButton');
-
-// Add event listener to the "Flowchart" button
-const flowchartButton = document.getElementById('flowchartButton');
-flowchartButton.addEventListener('click', showFlowchart);
-
-function showFlowchart() {
-  const storyData = getStoryData();
-  const flowchartHTML = generateFlowchartHTML(storyData);
-
-  const flowchartWindow = window.open('', 'Flowchart', 'width=800,height=600');
-  flowchartWindow.document.write(`
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <title>Story Flowchart</title>
-        <style>
-          .node {
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            background-color: #f9f9f9;
-            display: inline-block;
-            margin: 10px;
-          }
-          .edge {
-            stroke: #333;
-            stroke-width: 2;
-            marker-end: url(#arrow);
-          }
-          .skill-check {
-            font-style: italic;
-          }
-        </style>
-      </head>
-      <body>
-        <h1>Story Flowchart</h1>
-        <div id="flowchart"></div>
-        <svg>
-          <defs>
-            <marker id="arrow" markerWidth="10" markerHeight="10" refX="0" refY="3" orient="auto" markerUnits="strokeWidth">
-              <path d="M0,0 L0,6 L9,3 z" fill="#333" />
-            </marker>
-          </defs>
-        </svg>
-        <script>
-          const flowchartContainer = document.getElementById('flowchart');
-          flowchartContainer.innerHTML = \`${flowchartHTML}\`;
-        </script>
-      </body>
-    </html>
-  `);
-}
-
-function generateFlowchartHTML(storyData) {
-  let flowchartHTML = '';
-
-  for (const [roomName, roomData] of Object.entries(storyData.rooms)) {
-    flowchartHTML += `<div class="node">${roomName}</div>`;
-
-    for (const [exitName, exitData] of Object.entries(roomData.exits)) {
-      if (typeof exitData === 'string') {
-        flowchartHTML += `<div class="node">${exitData}</div>`;
-        flowchartHTML += `<svg><path class="edge" d="M0,0 L100,0" /></svg>`;
-      } else if (typeof exitData === 'object' && exitData.skill_check) {
-        const skillCheckData = exitData.skill_check;
-        flowchartHTML += `<div class="node skill-check">${exitName}<br>${skillCheckData.dice_type} vs ${skillCheckData.target}</div>`;
-        flowchartHTML += `<div class="node">${skillCheckData.success.room}</div>`;
-        flowchartHTML += `<div class="node">${skillCheckData.failure.room}</div>`;
-        flowchartHTML += `<svg><path class="edge" d="M0,0 L100,0" /><path class="edge" d="M0,0 L100,50" /><path class="edge" d="M0,0 L100,-50" /></svg>`;
-      }
-    }
-  }
-
-  return flowchartHTML;
-}
-
-// Add event listener to the "Save Story" button
-saveStoryButton.addEventListener('click', () => {
-  // Get the editor data
-  const editorData = getStoryData();
-
-  // Generate the JSON structure
-  const storyJson = generateJsonFromEditorData(editorData);
-
-  // Save the story as a JSON file
-  saveStoryAsJsonFile(storyJson);
-});
 
 function updateMode(isLightMode) {
   const body = document.body;

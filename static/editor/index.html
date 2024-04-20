@@ -67,19 +67,19 @@
     }
 
     input[type="color"] {
-      width: 40px; /* Square size */
-      height: 40px; /* Square size */
-      padding: 0; /* Remove padding to make the square */
+      width: 40px;
+      height: 40px;
+      padding: 0;
     }
 
     textarea {
-      height: 150px; /* Increase the height of textarea elements */
+      height: 150px;
     }
 
     /* Styles for story name and start room inputs */
     #storyName,
     #startRoom {
-      max-width: 300px; /* Adjust the width as needed */
+      max-width: 300px;
     }
 
     /* Button Styles */
@@ -94,56 +94,86 @@
     }
 
     button.add-exit {
-      background-color: #007bff; /* Blue color */
-      color: #ffffff; /* White text color */
+      background-color: #007bff;
+      color: #ffffff;
     }
 
     button.add-exit:hover {
-      background-color: #0056b3; /* Darker shade on hover */
+      background-color: #0056b3;
     }
 
     button.remove-room {
-      background-color: #dc3545; /* Red color */
-      color: #ffffff; /* White text color */
+      background-color: #dc3545;
+      color: #ffffff;
     }
 
     button.remove-room:hover {
-      background-color: #c82333; /* Darker shade on hover */
+      background-color: #c82333;
     }
 
     button#addRoomButton {
-      background-color: #28a745; /* Green color */
-      color: #ffffff; /* White text color */
+      background-color: #28a745;
+      color: #ffffff;
     }
 
     button#addRoomButton:hover {
-      background-color: #1e7e34; /* Darker shade on hover */
+      background-color: #1e7e34;
     }
 
     /* Room Container Styles */
     .room-container {
-      border: 1px solid #ccc;
-      padding: 10px;
-      margin-bottom: 10px;
+      display: flex;
+      margin-bottom: 20px;
     }
 
     .room-container:nth-child(odd) {
-      background-color: #f0f0f0; /* Lighter background for odd numbered rooms */
+      flex-direction: row;
     }
 
     .room-container:nth-child(even) {
-      background-color: #ffffff; /* White background for even numbered rooms */
+      flex-direction: row-reverse;
     }
 
-    .room-image-container {
-      margin-bottom: 10px;
+    .room-sidebar {
+     width: 40px;
+     height: 360px;
+     background-color: #000;
+     color: #fff;
+     display: flex;
+     font-size: 26px;
+     align-items: center;
+     justify-content: flex-start; /* Align text to the left side */
+     font-weight: bold;
+     padding: 10px;
+     box-sizing: border-box;
+     letter-spacing: 2px;
+     writing-mode: vertical-rl;
+     text-orientation: mixed;
     }
 
-    .room-thumbnail {
-      max-width: 100px;
-      max-height: 100px;
-      object-fit: cover;
+    .room-content {
+      flex: 1;
+      padding: 20px;
+      background-color: #f0f0f0;
+    }
+
+    .room-buttons {
+      display: flex;
+      justify-content: flex-end;
       margin-top: 10px;
+    }
+
+    .room-buttons button {
+      margin-left: 10px;
+    }
+
+    .room-image-preview {
+      margin-top: 10px;
+    }
+
+    .room-image-preview img {
+      max-width: 100%;
+      max-height: 200px;
     }
 
     .exits-container {
@@ -154,7 +184,7 @@
     .skill-check-container {
       margin-bottom: 10px;
       padding: 10px;
-      background-color: #f5f5f5;
+      background-color: #e4e4e4;
     }
 
     .mode-toggle {
@@ -182,16 +212,14 @@
       background-color: #fff;
     }
 
-    body.light-mode h1, body.light-mode h2, body.light-mode label {
+    body.light-mode h1,
+    body.light-mode h2,
+    body.light-mode label {
       color: #333;
     }
 
     body.light-mode .room-container {
       background-color: #f0f0f0;
-    }
-
-    body.light-mode .room-container:nth-child(odd) {
-      background-color: #ffffff;
     }
 
     body.light-mode .mode-toggle-text {
@@ -234,8 +262,8 @@
       z-index: 1;
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
       display: none;
-      max-height: 80vh; /* Adjust the height as needed */
-      overflow-y: auto; /* Add this line to enable vertical scrolling */
+      max-height: 80vh;
+      overflow-y: auto;
     }
   </style>
 </head>
@@ -257,13 +285,13 @@
 
       <form id="storyForm">
         <label for="storyName">Story Name:</label>
-        <input type="text" id="storyName" name="storyName" required>
+        <input type="text" id="storyName" name="storyName" required maxlength="25" pattern="[^\s]+" title="No spaces allowed. Spaces will be replaced with underscores.">
 
         <label for="buttonColor">Button theme:</label>
         <input type="color" id="buttonColor" name="buttonColor">
 
         <label for="startRoom">Start Room:</label>
-        <input type="text" id="startRoom" name="startRoom" required>
+        <input type="text" id="startRoom" name="startRoom" required maxlength="25" pattern="[^\s]+" title="No spaces allowed. Spaces will be replaced with underscores.">
 
         <h2>Rooms</h2>
         <div id="roomsContainer">

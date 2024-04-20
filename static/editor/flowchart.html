@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Story Flowchart</title>
+    <style>
+      .node {
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        background-color: #f9f9f9;
+        display: inline-block;
+        margin: 10px;
+      }
+      .edge {
+        stroke: #333;
+        stroke-width: 2;
+        marker-end: url(#arrow);
+      }
+      .skill-check {
+        font-style: italic;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Story Flowchart</h1>
+    <div id="flowchart"></div>
+    <svg>
+      <defs>
+        <marker id="arrow" markerWidth="10" markerHeight="10" refX="0" refY="3" orient="auto" markerUnits="strokeWidth">
+          <path d="M0,0 L0,6 L9,3 z" fill="#333" />
+        </marker>
+      </defs>
+    </svg>
+    <script>
+      const flowchartContainer = document.getElementById('flowchart');
+      const flowchartHTML = decodeURIComponent(window.location.hash.substring(1));
+      flowchartContainer.innerHTML = flowchartHTML;
+    </script>
+  </body>
+</html>
