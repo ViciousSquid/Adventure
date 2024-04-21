@@ -15,24 +15,41 @@
       flex-direction: column;
     }
 
-    .sidebar {
+    .topbar {
       width: 100%;
       background-color: #333333;
       color: #ffffff;
       padding: 20px;
       display: flex;
+      justify-content: space-between;
       align-items: center;
     }
 
-    .image-placeholder {
-      width: 50px;
-      height: 50px;
-      background-color: #333333;
+    .topbar-left {
+      display: flex;
+      align-items: center;
+    }
+
+    .topbar-title {
+      font-size: 24px;
+      font-weight: bold;
       margin-right: 20px;
     }
 
     .button-container {
       display: flex;
+    }
+
+    .dyslexic-font-toggle {
+      display: flex;
+      align-items: center;
+      margin-left: 20px;
+    }
+
+    .dyslexic-font-toggle label {
+      color: #ffffff;
+      margin-left: 0px;
+      margin-right: 50px;
     }
 
     .main-content {
@@ -60,7 +77,7 @@
     textarea {
       width: 100%;
       padding: 8px;
-      border: 1px solid #ccc;
+      border: 1px solid #cccccc;
       border-radius: 4px;
       box-sizing: border-box;
       margin-bottom: 10px;
@@ -83,41 +100,44 @@
     }
 
     /* Button Styles */
-    button {
+    .button {
+      display: inline-block;
       padding: 10px 20px;
+      text-decoration: none;
       border: none;
       border-radius: 4px;
       cursor: pointer;
       margin-right: 10px;
       margin-bottom: 10px;
       font-size: 14px;
+      color: #ffffff;
+      background-color: #4b4a4a;
+      transition: background-color 0.3s ease;
     }
 
-    button.add-exit {
+    .button:hover {
+      background-color: #494848;
+    }
+
+    .button.add-exit {
       background-color: #007bff;
-      color: #ffffff;
     }
 
-    button.add-exit:hover {
-      background-color: #0056b3;
-    }
-
-    button.remove-room {
+    .button.remove-room {
       background-color: #dc3545;
-      color: #ffffff;
     }
 
-    button.remove-room:hover {
-      background-color: #c82333;
+    .button.add-skill-check {
+      background-color: #ffbd42c4;
+      color: #000000;
     }
 
-    button#addRoomButton {
-      background-color: #28a745;
-      color: #ffffff;
+    .button.remove-exit {
+      background-color: #dc3545;
     }
 
-    button#addRoomButton:hover {
-      background-color: #1e7e34;
+    .button.disabled {
+      background-color: #494848;
     }
 
     /* Room Container Styles */
@@ -135,20 +155,20 @@
     }
 
     .room-sidebar {
-     width: 40px;
-     height: 360px;
-     background-color: #000;
-     color: #fff;
-     display: flex;
-     font-size: 26px;
-     align-items: center;
-     justify-content: flex-start; /* Align text to the left side */
-     font-weight: bold;
-     padding: 10px;
-     box-sizing: border-box;
-     letter-spacing: 2px;
-     writing-mode: vertical-rl;
-     text-orientation: mixed;
+      width: 40px;
+      height: 360px;
+      background-color: #000000;
+      color: #ffffff;
+      display: flex;
+      font-size: 26px;
+      align-items: center;
+      justify-content: flex-start;
+      font-weight: bold;
+      padding: 10px;
+      box-sizing: border-box;
+      letter-spacing: 2px;
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
     }
 
     .room-content {
@@ -163,7 +183,7 @@
       margin-top: 10px;
     }
 
-    .room-buttons button {
+    .room-buttons .button {
       margin-left: 10px;
     }
 
@@ -187,43 +207,13 @@
       background-color: #e4e4e4;
     }
 
-    .mode-toggle {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      display: flex;
-      align-items: center;
+    .thumbnail-container {
+      margin-top: 10px;
     }
 
-    .mode-toggle label {
-      display: flex;
-      align-items: center;
-      margin-left: 10px;
-      cursor: pointer;
-    }
-
-    .mode-toggle-text {
-      margin-left: 5px;
-      color: #adadad;
-      transition: color 0.5s ease;
-    }
-
-    body.light-mode {
-      background-color: #fff;
-    }
-
-    body.light-mode h1,
-    body.light-mode h2,
-    body.light-mode label {
-      color: #333;
-    }
-
-    body.light-mode .room-container {
-      background-color: #f0f0f0;
-    }
-
-    body.light-mode .mode-toggle-text {
-      color: #333;
+    .thumbnail-container img {
+      max-width: 256px;
+      max-height: 192px;
     }
 
     @font-face {
@@ -243,46 +233,32 @@
     body.dyslexic-font {
       font-family: 'OpenDyslexic', Arial, sans-serif;
     }
-
     body.dyslexic-font input,
     body.dyslexic-font textarea,
-    body.dyslexic-font button,
-    body.dyslexic-font .mode-toggle-text {
+    body.dyslexic-font .button {
       font-family: 'OpenDyslexic', Arial, sans-serif;
-    }
-
-    #userManualContainer {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background-color: rgba(255, 255, 255, 0.9);
-      padding: 20px;
-      max-width: 800px;
-      z-index: 1;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-      display: none;
-      max-height: 80vh;
-      overflow-y: auto;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="sidebar">
-      <div class="image-placeholder"></div>
-      <div class="button-container">
-        <button type="button" id="newStoryButton">New Story</button>
-        <button type="button" id="loadStoryButton">Load Story</button>
-        <button type="submit" id="saveStoryButton">Save Story</button>
-        <button type="button" id="flowchartButton">Flowchart</button>
-        <button type="button" id="helpButton">Help</button>
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-title">    Editor!</div>
+        <div class="button-container">
+          <a href="#" id="newStoryLink" class="button">New Story</a>
+          <a href="#" id="loadStoryLink" class="button">Load Story</a>
+          <a href="#" id="saveStoryLink" class="button disabled">Save Story</a>
+          <a href="#" id="flowchartLink" class="button">Flowchart</a>
+        </div>
+      </div>
+      <div class="dyslexic-font-toggle">
+        <input type="checkbox" id="dyslexic-toggle-checkbox">
+        <label for="dyslexic-toggle-checkbox">Dyslexic Font</label>
       </div>
     </div>
 
     <div class="main-content">
-      <h1>Story Editor (beta)</h1>
-
       <form id="storyForm">
         <label for="storyName">Story Name:</label>
         <input type="text" id="storyName" name="storyName" required maxlength="25" pattern="[^\s]+" title="No spaces allowed. Spaces will be replaced with underscores.">
@@ -290,142 +266,27 @@
         <label for="buttonColor">Button theme:</label>
         <input type="color" id="buttonColor" name="buttonColor">
 
-        <label for="startRoom">Start Room:</label>
+        <br> <br>
+        <label for="coverimageUpload">Cover Image & summary:</label>
+        <p>Will be displayed on the main menu. Image will be resized to 256x192.</p>
+<input type="file" id="coverimageUpload" name="coverimageUpload" accept=".jpg">
+<div class="cover-thumbnail-container">
+  <img id="cover-thumbnail" src="" alt="Thumbnail">
+  <br>
+  </div>
+<h2>----- Rooms -----</h2>
+<label for="startRoom">Start Room:</label>
         <input type="text" id="startRoom" name="startRoom" required maxlength="25" pattern="[^\s]+" title="No spaces allowed. Spaces will be replaced with underscores.">
-
-        <h2>Rooms</h2>
         <div id="roomsContainer">
           <!-- Room inputs will be dynamically added here -->
         </div>
-        <button type="button" id="addRoomButton">Add Room</button>
+        <a href="#" id="addRoomLink" class="button">Add Room</a>
       </form>
-    </div>
-
-    <div class="mode-toggle">
-      <label>
-        <input type="checkbox" id="dyslexic-toggle-checkbox">
-        <span class="mode-toggle-text">Dyslexic Font</span>
-      </label>
-    </div>
-
-    <div id="userManualContainer">
-      <pre>
-**Creating a New Story**
-------------------------
-
-1.  Click the "New Story" button in the sidebar.
-2.  Enter a name for your story in the "Story Name" field.
-3.  (Optional) Select a color for the button theme using the "Button theme" color picker.
-4.  Enter the name of the starting room in the "Start Room" field.
-
-**Adding Rooms**
-----------------
-
-1.  Click the "Add Room" button to create a new room.
-2.  Enter the room name in the "Room Name" field.
-3.  Provide a description for the room in the "Room Description" textarea.
-4.  (Optional) Click the "Room Image" file input to upload an image for the room.
-
-**Adding Exits**
-----------------
-
-1.  In the room you want to add an exit to, click the "Add Exit" button.
-2.  Enter the name of the exit in the "Exit Name" field.
-3.  If the exit leads to another room without a skill check, enter the name of the destination room in the "Exit Destination" field.
-4.  If the exit requires a skill check, click the "Add Skill Check" button.
-
-    *   Enter the dice type (e.g., "1d20") in the "Skill Check Dice Type" field.
-
-    *   Enter the target value for the skill check in the "Skill Check Target" field.
-
-    *   Provide a description for the success scenario in the "Success Description" textarea.
-
-    *   Enter the name of the room to go to on success in the "Success Room" field.
-
-    *   Provide a description for the failure scenario in the "Failure Description" textarea.
-
-    *   Enter the name of the room to go to on failure in the "Failure Room" field.
-
-**Removing Rooms**
-------------------
-
-To remove a room, click the "Remove Room" button within the room container. You'll be prompted to confirm the removal.
-
-**Saving a Story**
-------------------
-
-1.  Click the "Save Story" button in the sidebar.
-2.  The story will be saved as a ZIP file containing any room images you've included.
-3.  Choose a location on your computer to save the ZIP file.
-
-**Loading a Story**
--------------------
-
-1.  Click the "Load Story" button in the sidebar.
-2.  Select the ZIP file containing the story you want to load.
-3.  The editor will populate the fields with the loaded story data.
-
-**Generating a Flowchart**
---------------------------
-
-1.  Click the "Flowchart" button in the sidebar.
-2.  A new window will open, displaying a visual representation of the story's flow.
-3.  Rooms are represented as nodes, and exits are shown as edges connecting the nodes.
-4.  Skill checks are displayed as separate nodes with success and failure paths.
-      </pre>
     </div>
 
   </div>
 
   <script src="main.js"></script>
-  <script src="main2.js"></script>
   <script src="lib/jszip.min.js"></script>
-  <script>
-    // Add event listener to the new story button
-    document.getElementById('newStoryButton').addEventListener('click', function() {
-      const confirmNew = window.confirm('Are you sure you want to create a new story? All unsaved changes will be lost.');
-      if (confirmNew) {
-        // Clear the form and room containers
-        document.getElementById('storyForm').reset();
-        document.getElementById('roomsContainer').innerHTML = '';
-      }
-    });
-
-    const modeToggleCheckbox = document.getElementById('mode-toggle-checkbox');
-    const dyslexicToggleCheckbox = document.getElementById('dyslexic-toggle-checkbox');
-
-    // Load the light mode setting from localStorage
-    const isLightModeEnabled = localStorage.getItem('isLightModeEnabled') === 'true';
-    modeToggleCheckbox.checked = isLightModeEnabled;
-    updateMode(isLightModeEnabled);
-
-    modeToggleCheckbox.addEventListener('change', () => {
-      updateMode(modeToggleCheckbox.checked);
-      // Store the light mode setting in localStorage
-      localStorage.setItem('isLightModeEnabled', modeToggleCheckbox.checked);
-    });
-
-    function updateMode(isLightMode) {
-      const body = document.body;
-      const modeToggleText = modeToggleCheckbox.nextElementSibling;
-      modeToggleText.textContent = isLightMode ? 'Dark Mode' : 'Light Mode';
-      if (isLightMode) {
-        body.classList.add('light-mode');
-      } else {
-        body.classList.remove('light-mode');
-      }
-    }
-
-    // Load the dyslexic font setting from localStorage
-    const isDyslexicFontEnabled = localStorage.getItem('isDyslexicFontEnabled') === 'true';
-    dyslexicToggleCheckbox.checked = isDyslexicFontEnabled;
-    document.body.classList.toggle('dyslexic-font', isDyslexicFontEnabled);
-
-    dyslexicToggleCheckbox.addEventListener('change', () => {
-      document.body.classList.toggle('dyslexic-font');
-      // Store the dyslexic font setting in localStorage
-      localStorage.setItem('isDyslexicFontEnabled', dyslexicToggleCheckbox.checked);
-    });
-  </script>
 </body>
 </html>
