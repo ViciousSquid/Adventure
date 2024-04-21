@@ -1,4 +1,5 @@
 from flask import render_template, request, redirect, url_for, make_response, jsonify, session
+from markupsafe import escape  # Import escape from markupsafe
 from main import app, current_adventure, current_room, action_history, load_adventures
 from dicerollAPI.diceroll_api import dicerollAPI
 from .editor_stuff import story_editor
@@ -8,6 +9,18 @@ import zipfile
 import os
 import json
 import ast
+import re
+
+def renderMarkup(text):
+    bold_regex = r"\*\*(.*?)\*\*"
+    italic_regex = r"\*(.*?)\*"
+    newline_regex = r"\n"
+
+    text = re.sub(bold_regex, r"<strong>\1</strong>", text)
+    text = re.sub(italic_regex, r"<em>\1</em>", text)
+    text = re.sub(newline_regex, r"<br>", text)
+
+    return text
 
 @app.route('/images/<path:filename>', methods=['GET'])
 def serve_image(filename):
@@ -149,6 +162,7 @@ def adventure_game():
     player_roll = None  # Initialize player_roll with None
     animation_html = ""  # Initialize animation_html with an empty string
     roll_dice_button = ""  # Initialize roll_dice_button with an empty string
+    dice_notation = ""  # Initialize dice_notation with an empty string
 
     if request.method == 'POST':
         direction = request.form.get('direction')
@@ -159,6 +173,7 @@ def adventure_game():
                 skill_check = next_room['skill_check']
                 dice_type = skill_check['dice_type']
                 target_value = skill_check['target']
+                dice_notation = dice_type  # Get the dice notation from the skill check
 
                 if 'roll_dice' in request.form:
                     # Perform the dice roll and handle the result
@@ -172,26 +187,26 @@ def adventure_game():
 
                     skill_check_result = resolve_skill_check(skill_check, player_roll)
                     current_room = skill_check_result['room']
-                    content = skill_check_result['description']
+                    content = escape(renderMarkup(skill_check_result['description']))  # Use escape and renderMarkup here
 
                     room = story_data['rooms'][current_room]
                     action_history.append(current_room)
                 else:
                     # Display the room description and the "Roll Dice" button
-                    content = room['description']
+                    content = escape(renderMarkup(room['description']))  # Use escape and renderMarkup here
                     roll_dice_button = f'<form method="post"><input type="hidden" name="direction" value="{direction}"><button type="submit" name="roll_dice">Roll Dice</button></form>'
             elif isinstance(next_room, str):
                 # Simple room transition
                 current_room = next_room
                 room = story_data['rooms'][current_room]
                 action_history.append(current_room)
-                content = room['description']
+                content = escape(renderMarkup(room['description']))  # Use escape and renderMarkup here
             else:
                 content = "You can't go that way."
         else:
-            content = room['description']
+            content = escape(renderMarkup(room['description']))  # Use escape and renderMarkup here
     else:
-        content = room['description']
+        content = escape(renderMarkup(room['description']))  # Use escape and renderMarkup here
 
     # Check if the player has reached an ending
     if not room['exits']:
@@ -206,12 +221,12 @@ def adventure_game():
     if room_visit_count >= revisit_count:
         # Add additional content or options from the story.json file
         additional_content = room.get('revisit_content', "")
-        content += "\n" + additional_content
+        content += "\n" + escape(renderMarkup(additional_content))  # Use escape and renderMarkup here
 
     return render_template('adventure.html', content=content, exits=exits, room=room, show_map=show_map,
                            action_history=action_history, button_color=button_color, story_title=story_title,
                            skill_check=skill_check, player_roll=player_roll, animation_html=animation_html,
-                           roll_dice_button=roll_dice_button)
+                           roll_dice_button=roll_dice_button, dice_notation=dice_notation)
 
 @app.route('/dice_roll_image')
 def serve_dice_roll_image():
@@ -233,7 +248,9 @@ def play_story():
     current_room = story_data['rooms'][current_room_id]['name']  # Get the room name
     room = story_data['rooms'][current_room_id]  # Get the current room data
 
-    return render_template('play.html', adventure=story_data, current_room=current_room, action_history=action_history, content=room['description'], exits=[direction for direction, room_name in room['exits'].items() if room_name])
+    content = escape(renderMarkup(room['description']), False)
+    exits = [direction for direction, room_name in room['exits'].items() if room_name]
+    return render_template('play.html', adventure=story_data, current_room=current_room, action_history=action_history, content=content, exits=exits)
 
 @app.route('/play_action', methods=['POST'])
 def play_action():
@@ -256,7 +273,7 @@ def play_action():
             action_history.append(current_room_id)
             current_room = story_data['rooms'][current_room_id]['name']  # Get the new room name
             room = story_data['rooms'][current_room_id]  # Get the new current room data
-            content = room['description']
+            content = escape(renderMarkup(room['description']), False)
             exits = [direction for direction, room_name in room['exits'].items() if room_name]
             return render_template('play.html', adventure=story_data, current_room=current_room, action_history=action_history, content=content, exits=exits)
         else:
@@ -319,7 +336,7 @@ def load_game():
     action_history = data.get('action_history', [])
 
     room = story_data['rooms'][current_room]
-    content = room['description']
+    content = escape(renderMarkup(room['description']), False)
     exits = [direction for direction, room_name in room['exits'].items() if room_name]
     show_map = room.get('show_map', True)
     button_color = story_data.get('button_color', '#4CAF50')
