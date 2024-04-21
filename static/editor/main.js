@@ -337,6 +337,7 @@ function populateEditorFields(storyData) {
 }
 
 // Function to load story from ZIP file
+// Function to load story from ZIP file
 function loadStoryFromZip() {
   const fileInput = document.createElement('input');
   fileInput.type = 'file';
