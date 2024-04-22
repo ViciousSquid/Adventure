@@ -18,7 +18,7 @@ def renderMarkup(text):
 
     text = re.sub(bold_regex, r"<strong>\1</strong>", text)
     text = re.sub(italic_regex, r"<em>\1</em>", text)
-    text = re.sub(newline_regex, r"<br>", text)
+    text = text.replace(newline_regex, "<br>")
 
     return text
 
