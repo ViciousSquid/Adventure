@@ -394,20 +394,6 @@ function populateEditorFields(storyData) {
     addRoom();
   });
 
-  // Reattach event listener for the "Load Story" button
-  loadStoryLink.addEventListener('click', function (event) {
-    event.preventDefault();
-    loadStoryFromZip();
-  });
-
-  // Reattach event listener for the "Save Story" button
-  saveStoryLink.addEventListener('click', function (event) {
-    event.preventDefault();
-    const editorData = getStoryData();
-    const storyJson = generateJsonFromEditorData(editorData);
-    saveStoryAsJsonFile(storyJson);
-  });
-
   // Enable the save link after populating the fields
   saveStoryLink.classList.remove('disabled');
 
@@ -415,6 +401,12 @@ function populateEditorFields(storyData) {
   const summaryInput = document.getElementById('summary');
   if (summaryInput) {
     summaryInput.value = storyData.summary || '';
+  }
+
+  // Display cover thumbnail if it exists
+  if (storyData.cover_thumbnail) {
+    const coverThumbnailImg = document.getElementById('cover-thumbnail');
+    coverThumbnailImg.src = `data:image/jpeg;base64,${storyData.cover_thumbnail}`;
   }
 }
 
@@ -650,6 +642,52 @@ if (coverImageSrc && coverImageSrc !== 'NoImage.jpg' && coverImageSrc.startsWith
   const coverImageFile = coverImageSrc.split(',')[1];
   const coverImageBuffer = Buffer.from(coverImageFile, 'base64');
   zip.file('cover.jpg', coverImageBuffer);
+}
+
+function reattachEventHandlers() {
+  // Reattach event listener for the "Add Room" button
+  addRoomLink.addEventListener('click', function (event) {
+    event.preventDefault();
+    addRoom();
+  });
+
+  // Reattach event listeners for the "Add Exit" buttons
+  const addExitLinks = document.querySelectorAll('.add-exit');
+  addExitLinks.forEach(function (link) {
+    link.addEventListener('click', handleAddExitClick);
+  });
+
+  // Reattach event listeners for the "Remove Room" buttons
+  const removeRoomLinks = document.querySelectorAll('.remove-room');
+  removeRoomLinks.forEach(function (link) {
+    link.addEventListener('click', handleRemoveRoomClick);
+  });
+
+  // Reattach event listeners for the "Add Skill Check" buttons
+  const addSkillCheckLinks = document.querySelectorAll('.add-skill-check');
+  addSkillCheckLinks.forEach(function (link) {
+    link.addEventListener('click', handleAddSkillCheckClick);
+  });
+
+  // Reattach event listeners for the "Remove Exit" buttons
+  const removeExitLinks = document.querySelectorAll('.remove-exit');
+  removeExitLinks.forEach(function (link) {
+    link.addEventListener('click', handleRemoveExitClick);
+  });
+
+  // Reattach event listener for the "Load Story" button
+  loadStoryLink.addEventListener('click', function (event) {
+    event.preventDefault();
+    loadStoryFromZip();
+  });
+
+  // Reattach event listener for the "Save Story" button
+  saveStoryLink.addEventListener('click', function (event) {
+    event.preventDefault();
+    const editorData = getStoryData();
+    const storyJson = generateJsonFromEditorData(editorData);
+    saveStoryAsJsonFile(storyJson);
+  });
 }
 
 document.addEventListener('DOMContentLoaded', function() {
