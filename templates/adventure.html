@@ -194,7 +194,7 @@
 
     <h1>{{ story_title }}</h1>
 
-    {% if show_map %}
+    {% if show_map and room.image and room.image.strip() %}
     <div class="room-image">
         <img src="{{ url_for('serve_image', filename=room.image) }}" alt="Room Image">
     </div>
@@ -216,6 +216,7 @@
                 <form method="post" action="{{ url_for('adventure_game') }}">
                     <input type="hidden" name="direction" value="{{ direction }}">
                     <button type="submit" style="background-color: {{ button_color }};">{{ direction.capitalize().replace('_', ' ') }}</button>
+                    <p>Skill Check: {{ room_data.skill_check.dice_type }} >= {{ room_data.skill_check.target }}</p>
                 </form>
             {% else %}
                 <form method="post" action="{{ url_for('adventure_game') }}">
