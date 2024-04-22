@@ -1,69 +1,104 @@
-<!DOCTYPE html> <html> <head> <title>Dice Roller</title> <style> body { font-family: Arial, sans-serif; text-align: center; padding: 20px; background-color: #1b1919; transition: background-color 0.5s ease; }
-h1 {
-        color: #adadad;
-        transition: color 0.5s ease;
-    }
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dice Roller</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+            background-color: #1b1919;
+            transition: background-color 0.5s ease;
+        }
 
-    .dice-selector {
-        margin-bottom: 20px;
-    }
+        h1 {
+            color: #adadad;
+            transition: color 0.5s ease;
+        }
 
-    .dice-selector label {
-        margin-right: 10px;
-        color: #adadad;
-        transition: color 0.5s ease;
-    }
+        .dice-selector {
+            margin-bottom: 20px;
+        }
 
-    .roll-button {
-        padding: 10px 20px;
-        font-size: 18px;
-        background-color: #4CAF50;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        transition: background-color 0.3s ease;
-    }
+        .dice-selector label {
+            margin-right: 10px;
+            color: #adadad;
+            transition: color 0.5s ease;
+        }
 
-    .roll-button:hover {
-        background-color: #45a049;
-    }
+        .roll-button {
+            padding: 10px 20px;
+            font-size: 18px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
 
-    .dice-animation-container {
-        margin-top: 20px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        min-height: 200px;
-        background-color: #333;
-        border-radius: 5px;
-        transition: background-color 0.5s ease;
-    }
+        .roll-button:hover {
+            background-color: #45a049;
+        }
 
-    .dice-animation {
-        position: relative;
-        width: 150px;
-        height: 150px;
-        background-color: rgba(255, 255, 255, 0);
-        border: 1px solid black;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        animation: roll 1s ease-in-out;
-    }
+        .dice-animation-container {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 200px;
+            background-color: #333;
+            border-radius: 5px;
+            transition: background-color 0.5s ease;
+        }
 
-    .dice-number {
-        font-size: 48px;
-        font-weight: bold;
-        color: white;
-    }
+        .dice-animation {
+            position: relative;
+            width: 150px;
+            height: 150px;
+            background-color: rgba(255, 255, 255, 0);
+            border: 1px solid black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            animation: roll 1s ease-in-out;
+        }
 
-    @keyframes roll {
-        0% { transform: rotateX(0deg) rotateY(0deg); }
-        100% { transform: rotateX(720deg) rotateY(720deg); }
-    }
-</style>
-</head> <body> <h1>Dice Roller</h1>
+        .dice-image {
+            width: 100px;
+            height: 100px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            position: relative;
+        }
+
+        .dice-number {
+            font-size: 40px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            animation: fade-in 1s ease-in-out 1s forwards;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        @keyframes roll {
+            0% { transform: rotateX(0deg) rotateY(0deg); }
+            100% { transform: rotateX(720deg) rotateY(720deg); }
+        }
+
+        @keyframes fade-in {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <h1>Dice Roller</h1>
     <div class="dice-selector">
         <label for="dice-type">Select Dice Type:</label>
         <select id="dice-type" name="dice-type">
@@ -75,31 +110,74 @@ h1 {
             <option value="20">D20</option>
         </select>
     </div>
-    
+
     <button class="roll-button" onclick="rollDice()">Roll Dice</button>
-    
+
     <div class="dice-animation-container">
-        <div id="dice-animation" class="dice-animation">
-            <div id="dice-number" class="dice-number"></div>
-        </div>
+        <div id="dice-animation" class="dice-animation"></div>
     </div>
-    
+
     <script>
         function rollDice() {
             const diceType = parseInt(document.getElementById('dice-type').value);
             const diceNumber = Math.floor(Math.random() * diceType) + 1;
-    
+
             const diceAnimationContainer = document.getElementById('dice-animation');
-            const diceNumberElement = document.getElementById('dice-number');
-    
-            // Reset animation
+
+            // Reset animation and remove existing dice image
             diceAnimationContainer.style.animation = 'none';
+            diceAnimationContainer.innerHTML = '';
             void diceAnimationContainer.offsetWidth; // Trigger reflow
             diceAnimationContainer.style.animation = 'roll 1s ease-in-out';
-    
-            // Update dice number after animation ends
-            setTimeout(() => {
-                diceNumberElement.textContent = diceNumber;
-            }, 1000);
+
+            // Create new dice image element and set its background image
+            const diceImageElement = document.createElement('div');
+            diceImageElement.classList.add('dice-image');
+
+            // Dice images are in [ROOT]/static/dice_imgs
+            // so we need to go back in the directory tree
+            // If the HTML file moves, the images will need updating here
+
+            let imageUrl;
+            switch (diceType) {
+                case 4:
+                    imageUrl = `../static/dice_imgs/blank_d4.png`;
+                    break;
+                case 6:
+                    imageUrl = `../static/dice_imgs/d6_${diceNumber}.png`;
+                    break;
+                case 8:
+                    imageUrl = `../static/dice_imgs/blank_d8.png`;
+                    break;
+                case 10:
+                    imageUrl = `../static/dice_imgs/blank_d10.png`;
+                    break;
+                case 12:
+                    imageUrl = `../static/dice_imgs/blank_d12.png`;
+                    break;
+                case 20:
+                    imageUrl = `../static/dice_imgs/blank_d20.png`;
+                    break;
+                default:
+                    console.error('Invalid dice type');
+                    return;
+            }
+
+            diceImageElement.style.backgroundImage = `url(${imageUrl})`;
+
+            // If the dice type is not D6, overlay the dice number on the image after a 1-second delay
+            if (diceType !== 6) {
+                setTimeout(() => {
+                    const diceNumberElement = document.createElement('div');
+                    diceNumberElement.classList.add('dice-number');
+                    diceNumberElement.textContent = diceNumber;
+                    diceImageElement.appendChild(diceNumberElement);
+                }, 1000);
+            }
+
+            // Append the new dice image element to the animation container
+            diceAnimationContainer.appendChild(diceImageElement);
         }
-    </script> </body> </html>
+    </script>
+</body>
+</html>

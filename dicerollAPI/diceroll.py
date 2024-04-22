@@ -2,6 +2,8 @@ import random
 import logging
 import re
 from collections import defaultdict
+import os
+
 print("+ diceroll engine 105")
 
 class DiceRoller:
@@ -15,11 +17,19 @@ class DiceRoller:
         self.log_formatter = logging.Formatter('%(asctime)s\t%(message)s', '%Y-%m-%d %H:%M:%S')
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.INFO)
-        file_handler = logging.FileHandler('diceroll.log')
+
+        logs_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')
+        if not os.path.exists(logs_dir):
+            os.makedirs(logs_dir)
+
+        log_file = os.path.join(logs_dir, 'diceroll.log')
+        file_handler = logging.FileHandler(log_file)
         file_handler.setFormatter(self.log_formatter)
         self.logger.addHandler(file_handler)
 
     def roll_dice(self, dice_notation, target=None, success_outcome=None, failure_outcome=None):
+        self.last_roll_total = None
+        self.last_roll_details = None
         roll_results = []
         roll_sum = 0
 
@@ -60,8 +70,10 @@ class DiceRoller:
             self.roll_history.append(roll_data)
             self.save_last_5_rolls()
 
-        self.last_roll_total = roll_sum
-        self.last_roll_details = roll_results
+        if not self.last_roll_total:
+            self.last_roll_total = roll_sum
+            self.last_roll_details = roll_results
+
         self.logger.info(f"\tTotal: {roll_sum}")
         return roll_data
 
