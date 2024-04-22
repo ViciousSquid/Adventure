@@ -78,7 +78,7 @@
             z-index: 9999;
             width: 200px;
             height: 200px;
-            background-color: rgba(255, 255, 255, 0.8);
+            background-color: #e0e0e0;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -216,7 +216,6 @@
                 <form method="post" action="{{ url_for('adventure_game') }}">
                     <input type="hidden" name="direction" value="{{ direction }}">
                     <button type="submit" style="background-color: {{ button_color }};">{{ direction.capitalize().replace('_', ' ') }}</button>
-                    <p>Skill Check: {{ room_data.skill_check.dice_type }} >= {{ room_data.skill_check.target }}</p>
                 </form>
             {% else %}
                 <form method="post" action="{{ url_for('adventure_game') }}">
@@ -235,7 +234,10 @@
 
     <div id="dice-animation-container">
         {% if animation_html %}
-            {{ animation_html|safe }}
+            <div class="dice-animation-content">
+                {{ animation_html|safe }}
+                <div class="dice-notation">{{ dice_notation }}</div>
+            </div>
         {% endif %}
     </div>
 

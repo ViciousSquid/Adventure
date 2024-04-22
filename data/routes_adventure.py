@@ -183,7 +183,9 @@ def adventure_game():
                     # Trigger the dice roll animation
                     dice_animator = DiceAnimator()
                     dice_color = 'blue'  # Set the desired dice color
-                    animation_html = dice_animator.animate_dice_roll_html(dice_type, dice_color, dice_roller)
+                    dice_roll_result = dice_roller.roll_dice(dice_type, dice_color)
+                    if dice_roll_result is not None:
+                        animation_html = dice_animator.animate_dice_roll_html(dice_type, dice_color, dice_roll_result)
 
                     skill_check_result = resolve_skill_check(skill_check, player_roll)
                     current_room = skill_check_result['room']

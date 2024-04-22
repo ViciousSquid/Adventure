@@ -3,6 +3,10 @@ from main import app, load_adventures
 from adventures import get_cover_image_data, get_summary_text
 import base64
 
+def is_mobile_device(user_agent):
+    mobile_keywords = ['Android', 'webOS', 'iPhone', 'iPad', 'iPod', 'BlackBerry', 'Windows Phone']
+    return any(keyword in user_agent for keyword in mobile_keywords)
+
 @app.route('/', methods=['GET', 'POST'])
 def main_menu():
     adventures = load_adventures()
@@ -21,7 +25,13 @@ def main_menu():
     cover_image_data = get_cover_image_data('Cosmic_paradox')
     summary_text = get_summary_text('Cosmic_paradox')
 
-    return render_template('main_menu.html', adventures=adventures, selected_story=selected_story, cover_image_data=cover_image_data, summary_text=summary_text)
+    user_agent = request.headers.get('User-Agent')
+    if is_mobile_device(user_agent):
+        template_name = 'main_menu_mobile.html'
+    else:
+        template_name = 'main_menu.html'
+
+    return render_template(template_name, adventures=adventures, selected_story=selected_story, cover_image_data=cover_image_data, summary_text=summary_text)
 
 @app.route('/static/<path:filename>')
 def serve_static(filename):

@@ -16,24 +16,12 @@ class DiceAnimator:
         self.dice_image_path = dice_image_path
         self.animation_style = AnimationStyle.SHAKE
 
-    def animate_dice_roll_html(self, dice_notation, dice_color, dice_roller):
+    def animate_dice_roll_html(self, dice_notation, dice_color, roll_result):
         number_of_dice = int(dice_notation.split("d")[0])
         dice_type = dice_notation.split("d")[1]
 
-        number_of_faces = {
-            "4": 4,
-            "6": 6,
-            "8": 8,
-            "10": 10,
-            "12": 12,
-            "20": 20
-        }
-
-        if dice_type not in number_of_faces:
-            raise ValueError(f"Unsupported dice type: {dice_type}")
-
-        roll_results = [random.randint(1, number_of_faces[dice_type]) for _ in range(number_of_dice)]
-        roll_sum = sum(roll_results)
+        roll_results = roll_result['roll_details']
+        roll_sum = roll_result['roll_result']
 
         dice_images = []
         for result in roll_results:
@@ -63,14 +51,26 @@ class DiceAnimator:
                     width: 150px;
                     height: 171px;
                     background-size: cover;
-                    animation: shake 1s ease-in-out, roll 1s ease-in-out forwards;
+                    animation: shake 0.75s ease-in-out 0s 1, roll 1s ease-in-out 1s forwards;
                 }}
                 .dice-number {{
                     position: absolute;
                     top: 50%;
                     left: 50%;
                     transform: translate(-50%, -50%);
-                    font-size: 28px;
+                    font-size: 40px;
+                    font-weight: bold;
+                    color: black;
+                    opacity: 0;
+                    animation: fade-in 1.25s ease-in-out 1.25s forwards;
+                    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+                }}
+                .dice-notation {{
+                    position: absolute;
+                    top: 10px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    font-size: 14px;
                     font-weight: bold;
                     color: black;
                 }}
@@ -91,13 +91,16 @@ class DiceAnimator:
                     0% {{ transform: translate(0, 0) rotate(0deg); }}
                     100% {{ transform: translate(0, 0) rotate(360deg); }}
                 }}
+                @keyframes fade-in {{
+                    0% {{ opacity: 0; }}
+                    100% {{ opacity: 1; }}
+                }}
             </style>
             <div class="dice-container">
                 {''.join(dice_images)}
             </div>
+            <div class="dice-notation">{dice_notation}</div>
         </div>
         """
-
-        print(f"\t{{'roll_result': {roll_sum}, 'roll_details': {roll_results}}}")
 
         return animation_html

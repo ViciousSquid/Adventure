@@ -284,6 +284,7 @@ function saveStoryAsJsonFile(storyJson) {
   const jsonString = JSON.stringify(storyJson, null, 2);
   zip.file('story.json', jsonString);
 
+  
   const roomContainers = document.querySelectorAll('.room-container');
   const imagePromises = Array.from(roomContainers).map(function (roomContainer, index) {
     const roomImageInput = roomContainer.querySelector('input[name="roomImage[]"]');
@@ -422,7 +423,7 @@ function loadStoryFromZip() {
   const fileInput = document.createElement('input');
   fileInput.type = 'file';
   fileInput.accept = '.zip';
-  fileInput.addEventListener('change', function (event) {
+  fileInput.addEventListener('change', async function (event) {
     const file = event.target.files[0];
     if (file) {
       JSZip.loadAsync(file)
@@ -438,14 +439,23 @@ function loadStoryFromZip() {
                   return zip.file(fileName).async('base64');
                 })
             ),
-            zip.file('summary.txt') ? zip.file('summary.txt').async('string') : Promise.resolve(null), // Load summary.txt if it exists
+            zip.file('summary.txt') ? zip.file('summary.txt').async('string') : Promise.resolve(null),
           ]);
         })
-        .then(function (results) {
+        .then(async function (results) {
           const jsonString = results[0];
           const imageData = results[1];
           const summaryText = results[2];
           const storyData = JSON.parse(jsonString);
+
+          const coverImageFile = zip.file('cover.jpg');
+          if (coverImageFile) {
+            const coverImageData = await coverImageFile.async('base64');
+            const coverImageSrc = `data:image/jpeg;base64,${coverImageData}`;
+            const coverThumbnailImg = document.getElementById('cover-thumbnail');
+            coverThumbnailImg.src = coverImageSrc;
+          }
+
           Object.entries(storyData.rooms).forEach(function (entry, index) {
             const roomName = entry[0];
             const roomData = entry[1];
@@ -457,7 +467,7 @@ function loadStoryFromZip() {
               }
             }
           });
-          storyData.summary = summaryText; // Add summary to the storyData object
+          storyData.summary = summaryText;
           populateEditorFields(storyData);
         })
         .catch(function (error) {
@@ -634,59 +644,13 @@ function updateMode(isLightMode) {
 // storyForm.appendChild(thumbnailContainer);
 
 const coverThumbnailImg = document.getElementById('cover-thumbnail');
-coverThumbnailImg.src = 'NoImage.jpg'; // Set the default src to 'NoImage.jpg'
+const coverImageSrc = coverThumbnailImg.src;
 
-// const coverImageUploadInput = document.querySelector('input[name="coverimageUpload"]');
-//coverImageUploadInput.addEventListener('change', function(event) {
-//  const file = event.target.files[0];
-//  if (file) {
-//    const reader = new FileReader();
-//    reader.onload = function() {
-//      const imagePreview = new Image();
-//      imagePreview.onload = function() {
-//        const canvas = document.createElement('canvas');
-//       const ctx = canvas.getContext('2d');
-//
-//        // Calculate the aspect ratio of the original image
-//        const aspectRatio = imagePreview.width / imagePreview.height;
-//
-//        // Calculate the dimensions of the thumbnail while maintaining the aspect ratio
-//        let thumbnailWidth, thumbnailHeight;
-//        if (aspectRatio > 1) {
-//          thumbnailWidth = 256;
-//          thumbnailHeight = 192 / aspectRatio;
-//        } else {
-//          thumbnailWidth = 256 * aspectRatio;
-//          thumbnailHeight = 192;
-//        }
-//
-//        // Set the canvas dimensions to the thumbnail size
-//        canvas.width = thumbnailWidth;
-//        canvas.height = thumbnailHeight;
-//
-//        // Draw the resized image on the canvas
-//        ctx.drawImage(
-//         imagePreview,
-//          0,
-//          0,
-//          imagePreview.width,
-//          imagePreview.height,
-//          0,
-//          0,
-//          thumbnailWidth,
-//          thumbnailHeight
-//        );
-//
-//        // Set the thumbnail image source to the thumbnail data URL
-//        thumbnailImg.src = canvas.toDataURL();
-//      };
-//      imagePreview.src = reader.result;
-//    };
-//    reader.readAsDataURL(file);
-//  } else {
-//    thumbnailImg.src = '';
-//   }
-// });
+if (coverImageSrc && coverImageSrc !== 'NoImage.jpg' && coverImageSrc.startsWith('data:image/jpeg;base64,')) {
+  const coverImageFile = coverImageSrc.split(',')[1];
+  const coverImageBuffer = Buffer.from(coverImageFile, 'base64');
+  zip.file('cover.jpg', coverImageBuffer);
+}
 
 document.addEventListener('DOMContentLoaded', function() {
   const summaryInput = document.createElement('textarea');

@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adventure!</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            background-color: #222222;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        body::before,
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            width: 10%;
+            background-color: #222222;
+            z-index: -1;
+        }
+
+        body::before {
+            left: 0;
+        }
+
+        body::after {
+            right: 0;
+        }
+
+        .container {
+            max-width: 100%;
+            width: 100%;
+            padding: 10px;
+            text-align: center;
+            background-color: white;
+            box-sizing: border-box;
+            min-height: 100vh;
+        }
+
+        .top-container {
+            background-color: #ffffff;
+            width: 100%;
+        }
+
+        .apple-green-button,
+        .orange-button,
+        .custom-button {
+            width: 400px;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            font-size: 28px;
+            height: 40px;
+            margin-bottom: 10px;
+        }
+
+        .apple-green-button {
+            background-color: #008000;
+            color: white;
+            height: 80px;
+        }
+
+        .orange-button {
+            background-color: #E3963E;
+            width: 400px;
+            color: white;
+            text-decoration: none;
+        }
+
+        .custom-button {
+            background-color: #1e65ff;
+            width: 400px;
+            color: white;
+        }
+
+        .button-container {
+            display: flex;
+            flex-direction: column; /* Change flex direction to column */
+            justify-content: center;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .button-container.green-button-container {
+            margin-bottom: 20px;
+        }
+
+        .button-container .custom-button,
+        .button-container .orange-link {
+            width: 400px;
+            height: 60px;
+            font-size: 20px;
+        }
+
+        .story-select {
+            margin-bottom: 20px;
+        }
+
+        .orange-link {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100px;
+            background-color: #750080;
+            color: white;
+            text-decoration: none;
+            box-sizing: border-box;
+            font-size: 18px;
+            line-height: 30px;
+        }
+
+        select {
+            font-size: 18px;
+            height: 50px;
+            width: 400px;
+        }
+
+        .dyslexic-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+        }
+
+        .dyslexic-toggle label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .dyslexic-toggle-text {
+            margin-left: 5px;
+            color: #adadad;
+        }
+
+        .main-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .left-column,
+        .right-column {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .image-and-summary {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .cover-image-container {
+            width: 400px;
+            height: 139px;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #cover-image {
+            max-width: 400px;
+            max-height: 139px;
+            object-fit: contain;
+        }
+
+        .summary-container {
+            overflow-y: auto;
+            max-width: 400px;
+            max-height: 139px;
+            border-left: none;
+            padding: 10px;
+            box-sizing: border-box;
+            background-color: #f5f5f5;
+        }
+
+        #summary-text {
+            white-space: pre-wrap;
+        }
+
+        .button-row {
+            display: flex;
+            justify-content: center;
+            margin-top: 10px;
+            gap: 5px;
+        }
+
+        @font-face {
+            font-family: 'OpenDyslexic';
+            src: url('/fonts/OpenDyslexic3-Regular.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'OpenDyslexic';
+            src: url('/fonts/OpenDyslexic3-Bold.ttf') format('truetype');
+            font-weight: bold;
+            font-style: normal;
+        }
+
+        body.dyslexic-font,
+        body.dyslexic-font .container,
+        body.dyslexic-font .apple-green-button,
+        body.dyslexic-font .orange-button,
+        body.dyslexic-font .custom-button,
+        body.dyslexic-font .orange-link,
+        body.dyslexic-font select,
+        body.dyslexic-font .dyslexic-toggle-text,
+        body.dyslexic-font option,
+        body.dyslexic-font #summary-text {
+            font-family: 'OpenDyslexic', Arial, sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="top-container">
+            <h1>Adventure!</h1>
+            <b>An interactive story engine</b>
+            <a href="https://github.com/ViciousSquid/Adventure">https://github.com/ViciousSquid/Adventure</a><br><br>
+        </div>
+
+        <div class="main-container">
+            <div class="left-column">
+                <div class="button-container">
+                    <!-- Left column content -->
+                </div>
+            </div>
+            <div class="right-column">
+                <div class="story-select">
+                    <h2>Select a Story:</h2>
+                    <form>
+                        <select name="story_name">
+                            <option value="Cosmic_paradox" selected>Cosmic Paradox</option>
+                            {% for story_name in adventures %}
+                                {% if story_name != 'Cosmic_paradox' %}
+                                    <option value="{{ story_name }}">{{ story_name.replace('_', ' ')|capitalize }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </form>
+                </div>
+                <div class="image-and-summary">
+                    <div class="cover-image-container">
+                        <img id="cover-image" src="" alt="Cover Image">
+                    </div>
+                    <div class="summary-container">
+                        <pre id="summary-text"></pre>
+                    </div>
+                </div>
+                <!-- Green button container -->
+                <div class="button-container green-button-container">
+                    <form id="start-new-story-form" action="{{ url_for('new_story') }}" method="post">
+                        <input type="hidden" name="story_name" id="selected-story-name">
+                        <button type="submit" class="apple-green-button">Start New Story</button>
+                    </form>
+                </div>
+                <!-- Blue and purple buttons container -->
+                <div class="button-container">
+                    <form id="upload-form" action="{{ url_for('upload_story') }}" method="post" enctype="multipart/form-data">
+                        <input type="file" name="story_file" id="story-file" accept=".zip" style="display: none;">
+                        <input type="hidden" name="zipData" id="zip-data">
+                        <button type="button" id="upload-button" class="custom-button">Upload Story</button>
+                    </form>
+                    <!-- Move the Story Editor link after the Upload Story form -->
+                    <a href="{{ url_for('static', filename='editor/index.html') }}" class="orange-link">Story Editor</a>
+                </div>
+            </div>
+        </div>
+
+        <br><br>
+        <a href="#" id="changelog-link">Please Click here for changelog and credits</a>
+
+        <div id="message-box" class="message-box" style="display: none;">
+            <div class="message-box-content">
+                <h3>Version 107</h3>
+                <p>Last update: 21/04/2024</p>
+                <p>Uses the <a href="https://github.com/ViciousSquid/diceroll" target="_blank">diceroll API</a></p>
+                <p>OpenDyslexia font by Abbie Gonzalez:<a href="https://antijingoist.itch.io/opendyslexic" target="_blank">[link]</a></p>
+                <p><a href="https://buymeacoffee.com/vicioussquid" target="_blank">Please buy me a coffee!</a></p>
+                <button id="close-message-box">Close</button>
+            </div>
+        </div>
+
+        <div class="dyslexic-toggle">
+            <label>
+                <input type="checkbox" id="dyslexic-toggle-checkbox">
+                <span class="dyslexic-toggle-text">Dyslexic Font</span>
+            </label>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('upload-button').addEventListener('click', function() {
+            document.getElementById('story-file').click();
+        });
+
+        document.getElementById('story-file').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                const zipData = e.target.result;
+                document.getElementById('zip-data').value = zipData;
+                document.getElementById('upload-form').submit();
+            };
+
+            reader.readAsDataURL(file);
+        });
+
+        const changelogLink = document.getElementById('changelog-link');
+        const messageBox = document.getElementById('message-box');
+        const closeButton = document.getElementById('close-message-box');
+
+        changelogLink.addEventListener('click', () => {
+            messageBox.style.display = 'flex';
+        });
+
+        closeButton.addEventListener('click', () => {
+            messageBox.style.display = 'none';
+        });
+
+        const dyslexicToggleCheckbox = document.getElementById('dyslexic-toggle-checkbox');
+
+        // Load the dyslexic font setting from localStorage
+        const isDyslexicFontEnabled = localStorage.getItem('isDyslexicFontEnabled') === 'true';
+        dyslexicToggleCheckbox.checked = isDyslexicFontEnabled;
+        document.body.classList.toggle('dyslexic-font', isDyslexicFontEnabled);
+
+        dyslexicToggleCheckbox.addEventListener('change', () => {
+            document.body.classList.toggle('dyslexic-font');
+
+            // Store the dyslexic font setting in localStorage
+            localStorage.setItem('isDyslexicFontEnabled', dyslexicToggleCheckbox.checked);
+        });
+
+        const storySelectElement = document.querySelector('select[name="story_name"]');
+        const coverImage = document.getElementById('cover-image');
+        const summaryText = document.getElementById('summary-text');
+
+        // Load the cover image and summary for 'Cosmic Paradox' by default
+        window.addEventListener('DOMContentLoaded', () => {
+            loadStoryData('Cosmic_paradox');
+        });
+
+        storySelectElement.addEventListener('change', () => {
+            const selectedStoryName = storySelectElement.value;
+            loadStoryData(selectedStoryName);
+        });
+
+        function loadStoryData(storyName) {
+            fetch(`/get_story_data?story_name=${storyName}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                const { cover_image_data, summary_text } = data;
+                if (cover_image_data) {
+                    coverImage.src = `data:image/jpeg;base64,${cover_image_data}`;
+                } else {
+                    coverImage.src = '/static/images/book.png';
+                    coverImage.alt = 'Placeholder Cover Image';
+                }
+
+                if (summary_text) {
+                    summaryText.textContent = summary_text;
+                } else {
+                    summaryText.textContent = 'No summary available';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading story data:', error);
+                coverImage.src = '/static/images/book.png';
+                coverImage.alt = 'Placeholder Cover Image';
+                summaryText.textContent = 'No summary available';
+            });
+        }
+
+        const startNewStoryForm = document.getElementById('start-new-story-form');
+        const selectedStoryNameInput = document.getElementById('selected-story-name');
+
+        startNewStoryForm.addEventListener('submit', (event) => {
+            selectedStoryNameInput.value = storySelectElement.value;
+        });
+    </script>
+</body>
+</html>

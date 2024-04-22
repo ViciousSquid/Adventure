@@ -1,0 +1,1 @@
+cover.jpg can be either full-size (400x139) or a thumbnail of 256x192

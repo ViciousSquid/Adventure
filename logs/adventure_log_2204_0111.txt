@@ -1,0 +1,134 @@
+--- Adventure! ---
+* Init...
+--- Adventure! ------ Adventure! ---
+
+ * Serving Flask app 'main'
+ * Serving Flask app 'main'
+ * Debug mode: off
+ * Debug mode: off
+WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on http://127.0.0.1:5000
+
+ * Running on http://127.0.0.1:5000
+
+ * Running on http://127.0.0.1:5000
+Press CTRL+C to quitPress CTRL+C to quitPress CTRL+C to quit
+
+
+127.0.0.1 - - [22/Apr/2024 01:12:02] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [22/Apr/2024 01:12:02] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [22/Apr/2024 01:12:02] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [22/Apr/2024 01:12:02] "GET /get_story_data?story_name=Cosmic_paradox HTTP/1.1" 200 -
+127.0.0.1 - - [22/Apr/2024 01:12:02] "GET /get_story_data?story_name=Cosmic_paradox HTTP/1.1" 200 -
+127.0.0.1 - - [22/Apr/2024 01:12:02] "GET /get_story_data?story_name=Cosmic_paradox HTTP/1.1" 200 -
+127.0.0.1 - - [22/Apr/2024 01:12:05] "GET /get_story_data?story_name=Dice_Roll_Test_1 HTTP/1.1" 200 -
+127.0.0.1 - - [22/Apr/2024 01:12:05] "GET /get_story_data?story_name=Dice_Roll_Test_1 HTTP/1.1" 200 -
+127.0.0.1 - - [22/Apr/2024 01:12:05] "GET /get_story_data?story_name=Dice_Roll_Test_1 HTTP/1.1" 200 -
+Current adventure set to: Dice_Roll_Test_1Current adventure set to: Dice_Roll_Test_1
+
+>>Starting a New Game:>>Starting a New Game:
+
+127.0.0.1 - - [22/Apr/2024 01:12:06] "127.0.0.1 - - [22/Apr/2024 01:12:06] "127.0.0.1 - - [22/Apr/2024 01:12:06] "POST /new_story HTTP/1.1POST /new_story HTTP/1.1POST /new_story HTTP/1.1" 302 -
+" 302 -
+" 302 -
+>choice point>choice point
+
+127.0.0.1 - - [22/Apr/2024 01:12:06] "GET /adventure HTTP/1.1" 200 -
+127.0.0.1 - - [22/Apr/2024 01:12:06] "GET /adventure HTTP/1.1" 200 -
+127.0.0.1 - - [22/Apr/2024 01:12:06] "GET /adventure HTTP/1.1" 200 -
+127.0.0.1 - - [22/Apr/2024 01:12:06] "127.0.0.1 - - [22/Apr/2024 01:12:06] "127.0.0.1 - - [22/Apr/2024 01:12:06] "GET /images/ HTTP/1.1GET /images/ HTTP/1.1GET /images/ HTTP/1.1" 404 -
+" 404 -
+" 404 -
+>choice point>choice point
+
+127.0.0.1 - - [22/Apr/2024 01:12:07] "POST /adventure HTTP/1.1" 200 -
+127.0.0.1 - - [22/Apr/2024 01:12:07] "POST /adventure HTTP/1.1" 200 -
+127.0.0.1 - - [22/Apr/2024 01:12:07] "POST /adventure HTTP/1.1" 200 -
+127.0.0.1 - - [22/Apr/2024 01:12:07] "127.0.0.1 - - [22/Apr/2024 01:12:07] "127.0.0.1 - - [22/Apr/2024 01:12:07] "GET /images/ HTTP/1.1GET /images/ HTTP/1.1GET /images/ HTTP/1.1" 404 -
+" 404 -
+" 404 -
+>choice point>choice point
+
+Dice Notation: 1d6Dice Notation: 1d6
+
+Roll Result: 2Roll Result: 2
+
+Roll Details: [2]Roll Details: [2]
+
+Dice Notation: 1d6Dice Notation: 1d6
+
+Roll Result: 4Roll Result: 4
+
+Roll Details: [4]Roll Details: [4]
+
+127.0.0.1 - - [22/Apr/2024 01:12:08] "POST /adventure HTTP/1.1" 200 -
+127.0.0.1 - - [22/Apr/2024 01:12:08] "POST /adventure HTTP/1.1" 200 -
+127.0.0.1 - - [22/Apr/2024 01:12:08] "POST /adventure HTTP/1.1" 200 -
+127.0.0.1 - - [22/Apr/2024 01:12:08] "127.0.0.1 - - [22/Apr/2024 01:12:08] "127.0.0.1 - - [22/Apr/2024 01:12:08] "GET /images/ HTTP/1.1GET /images/ HTTP/1.1GET /images/ HTTP/1.1" 404 -
+" 404 -
+" 404 -
+127.0.0.1 - - [22/Apr/2024 01:12:08] "GET /static/dice_imgs/d6_4.png HTTP/1.1" 200 -
+127.0.0.1 - - [22/Apr/2024 01:12:08] "GET /static/dice_imgs/d6_4.png HTTP/1.1" 200 -
+127.0.0.1 - - [22/Apr/2024 01:12:08] "GET /static/dice_imgs/d6_4.png HTTP/1.1" 200 -
+>choice point>choice point
+
+127.0.0.1 - - [22/Apr/2024 01:12:11] "POST /adventure HTTP/1.1" 200 -
+127.0.0.1 - - [22/Apr/2024 01:12:11] "POST /adventure HTTP/1.1" 200 -
+127.0.0.1 - - [22/Apr/2024 01:12:11] "POST /adventure HTTP/1.1" 200 -
+127.0.0.1 - - [22/Apr/2024 01:12:11] "127.0.0.1 - - [22/Apr/2024 01:12:11] "127.0.0.1 - - [22/Apr/2024 01:12:11] "GET /images/ HTTP/1.1GET /images/ HTTP/1.1GET /images/ HTTP/1.1" 404 -
+" 404 -
+" 404 -
+>choice point>choice point
+
+Dice Notation: 1d4Dice Notation: 1d4
+
+Roll Result: 1Roll Result: 1
+
+Roll Details: [1]Roll Details: [1]
+
+Dice Notation: 1d4Dice Notation: 1d4
+
+Roll Result: 1Roll Result: 1
+
+Roll Details: [1]Roll Details: [1]
+
+127.0.0.1 - - [22/Apr/2024 01:12:13] "POST /adventure HTTP/1.1" 200 -
+127.0.0.1 - - [22/Apr/2024 01:12:13] "POST /adventure HTTP/1.1" 200 -
+127.0.0.1 - - [22/Apr/2024 01:12:13] "POST /adventure HTTP/1.1" 200 -
+127.0.0.1 - - [22/Apr/2024 01:12:13] "127.0.0.1 - - [22/Apr/2024 01:12:13] "127.0.0.1 - - [22/Apr/2024 01:12:13] "GET /images/ HTTP/1.1GET /images/ HTTP/1.1GET /images/ HTTP/1.1" 404 -
+" 404 -
+" 404 -
+127.0.0.1 - - [22/Apr/2024 01:12:13] "127.0.0.1 - - [22/Apr/2024 01:12:13] "127.0.0.1 - - [22/Apr/2024 01:12:13] "GET /static/dice_imgs/blank_d4.png HTTP/1.1GET /static/dice_imgs/blank_d4.png HTTP/1.1GET /static/dice_imgs/blank_d4.png HTTP/1.1" 304 -
+" 304 -
+" 304 -
+>choice point>choice point
+
+127.0.0.1 - - [22/Apr/2024 01:12:16] "POST /adventure HTTP/1.1" 200 -
+127.0.0.1 - - [22/Apr/2024 01:12:16] "POST /adventure HTTP/1.1" 200 -
+127.0.0.1 - - [22/Apr/2024 01:12:16] "POST /adventure HTTP/1.1" 200 -
+127.0.0.1 - - [22/Apr/2024 01:12:16] "127.0.0.1 - - [22/Apr/2024 01:12:16] "127.0.0.1 - - [22/Apr/2024 01:12:16] "GET /images/ HTTP/1.1GET /images/ HTTP/1.1GET /images/ HTTP/1.1" 404 -
+" 404 -
+" 404 -
+>choice point>choice point
+
+Dice Notation: 1d12Dice Notation: 1d12
+
+Roll Result: 9Roll Result: 9
+
+Roll Details: [9]Roll Details: [9]
+
+Dice Notation: 1d12Dice Notation: 1d12
+
+Roll Result: 2Roll Result: 2
+
+Roll Details: [2]Roll Details: [2]
+
+127.0.0.1 - - [22/Apr/2024 01:12:17] "POST /adventure HTTP/1.1" 200 -
+127.0.0.1 - - [22/Apr/2024 01:12:17] "POST /adventure HTTP/1.1" 200 -
+127.0.0.1 - - [22/Apr/2024 01:12:17] "POST /adventure HTTP/1.1" 200 -
+127.0.0.1 - - [22/Apr/2024 01:12:17] "127.0.0.1 - - [22/Apr/2024 01:12:17] "127.0.0.1 - - [22/Apr/2024 01:12:17] "GET /images/ HTTP/1.1GET /images/ HTTP/1.1GET /images/ HTTP/1.1" 404 -
+" 404 -
+" 404 -
+127.0.0.1 - - [22/Apr/2024 01:12:17] "GET /static/dice_imgs/blank_d12.png HTTP/1.1" 200 -
+127.0.0.1 - - [22/Apr/2024 01:12:17] "GET /static/dice_imgs/blank_d12.png HTTP/1.1" 200 -
+127.0.0.1 - - [22/Apr/2024 01:12:17] "GET /static/dice_imgs/blank_d12.png HTTP/1.1" 200 -

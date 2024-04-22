@@ -1,0 +1,105 @@
+<!DOCTYPE html> <html> <head> <title>Dice Roller</title> <style> body { font-family: Arial, sans-serif; text-align: center; padding: 20px; background-color: #1b1919; transition: background-color 0.5s ease; }
+h1 {
+        color: #adadad;
+        transition: color 0.5s ease;
+    }
+
+    .dice-selector {
+        margin-bottom: 20px;
+    }
+
+    .dice-selector label {
+        margin-right: 10px;
+        color: #adadad;
+        transition: color 0.5s ease;
+    }
+
+    .roll-button {
+        padding: 10px 20px;
+        font-size: 18px;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+    .roll-button:hover {
+        background-color: #45a049;
+    }
+
+    .dice-animation-container {
+        margin-top: 20px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 200px;
+        background-color: #333;
+        border-radius: 5px;
+        transition: background-color 0.5s ease;
+    }
+
+    .dice-animation {
+        position: relative;
+        width: 150px;
+        height: 150px;
+        background-color: rgba(255, 255, 255, 0);
+        border: 1px solid black;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        animation: roll 1s ease-in-out;
+    }
+
+    .dice-number {
+        font-size: 48px;
+        font-weight: bold;
+        color: white;
+    }
+
+    @keyframes roll {
+        0% { transform: rotateX(0deg) rotateY(0deg); }
+        100% { transform: rotateX(720deg) rotateY(720deg); }
+    }
+</style>
+</head> <body> <h1>Dice Roller</h1>
+    <div class="dice-selector">
+        <label for="dice-type">Select Dice Type:</label>
+        <select id="dice-type" name="dice-type">
+            <option value="4">D4</option>
+            <option value="6">D6</option>
+            <option value="8">D8</option>
+            <option value="10">D10</option>
+            <option value="12">D12</option>
+            <option value="20">D20</option>
+        </select>
+    </div>
+    
+    <button class="roll-button" onclick="rollDice()">Roll Dice</button>
+    
+    <div class="dice-animation-container">
+        <div id="dice-animation" class="dice-animation">
+            <div id="dice-number" class="dice-number"></div>
+        </div>
+    </div>
+    
+    <script>
+        function rollDice() {
+            const diceType = parseInt(document.getElementById('dice-type').value);
+            const diceNumber = Math.floor(Math.random() * diceType) + 1;
+    
+            const diceAnimationContainer = document.getElementById('dice-animation');
+            const diceNumberElement = document.getElementById('dice-number');
+    
+            // Reset animation
+            diceAnimationContainer.style.animation = 'none';
+            void diceAnimationContainer.offsetWidth; // Trigger reflow
+            diceAnimationContainer.style.animation = 'roll 1s ease-in-out';
+    
+            // Update dice number after animation ends
+            setTimeout(() => {
+                diceNumberElement.textContent = diceNumber;
+            }, 1000);
+        }
+    </script> </body> </html>
