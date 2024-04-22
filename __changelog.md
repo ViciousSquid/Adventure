@@ -1,14 +1,20 @@
 ### changelog
 
 
+* build 107
+
+Story editor has been completely rewritten from scratch to support diceroll features.
+Backwards compatibility with pre-107 stories has been maintained (buggy)
+
+-----
+
 * build 106
 
 Includes the OpenDyslexia font by Abbie Gonzalez: https://antijingoist.itch.io/opendyslexic
 
+-----
 
 * build 105
-
------
 
 Integration of `dicerollAPI` :
 Read more about diceroll here: https://github.com/ViciousSquid/diceroll
