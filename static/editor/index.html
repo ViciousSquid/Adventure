@@ -40,18 +40,6 @@
       display: flex;
     }
 
-    .dyslexic-font-toggle {
-      display: flex;
-      align-items: center;
-      margin-left: 20px;
-    }
-
-    .dyslexic-font-toggle label {
-      color: #ffffff;
-      margin-left: 0px;
-      margin-right: 50px;
-    }
-
     .main-content {
       padding: 20px;
     }
@@ -244,7 +232,7 @@
   <div class="container">
     <div class="topbar">
       <div class="topbar-left">
-        <div class="topbar-title">    Editor!</div>
+        <div class="topbar-title">Editor!</div>
         <div class="button-container">
           <a href="#" id="newStoryLink" class="button">New Story</a>
           <a href="#" id="loadStoryLink" class="button">Load Story</a>
@@ -252,16 +240,12 @@
           <a href="#" id="flowchartLink" class="button">Flowchart</a>
         </div>
       </div>
-      <div class="dyslexic-font-toggle">
-        <input type="checkbox" id="dyslexic-toggle-checkbox">
-        <label for="dyslexic-toggle-checkbox">Dyslexic Font</label>
-      </div>
     </div>
 
     <div class="main-content">
       <form id="storyForm">
         <label for="storyName">Story Name:</label>
-        <input type="text" id="storyName" name="storyName" required maxlength="25" pattern="[^\s]+" title="No spaces allowed. Spaces will be replaced with underscores.">
+        <input type="text" id="storyName" name="storyName" required maxlength="25" pattern="[^\s]+" title="The name of the story">
 
         <label for="buttonColor">Button theme:</label>
         <input type="color" id="buttonColor" name="buttonColor">
@@ -269,14 +253,14 @@
         <br> <br>
         <label for="coverimageUpload">Cover Image & summary:</label>
         <p>Will be displayed on the main menu. Image will be resized to 256x192.</p>
-<input type="file" id="coverimageUpload" name="coverimageUpload" accept=".jpg">
-<div class="cover-thumbnail-container">
-  <img id="cover-thumbnail" src="" alt="Thumbnail">
-  <br>
-  </div>
-<h2>----- Rooms -----</h2>
-<label for="startRoom">Start Room:</label>
-        <input type="text" id="startRoom" name="startRoom" required maxlength="25" pattern="[^\s]+" title="No spaces allowed. Spaces will be replaced with underscores.">
+        <input type="file" id="coverimageUpload" name="coverimageUpload" accept=".jpg">
+        <div class="cover-thumbnail-container">
+          <img id="cover-thumbnail" src="" alt="Thumbnail">
+          <br>
+        </div>
+        <h2>----- Rooms -----</h2>
+        <label for="startRoom">Start Room:</label>
+        <input type="text" id="startRoom" name="startRoom" required maxlength="25" pattern="[^\s]+" title="Starting room (required)">
         <div id="roomsContainer">
           <!-- Room inputs will be dynamically added here -->
         </div>
@@ -286,7 +270,7 @@
 
   </div>
 
-  <script src="main.js"></script>
   <script src="lib/jszip.min.js"></script>
+  <script src="data/main.js" type="module"></script>
 </body>
 </html>
