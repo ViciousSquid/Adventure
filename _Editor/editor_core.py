@@ -59,10 +59,25 @@ class RoomWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.initUserInterface()
-        self.roomImageLabel.setFixedSize(100, 75)  # Set a fixed size for the thumbnail
 
     def initUserInterface(self):
         layout = QVBoxLayout()
+
+        # Room name input
+        roomNameLayout = QHBoxLayout()
+        roomNameLabel = QLabel("Room Name:")
+        self.roomNameInput = QLineEdit()
+        self.roomNameInput.setMaxLength(60)
+        self.roomNameInput.textChanged.connect(self.emitRoomNameChanged)
+        roomNameLayout.addWidget(roomNameLabel)
+        roomNameLayout.addWidget(self.roomNameInput)
+        layout.addLayout(roomNameLayout)
+
+        # Room description input
+        roomDescriptionLabel = QLabel("Room Description:")
+        self.roomDescriptionInput = QTextEdit()
+        layout.addWidget(roomDescriptionLabel)
+        layout.addWidget(self.roomDescriptionInput)
 
         # Room image input
         roomImageLayout = QHBoxLayout()
@@ -72,9 +87,8 @@ class RoomWidget(QWidget):
         roomImageLayout.addWidget(self.roomImageButton)
         layout.addLayout(roomImageLayout)
 
-        # Room image preview (thumbnail)
+        # Room image preview
         self.roomImageLabel = QLabel()
-        self.roomImageLabel.setStyleSheet("background-color: gray;")  # Set a gray background for the thumbnail
         layout.addWidget(self.roomImageLabel)
 
         # Exits
@@ -91,6 +105,9 @@ class RoomWidget(QWidget):
         self.exitsLayout.addWidget(exitWidget)
         self.updateTabIcon()
 
+    def emitRoomNameChanged(self):
+        self.roomNameChanged.emit(self.roomNameInput.text())
+
     def hasSkillCheck(self):
         for index in range(self.exitsLayout.count()):
             widget = self.exitsLayout.itemAt(index).widget()
@@ -106,6 +123,12 @@ class RoomWidget(QWidget):
         else:
             tabWidget.setTabIcon(tabIndex, QIcon())
 
+        # Update the skill check indicator visibility for each exit
+        for index in range(self.exitsLayout.count()):
+            widget = self.exitsLayout.itemAt(index).widget()
+            if isinstance(widget, ExitWidget):
+                widget.skillCheckIndicator.setVisible(self.hasSkillCheck())
+
     def removeInvalidExits(self):
         for index in range(self.exitsLayout.count() - 1, -1, -1):
             widget = self.exitsLayout.itemAt(index).widget()
@@ -119,7 +142,6 @@ class StoryEditorWidget(QWidget):
         self.initUserInterface()
         self.addRoomButton.clicked.connect(self.addRoom)
         self.addExitButton.clicked.connect(self.addExit)
-        self.leftColumnToggleButton.clicked.connect(self.toggleLeftColumn)
 
     def initUserInterface(self):
         mainLayout = QHBoxLayout()
@@ -175,19 +197,13 @@ class StoryEditorWidget(QWidget):
         startRoomLayout.addWidget(self.startRoomInput)
         leftLayout.addLayout(startRoomLayout)
 
-        # Left column toggle button
-        self.leftColumnToggleButton = QPushButton(">")
-        self.leftColumnToggleButton.setFixedSize(20, 20)
-        leftLayout.addWidget(self.leftColumnToggleButton, 0, Qt.AlignRight)
-
         self.leftColumn.setLayout(leftLayout)
         mainLayout.addWidget(self.leftColumn)
 
         # Splitter for right section
         splitter = QSplitter(Qt.Vertical)
-        splitter.setHandleWidth(2)  # Set a thin resize handle
 
-        # Top section (room name and description)
+        # Top section (room details)
         topSection = QWidget()
         topLayout = QVBoxLayout()
 
@@ -233,7 +249,7 @@ class StoryEditorWidget(QWidget):
 
         bottomSection.setLayout(bottomLayout)
         splitter.addWidget(bottomSection)
-        splitter.setSizes([200, 400])  # Initial sizes for top and bottom sections
+        splitter.setSizes([300, 200])  # Initial sizes for top and bottom sections
 
         mainLayout.addWidget(splitter)
         self.setLayout(mainLayout)
@@ -274,14 +290,6 @@ class StoryEditorWidget(QWidget):
             self.roomsTabWidget.removeTab(tabIndex)
             self.startRoomInput.removeItem(tabIndex)
 
-    def toggleLeftColumn(self):
-        if self.leftColumn.isVisible():
-            self.leftColumn.hide()
-            self.leftColumnToggleButton.setText(">")
-        else:
-            self.leftColumn.show()
-            self.leftColumnToggleButton.setText("<")
-
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -314,12 +322,6 @@ class MainWindow(QMainWindow):
         self.toggleDarkModeAction.setChecked(CURRENT_THEME == "dark")
         self.toggleDarkModeAction.triggered.connect(self.toggleDarkMode)
 
-        # Toggle left column action
-        self.toggleLeftColumnAction = viewMenu.addAction("Toggle Left Column")
-        self.toggleLeftColumnAction.setCheckable(True)
-        self.toggleLeftColumnAction.setChecked(self.storyEditorWidget.leftColumn.isVisible())
-        self.toggleLeftColumnAction.triggered.connect(self.toggleLeftColumnVisibility)
-
         # Connect signals and slots
         self.storyEditorWidget.buttonColorButton.clicked.connect(self.showColorDialog)
         self.storyEditorWidget.coverImageButton.clicked.connect(self.openCoverImageDialog)
@@ -348,12 +350,6 @@ class MainWindow(QMainWindow):
                     QSize(256, 192), Qt.KeepAspectRatio, Qt.SmoothTransformation
                 )
                 self.storyEditorWidget.coverImageLabel.setPixmap(scaledPixmap)
-
-    def toggleLeftColumnVisibility(self, checked):
-        if checked:
-            self.storyEditorWidget.leftColumn.show()
-        else:
-            self.storyEditorWidget.leftColumn.hide()
 
 if __name__ == "__main__":
     application = QApplication(sys.argv)
