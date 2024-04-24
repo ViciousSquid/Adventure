@@ -2,7 +2,8 @@ import zipfile
 import json
 from PyQt5.QtWidgets import QMessageBox, QFileDialog, QLineEdit, QTextEdit, QWidget
 from PyQt5.QtGui import QPixmap
-from PyQt5.QtCore import QByteArray, QBuffer, QIODevice
+from PyQt5.QtCore import QByteArray, QBuffer, QIODevice, Qt
+
 from widgets.skill_check_widget import SkillCheckWidget
 from widgets.exit_widget import ExitWidget
 
@@ -68,7 +69,9 @@ def loadStory(storyEditorWidget, filename):
                     room_image_data = zip_file.read(room_image_filename)
                     pixmap = QPixmap()
                     pixmap.loadFromData(room_image_data)
-                    room_widget.roomImageLabel.setPixmap(pixmap)
+                    room_widget.roomImageLabel.setPixmap(pixmap.scaled(room_widget.roomImageLabel.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation))
+                else:
+                    room_widget.roomImageLabel.clear()  # Clear the image label if no image is present
 
                 # Load exits
                 for exit_name, exit_data in room_data.get('exits', {}).items():
