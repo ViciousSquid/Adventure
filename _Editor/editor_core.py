@@ -249,7 +249,7 @@ class StoryEditorWidget(QWidget):
 
         bottomSection.setLayout(bottomLayout)
         splitter.addWidget(bottomSection)
-        splitter.setSizes([300, 200])  # Initial sizes for top and bottom sections
+        splitter.setSizes([400, 200])  # Initial sizes for top and bottom sections
 
         mainLayout.addWidget(splitter)
         self.setLayout(mainLayout)
@@ -322,6 +322,12 @@ class MainWindow(QMainWindow):
         self.toggleDarkModeAction.setChecked(CURRENT_THEME == "dark")
         self.toggleDarkModeAction.triggered.connect(self.toggleDarkMode)
 
+        # Toggle sidebar action
+        self.toggleSidebarAction = viewMenu.addAction("Toggle Sidebar")
+        self.toggleSidebarAction.setCheckable(True)
+        self.toggleSidebarAction.setChecked(True)
+        self.toggleSidebarAction.triggered.connect(self.toggleSidebar)
+
         # Connect signals and slots
         self.storyEditorWidget.buttonColorButton.clicked.connect(self.showColorDialog)
         self.storyEditorWidget.coverImageButton.clicked.connect(self.openCoverImageDialog)
@@ -351,12 +357,18 @@ class MainWindow(QMainWindow):
                 )
                 self.storyEditorWidget.coverImageLabel.setPixmap(scaledPixmap)
 
+    def toggleSidebar(self, checked):
+        if checked:
+            self.storyEditorWidget.leftColumn.show()
+        else:
+            self.storyEditorWidget.leftColumn.hide()
+
 if __name__ == "__main__":
     application = QApplication(sys.argv)
 
     # Set the font for the application
-    font = QFont("Open Dyslexic")
-    application.setFont(font)
+    # font = QFont("Open Dyslexic")
+    # application.setFont(font)
 
     # Set the theme
     set_theme()
