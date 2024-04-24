@@ -28,11 +28,16 @@ class ExitWidget(QWidget):
         layout.addWidget(self.exitDestinationInput)
 
         # Add skill check button
-        self.addSkillCheckButton = QPushButton()
-        self.addSkillCheckButton.setIcon(QIcon("editordata/dice.png"))
-        self.addSkillCheckButton.setIconSize(QIcon("editordata/dice.png").actualSize(QSize(20, 20)))
+        self.addSkillCheckButton = QPushButton("Add Skill Check")
         self.addSkillCheckButton.clicked.connect(self.openSkillCheckDialog)
         layout.addWidget(self.addSkillCheckButton)
+
+        # Skill check indicator
+        self.skillCheckIndicator = QLabel()
+        self.skillCheckIndicator.setPixmap(QIcon("editordata/dice.png").pixmap(20, 20))
+        self.skillCheckIndicator.setVisible(False)
+        self.skillCheckIndicator.mousePressEvent = self.openSkillCheckDialog
+        layout.addWidget(self.skillCheckIndicator)
 
         self.setLayout(layout)
 
@@ -45,7 +50,8 @@ class ExitWidget(QWidget):
             dialog.setSkillCheckData(self.skillCheckData)
         if dialog.exec() == QDialog.Accepted:
             self.skillCheckData = dialog.getSkillCheckData()
-            self.addSkillCheckButton.setIcon(QIcon("editordata/dice.png"))
+            self.skillCheckIndicator.setVisible(True)
+            self.parent().updateTabIcon()  # Update the tab icon when skill check data changes
         else:
-            self.skillCheckData = None
-            self.addSkillCheckButton.setIcon(QIcon())
+            self.skillCheckIndicator.setVisible(False)
+            self.parent().updateTabIcon()  # Update the tab icon when skill check data changes
