@@ -1,57 +1,67 @@
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLineEdit, QLabel, QPushButton, QDialog
-from PyQt5.QtGui import QIcon
-from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLineEdit, QPushButton, QLabel
+from PyQt5.QtGui import QPixmap
+from PyQt5.QtCore import Qt
 
 class ExitWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.initUI()
         self.skillCheckData = None
+        self.initUI()
 
     def initUI(self):
         layout = QHBoxLayout()
 
-        # Exit name input
-        exitNameLabel = QLabel("Exit Name:")
         self.exitNameInput = QLineEdit()
-        self.exitNameInput.setObjectName("exitNameInput")
-        self.exitNameInput.setMaxLength(20)
-        layout.addWidget(exitNameLabel)
+        self.exitNameInput.setPlaceholderText("Exit Name")
         layout.addWidget(self.exitNameInput)
 
-        # Exit destination input
-        exitDestinationLabel = QLabel("Destination:")
         self.exitDestinationInput = QLineEdit()
-        self.exitDestinationInput.setObjectName("exitDestinationInput")
-        self.exitDestinationInput.setMaxLength(20)
-        layout.addWidget(exitDestinationLabel)
+        self.exitDestinationInput.setPlaceholderText("Destination")
         layout.addWidget(self.exitDestinationInput)
 
-        # Add skill check button
-        self.addSkillCheckButton = QPushButton("Add Skill Check")
-        self.addSkillCheckButton.clicked.connect(self.openSkillCheckDialog)
-        layout.addWidget(self.addSkillCheckButton)
+        addSkillCheckButton = QPushButton("Add Skill Check")
+        addSkillCheckButton.clicked.connect(self.addSkillCheck)
+        layout.addWidget(addSkillCheckButton)
 
-        # Skill check indicator
         self.skillCheckIndicator = QLabel()
-        self.skillCheckIndicator.setPixmap(QIcon("editordata/dice.png").pixmap(20, 20))
+        self.skillCheckIndicator.setPixmap(QPixmap("editordata/dice.png").scaled(16, 16))
         self.skillCheckIndicator.setVisible(False)
-        self.skillCheckIndicator.mousePressEvent = self.openSkillCheckDialog
+        self.skillCheckIndicator.mousePressEvent = self.showSkillCheckDialog
         layout.addWidget(self.skillCheckIndicator)
 
         self.setLayout(layout)
 
-    def openSkillCheckDialog(self, event=None):
-        # Import SkillCheckDialog here when it's actually needed
-        from editor_core import SkillCheckDialog
+    def addSkillCheck(self):
+        from widgets.skill_check_dialog import SkillCheckDialog
+        skillCheckDialog = SkillCheckDialog(self)
+        if skillCheckDialog.exec_():
+            self.skillCheckData = skillCheckDialog.getSkillCheckData()
+            self.updateIcon()
 
-        dialog = SkillCheckDialog(self)
+    def showSkillCheckDialog(self, event):
+        from widgets.skill_check_dialog import SkillCheckDialog
+        skillCheckDialog = SkillCheckDialog(self)
+        skillCheckDialog.setSkillCheckData(self.skillCheckData)
+        if skillCheckDialog.exec_():
+            self.skillCheckData = skillCheckDialog.getSkillCheckData()
+            self.updateIcon()
+
+    def updateIcon(self):
         if self.skillCheckData:
-            dialog.setSkillCheckData(self.skillCheckData)
-        if dialog.exec() == QDialog.Accepted:
-            self.skillCheckData = dialog.getSkillCheckData()
             self.skillCheckIndicator.setVisible(True)
-            self.parent().updateTabIcon()  # Update the tab icon when skill check data changes
         else:
             self.skillCheckIndicator.setVisible(False)
-            self.parent().updateTabIcon()  # Update the tab icon when skill check data changes
+        self.updateRoomWidgetIcons()
+
+    def updateRoomWidgetIcons(self):
+        room_widget = self.findRoomWidget()
+        if room_widget:
+            room_widget.updateIcons()
+
+    def findRoomWidget(self):
+        parent = self.parent()
+        while parent:
+            if isinstance(parent, QWidget) and hasattr(parent, 'updateIcons'):
+                return parent
+            parent = parent.parent()
+        return None
