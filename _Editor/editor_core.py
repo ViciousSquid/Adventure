@@ -11,13 +11,16 @@ import zipfile
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLineEdit,
     QPushButton, QTextEdit, QFileDialog, QLabel, QColorDialog, QComboBox,
-    QTabWidget, QScrollArea, QMessageBox, QMenu, QAction, QDialog, QSplitter
+    QTabWidget, QScrollArea, QMessageBox, QMenu, QAction, QDialog, QSplitter, QCheckBox
 )
 from PyQt5.QtGui import QPixmap, QColor, QFont, QImage, QIcon
 from PyQt5.QtCore import Qt, QRect, QSize, QByteArray, QBuffer, QIODevice, pyqtSignal
 
 from widgets.skill_check_widget import SkillCheckWidget
 from widgets.exit_widget import ExitWidget
+from widgets.revisit_dialog import RevisitDialog
+from widgets.RoomWidget import RoomWidget
+from widgets.skill_check_dialog import SkillCheckDialog
 from theme import set_theme, CURRENT_THEME
 
 print("Imports loaded \nPyQt5 loaded")
@@ -52,89 +55,6 @@ class SkillCheckDialog(QDialog):
 
     def setSkillCheckData(self, data):
         self.skillCheckWidget.setSkillCheckData(data)
-
-class RoomWidget(QWidget):
-    roomNameChanged = pyqtSignal(str)
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.initUserInterface()
-
-    def initUserInterface(self):
-        layout = QVBoxLayout()
-
-        # Room name input
-        roomNameLayout = QHBoxLayout()
-        roomNameLabel = QLabel("Room Name:")
-        self.roomNameInput = QLineEdit()
-        self.roomNameInput.setMaxLength(60)
-        self.roomNameInput.textChanged.connect(self.emitRoomNameChanged)
-        roomNameLayout.addWidget(roomNameLabel)
-        roomNameLayout.addWidget(self.roomNameInput)
-        layout.addLayout(roomNameLayout)
-
-        # Room description input
-        roomDescriptionLabel = QLabel("Room Description:")
-        self.roomDescriptionInput = QTextEdit()
-        layout.addWidget(roomDescriptionLabel)
-        layout.addWidget(self.roomDescriptionInput)
-
-        # Room image input
-        roomImageLayout = QHBoxLayout()
-        roomImageLabel = QLabel("Room Image:")
-        self.roomImageButton = QPushButton("Choose Image")
-        roomImageLayout.addWidget(roomImageLabel)
-        roomImageLayout.addWidget(self.roomImageButton)
-        layout.addLayout(roomImageLayout)
-
-        # Room image preview
-        self.roomImageLabel = QLabel()
-        layout.addWidget(self.roomImageLabel)
-
-        # Exits
-        self.exitsLayout = QVBoxLayout()
-        self.exitsLayout.setSpacing(2)  # Decreased vertical spacing between exits
-        exitsLabel = QLabel("Exits:")
-        self.exitsLayout.addWidget(exitsLabel)
-        layout.addLayout(self.exitsLayout)
-
-        self.setLayout(layout)
-
-    def addExit(self):
-        exitWidget = ExitWidget(self)
-        self.exitsLayout.addWidget(exitWidget)
-        self.updateTabIcon()
-
-    def emitRoomNameChanged(self):
-        self.roomNameChanged.emit(self.roomNameInput.text())
-
-    def hasSkillCheck(self):
-        for index in range(self.exitsLayout.count()):
-            widget = self.exitsLayout.itemAt(index).widget()
-            if isinstance(widget, ExitWidget) and widget.skillCheckData:
-                return True
-        return False
-
-    def updateTabIcon(self):
-        tabWidget = self.parent().parent()
-        tabIndex = tabWidget.indexOf(self)
-        if self.hasSkillCheck():
-            tabWidget.setTabIcon(tabIndex, QIcon("editordata/dice.png"))
-        else:
-            tabWidget.setTabIcon(tabIndex, QIcon())
-
-        # Update the skill check indicator visibility for each exit
-        for index in range(self.exitsLayout.count()):
-            widget = self.exitsLayout.itemAt(index).widget()
-            if isinstance(widget, ExitWidget):
-                widget.skillCheckIndicator.setVisible(self.hasSkillCheck())
-
-    def removeInvalidExits(self):
-        for index in range(self.exitsLayout.count() - 1, -1, -1):
-            widget = self.exitsLayout.itemAt(index).widget()
-            if not isinstance(widget, ExitWidget):
-                self.exitsLayout.removeWidget(widget)
-                widget.deleteLater()
 
 class StoryEditorWidget(QWidget):
     def __init__(self, parent=None):
@@ -290,10 +210,34 @@ class StoryEditorWidget(QWidget):
             self.roomsTabWidget.removeTab(tabIndex)
             self.startRoomInput.removeItem(tabIndex)
 
+class AboutDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("About Story Editor")
+
+        layout = QVBoxLayout()
+
+        title_label = QLabel("Version 1.0     build 107")
+        layout.addWidget(title_label)
+
+        description_label = QLabel("https://github.com/ViciousSquid/Adventure")
+        description_label.setWordWrap(True)
+        layout.addWidget(description_label)
+
+        ok_button = QPushButton("OK")
+        ok_button.clicked.connect(self.accept)
+        layout.addWidget(ok_button, 0, Qt.AlignRight)
+
+        self.setLayout(layout)
+        self.setMinimumWidth(400)  # Set the minimum width here
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.initUserInterface()
+
+        # Store the current application font
+        self.applicationFont = QApplication.font()
 
     def initUserInterface(self):
         self.setWindowTitle("Story Editor")
@@ -307,6 +251,7 @@ class MainWindow(QMainWindow):
         self.menubar = self.menuBar()
         fileMenu = self.menubar.addMenu("File")
         viewMenu = self.menubar.addMenu("View")
+        helpMenu = self.menubar.addMenu("Help")  # Add Help menu
 
         # Load story action
         loadStoryAction = fileMenu.addAction("Load Story")
@@ -327,6 +272,18 @@ class MainWindow(QMainWindow):
         self.toggleSidebarAction.setCheckable(True)
         self.toggleSidebarAction.setChecked(True)
         self.toggleSidebarAction.triggered.connect(self.toggleSidebar)
+
+        # Text size UP action
+        self.textSizeUpAction = viewMenu.addAction("Text size UP")
+        self.textSizeUpAction.triggered.connect(self.increaseFontSize)
+
+        # Text size DN action
+        self.textSizeDownAction = viewMenu.addAction("Text size DN")
+        self.textSizeDownAction.triggered.connect(self.decreaseFontSize)
+
+        # About action
+        aboutAction = helpMenu.addAction("About")
+        aboutAction.triggered.connect(self.showAboutDialog)
 
         # Connect signals and slots
         self.storyEditorWidget.buttonColorButton.clicked.connect(self.showColorDialog)
@@ -362,6 +319,20 @@ class MainWindow(QMainWindow):
             self.storyEditorWidget.leftColumn.show()
         else:
             self.storyEditorWidget.leftColumn.hide()
+
+    def increaseFontSize(self):
+        font = self.applicationFont
+        font.setPointSize(font.pointSize() + 1)
+        QApplication.setFont(font)
+
+    def decreaseFontSize(self):
+        font = self.applicationFont
+        font.setPointSize(max(font.pointSize() - 1, 1))
+        QApplication.setFont(font)
+
+    def showAboutDialog(self):
+        aboutDialog = AboutDialog(self)
+        aboutDialog.exec_()
 
 if __name__ == "__main__":
     application = QApplication(sys.argv)
