@@ -11,7 +11,8 @@ import zipfile
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLineEdit,
     QPushButton, QTextEdit, QFileDialog, QLabel, QColorDialog, QComboBox,
-    QTabWidget, QScrollArea, QMessageBox, QMenu, QAction, QDialog, QSplitter, QCheckBox
+    QTabWidget, QScrollArea, QMessageBox, QMenu, QAction, QDialog, QSplitter,
+    QCheckBox, QPlainTextEdit, QDialogButtonBox
 )
 from PyQt5.QtGui import QPixmap, QColor, QFont, QImage, QIcon
 from PyQt5.QtCore import Qt, QRect, QSize, QByteArray, QBuffer, QIODevice, pyqtSignal
@@ -22,6 +23,7 @@ from widgets.revisit_dialog import RevisitDialog
 from widgets.RoomWidget import RoomWidget
 from widgets.skill_check_dialog import SkillCheckDialog
 from theme import set_theme, CURRENT_THEME
+from settings_window import SettingsWindow
 
 print("Imports loaded \nPyQt5 loaded")
 
@@ -174,6 +176,15 @@ class StoryEditorWidget(QWidget):
         mainLayout.addWidget(splitter)
         self.setLayout(mainLayout)
 
+    def updateFonts(self, font):
+        def updateWidgetFont(widget):
+            widget.setFont(font)
+            for child in widget.findChildren(QWidget):
+                updateWidgetFont(child)
+
+        updateWidgetFont(self)
+        self.setStyleSheet("QWidget {font-family: '" + font.family() + "';}")
+
     def addRoom(self):
         roomWidget = RoomWidget(self)
         tabIndex = self.roomsTabWidget.addTab(roomWidget, "New Room")
@@ -214,30 +225,67 @@ class AboutDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("About Story Editor")
+        self.initUI()
 
+    def initUI(self):
         layout = QVBoxLayout()
 
-        title_label = QLabel("Version 1.0     build 107")
-        layout.addWidget(title_label)
+        about_label = QLabel("Development build 107")
+        layout.addWidget(about_label)
 
-        description_label = QLabel("https://github.com/ViciousSquid/Adventure")
-        description_label.setWordWrap(True)
-        layout.addWidget(description_label)
+        informative_label = QLabel("https://github.com/ViciousSquid/Adventure")
+        layout.addWidget(informative_label)
 
-        ok_button = QPushButton("OK")
-        ok_button.clicked.connect(self.accept)
-        layout.addWidget(ok_button, 0, Qt.AlignRight)
+        button_box = QDialogButtonBox(QDialogButtonBox.Ok)
+        button_box.accepted.connect(self.accept)
+        layout.addWidget(button_box)
 
         self.setLayout(layout)
-        self.setMinimumWidth(400)  # Set the minimum width here
+
+    def sizeHint(self):
+        return QSize(400, 200)  # Adjust the size as needed
+
+class JsonViewDialog(QDialog):
+    def __init__(self, parent=None, json_data=None, mode="Complete"):
+        super().__init__(parent)
+        self.setWindowTitle("View Story JSON")
+        self.initUI(json_data, mode)
+
+    def initUI(self, json_data, mode):
+        layout = QVBoxLayout()
+
+        json_text_edit = QPlainTextEdit()
+        json_text_edit.setReadOnly(True)
+
+        if mode == "Complete":
+            json_text_edit.setPlainText(json.dumps(json_data, indent=2))
+        elif mode == "Rooms":
+            json_text_edit.setPlainText(json.dumps(list(json_data['rooms'].keys()), indent=2))
+        elif mode == "Rooms with Exits":
+            rooms_with_exits = {room: data['exits'] for room, data in json_data['rooms'].items() if data['exits']}
+            json_text_edit.setPlainText(json.dumps(rooms_with_exits, indent=2))
+        elif mode == "Rooms without Exits":
+            rooms_without_exits = [room for room, data in json_data['rooms'].items() if not data['exits']]
+            json_text_edit.setPlainText(json.dumps(rooms_without_exits, indent=2))
+        elif mode == "Room Count":
+            room_count = len(json_data['rooms'])
+            room_names = list(json_data['rooms'].keys())
+            text = f"Number of rooms: {room_count}\n\nRoom names:\n"
+            text += "\n".join(room_names)
+            json_text_edit.setPlainText(text)
+
+        # Add a maximize button control
+        maximize_button = QPushButton("Maximize")  # Use QPushButton instead of QToolButton
+        maximize_button.clicked.connect(self.showMaximized)
+
+        layout.addWidget(json_text_edit)
+        layout.addWidget(maximize_button, alignment=Qt.AlignRight)  # Add the maximize button to the layout
+        self.setLayout(layout)
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.initUserInterface()
-
-        # Store the current application font
-        self.applicationFont = QApplication.font()
 
     def initUserInterface(self):
         self.setWindowTitle("Story Editor")
@@ -251,7 +299,8 @@ class MainWindow(QMainWindow):
         self.menubar = self.menuBar()
         fileMenu = self.menubar.addMenu("File")
         viewMenu = self.menubar.addMenu("View")
-        helpMenu = self.menubar.addMenu("Help")  # Add Help menu
+        settingsMenu = self.menubar.addMenu("Settings")  # Add Settings menu
+        helpMenu = self.menubar.addMenu("Help")  # Move Help menu after Settings
 
         # Load story action
         loadStoryAction = fileMenu.addAction("Load Story")
@@ -261,25 +310,28 @@ class MainWindow(QMainWindow):
         saveStoryAction = fileMenu.addAction("Save Story")
         saveStoryAction.triggered.connect(lambda: openSaveStoryDialog(self.storyEditorWidget))
 
-        # Toggle dark mode action
-        self.toggleDarkModeAction = viewMenu.addAction("Toggle Dark Mode")
-        self.toggleDarkModeAction.setCheckable(True)
-        self.toggleDarkModeAction.setChecked(CURRENT_THEME == "dark")
-        self.toggleDarkModeAction.triggered.connect(self.toggleDarkMode)
-
         # Toggle sidebar action
         self.toggleSidebarAction = viewMenu.addAction("Toggle Sidebar")
         self.toggleSidebarAction.setCheckable(True)
         self.toggleSidebarAction.setChecked(True)
         self.toggleSidebarAction.triggered.connect(self.toggleSidebar)
 
-        # Text size UP action
-        self.textSizeUpAction = viewMenu.addAction("Text size UP")
-        self.textSizeUpAction.triggered.connect(self.increaseFontSize)
+        # View Story Data menu
+        viewStoryDataMenu = viewMenu.addMenu("View Story Data")
+        viewStoryJsonAction = viewStoryDataMenu.addAction("Complete")
+        viewStoryJsonAction.triggered.connect(lambda: self.viewStoryJson("Complete"))
+        viewRoomsAction = viewStoryDataMenu.addAction("Rooms")
+        viewRoomsAction.triggered.connect(lambda: self.viewStoryJson("Rooms"))
+        viewRoomsWithExitsAction = viewStoryDataMenu.addAction("Rooms with Exits")
+        viewRoomsWithExitsAction.triggered.connect(lambda: self.viewStoryJson("Rooms with Exits"))
+        viewRoomsWithoutExitsAction = viewStoryDataMenu.addAction("Rooms without Exits")
+        viewRoomsWithoutExitsAction.triggered.connect(lambda: self.viewStoryJson("Rooms without Exits"))
+        viewRoomCountAction = viewStoryDataMenu.addAction("Room Count")
+        viewRoomCountAction.triggered.connect(lambda: self.viewStoryJson("Room Count"))
 
-        # Text size DN action
-        self.textSizeDownAction = viewMenu.addAction("Text size DN")
-        self.textSizeDownAction.triggered.connect(self.decreaseFontSize)
+        # Settings action
+        settingsAction = settingsMenu.addAction("Settings")
+        settingsAction.triggered.connect(self.showSettingsWindow)
 
         # About action
         aboutAction = helpMenu.addAction("About")
@@ -289,11 +341,11 @@ class MainWindow(QMainWindow):
         self.storyEditorWidget.buttonColorButton.clicked.connect(self.showColorDialog)
         self.storyEditorWidget.coverImageButton.clicked.connect(self.openCoverImageDialog)
 
-    def toggleDarkMode(self, checked):
-        global CURRENT_THEME
-        CURRENT_THEME = "dark" if checked else "light"
-        set_theme()
-        self.toggleDarkModeAction.setChecked(CURRENT_THEME == "dark")
+    def toggleSidebar(self, checked):
+        if checked:
+            self.storyEditorWidget.leftColumn.show()
+        else:
+            self.storyEditorWidget.leftColumn.hide()
 
     def showColorDialog(self):
         color = QColorDialog.getColor()
@@ -314,32 +366,59 @@ class MainWindow(QMainWindow):
                 )
                 self.storyEditorWidget.coverImageLabel.setPixmap(scaledPixmap)
 
-    def toggleSidebar(self, checked):
-        if checked:
-            self.storyEditorWidget.leftColumn.show()
-        else:
-            self.storyEditorWidget.leftColumn.hide()
-
-    def increaseFontSize(self):
-        font = self.applicationFont
-        font.setPointSize(font.pointSize() + 1)
-        QApplication.setFont(font)
-
-    def decreaseFontSize(self):
-        font = self.applicationFont
-        font.setPointSize(max(font.pointSize() - 1, 1))
-        QApplication.setFont(font)
-
     def showAboutDialog(self):
         aboutDialog = AboutDialog(self)
         aboutDialog.exec_()
 
+    def showSettingsWindow(self):
+        settings_window = SettingsWindow(self)
+        settings_window.exec_()
+
+    def updateApplicationFont(self, font):
+        QApplication.setFont(font)
+        self.storyEditorWidget.updateFonts(font)
+        self.storyEditorWidget.setStyleSheet("QWidget {font-family: '" + font.family() + "';}")
+
+    def viewStoryJson(self, mode):
+        # Load the story data from the storyEditorWidget
+        story_data = {
+            'name': self.storyEditorWidget.storyNameInput.text(),
+            'button_color': self.storyEditorWidget.buttonColorButton.styleSheet().split(':')[1].strip(),
+            'start_room': self.storyEditorWidget.startRoomInput.currentText(),
+            'rooms': {}
+        }
+
+        for i in range(self.storyEditorWidget.roomsTabWidget.count()):
+            roomWidget = self.storyEditorWidget.roomsTabWidget.widget(i)
+            roomName = roomWidget.roomNameInput.text()
+            roomDescription = roomWidget.roomDescriptionInput.toPlainText()
+            roomExits = {}
+
+            for j in range(roomWidget.exitsLayout.count()):
+                exitWidget = roomWidget.exitsLayout.itemAt(j).widget()
+                exitNameInput = exitWidget.findChild(QLineEdit, "exitNameInput")
+                exitName = exitNameInput.text() if exitNameInput else ''
+                exitDestinationInput = exitWidget.findChild(QLineEdit, "exitDestinationInput")
+                exitDestination = exitDestinationInput.text() if exitDestinationInput else ''
+
+                if exitWidget.skillCheckData:
+                    roomExits[exitName] = {'skill_check': exitWidget.skillCheckData}
+                else:
+                    roomExits[exitName] = exitDestination
+
+            roomData = {
+                'description': roomDescription,
+                'exits': roomExits
+            }
+
+            story_data['rooms'][roomName] = roomData
+
+        # Create and show the JsonViewDialog
+        json_view_dialog = JsonViewDialog(self, story_data, mode)
+        json_view_dialog.exec_()
+
 if __name__ == "__main__":
     application = QApplication(sys.argv)
-
-    # Set the font for the application
-    # font = QFont("Open Dyslexic")
-    # application.setFont(font)
 
     # Set the theme
     set_theme()
