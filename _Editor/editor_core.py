@@ -18,10 +18,12 @@ from PyQt5.QtGui import QPixmap, QColor, QFont, QImage, QIcon
 from PyQt5.QtCore import Qt, QRect, QSize, QByteArray, QBuffer, QIODevice, pyqtSignal
 
 from widgets.skill_check_widget import SkillCheckWidget
+from widgets.load_raw_json import loadRawJson
 from widgets.exit_widget import ExitWidget
 from widgets.revisit_dialog import RevisitDialog
 from widgets.RoomWidget import RoomWidget
 from widgets.skill_check_dialog import SkillCheckDialog
+from widgets.rawjson import show_json_error_dialog
 from theme import set_theme, CURRENT_THEME
 from settings_window import SettingsWindow
 
@@ -282,140 +284,236 @@ class JsonViewDialog(QDialog):
         layout.addWidget(maximize_button, alignment=Qt.AlignRight)  # Add the maximize button to the layout
         self.setLayout(layout)
 
+import json
+from PyQt5.QtWidgets import QMainWindow, QFileDialog, QMessageBox
+from widgets.rawjson import show_json_error_dialog
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.initUserInterface()
+        self.initialize_user_interface()
+        self.errors = []  # Initialize an empty list to store errors
 
-    def initUserInterface(self):
+    def initialize_user_interface(self):
         self.setWindowTitle("Story Editor")
         self.setMinimumSize(800, 600)
 
         # Create the story editor widget and set it as the central widget
-        self.storyEditorWidget = StoryEditorWidget(self)
-        self.setCentralWidget(self.storyEditorWidget)
+        self.story_editor_widget = StoryEditorWidget(self)
+        self.setCentralWidget(self.story_editor_widget)
 
         # Create menu bar
-        self.menubar = self.menuBar()
-        fileMenu = self.menubar.addMenu("File")
-        viewMenu = self.menubar.addMenu("View")
-        settingsMenu = self.menubar.addMenu("Settings")  # Add Settings menu
-        helpMenu = self.menubar.addMenu("Help")  # Move Help menu after Settings
+        self.menu_bar = self.menuBar()
+        file_menu = self.menu_bar.addMenu("File")
+        view_menu = self.menu_bar.addMenu("View")
+        settings_menu = self.menu_bar.addMenu("Settings")  # Add Settings menu
+        help_menu = self.menu_bar.addMenu("Help")  # Move Help menu after Settings
 
         # Load story action
-        loadStoryAction = fileMenu.addAction("Load Story")
-        loadStoryAction.triggered.connect(lambda: openLoadStoryDialog(self.storyEditorWidget))
+        load_story_action = file_menu.addAction("Load Story")
+        load_story_action.triggered.connect(lambda: openLoadStoryDialog(self.story_editor_widget))
 
         # Save story action
-        saveStoryAction = fileMenu.addAction("Save Story")
-        saveStoryAction.triggered.connect(lambda: openSaveStoryDialog(self.storyEditorWidget))
+        save_story_action = file_menu.addAction("Save Story")
+        save_story_action.triggered.connect(lambda: openSaveStoryDialog(self.story_editor_widget))
+
+        # Import menu
+        import_menu = file_menu.addMenu("Import")
+        load_raw_json_action = import_menu.addAction("Import Raw JSON")
+        load_raw_json_action.triggered.connect(lambda: self.load_raw_json_dialog())
 
         # Toggle sidebar action
-        self.toggleSidebarAction = viewMenu.addAction("Toggle Sidebar")
-        self.toggleSidebarAction.setCheckable(True)
-        self.toggleSidebarAction.setChecked(True)
-        self.toggleSidebarAction.triggered.connect(self.toggleSidebar)
+        self.toggle_sidebar_action = view_menu.addAction("Toggle Sidebar")
+        self.toggle_sidebar_action.setCheckable(True)
+        self.toggle_sidebar_action.setChecked(True)
+        self.toggle_sidebar_action.triggered.connect(self.toggle_sidebar)
 
         # View Story Data menu
-        viewStoryDataMenu = viewMenu.addMenu("View Story Data")
-        viewStoryJsonAction = viewStoryDataMenu.addAction("Complete")
-        viewStoryJsonAction.triggered.connect(lambda: self.viewStoryJson("Complete"))
-        viewRoomsAction = viewStoryDataMenu.addAction("Rooms")
-        viewRoomsAction.triggered.connect(lambda: self.viewStoryJson("Rooms"))
-        viewRoomsWithExitsAction = viewStoryDataMenu.addAction("Rooms with Exits")
-        viewRoomsWithExitsAction.triggered.connect(lambda: self.viewStoryJson("Rooms with Exits"))
-        viewRoomsWithoutExitsAction = viewStoryDataMenu.addAction("Rooms without Exits")
-        viewRoomsWithoutExitsAction.triggered.connect(lambda: self.viewStoryJson("Rooms without Exits"))
-        viewRoomCountAction = viewStoryDataMenu.addAction("Room Count")
-        viewRoomCountAction.triggered.connect(lambda: self.viewStoryJson("Room Count"))
+        view_story_data_menu = view_menu.addMenu("View Story Data")
+        view_story_json_action = view_story_data_menu.addAction("Complete")
+        view_story_json_action.triggered.connect(lambda: self.view_story_json("Complete"))
+        view_rooms_action = view_story_data_menu.addAction("Rooms")
+        view_rooms_action.triggered.connect(lambda: self.view_story_json("Rooms"))
+        view_rooms_with_exits_action = view_story_data_menu.addAction("Rooms with Exits")
+        view_rooms_with_exits_action.triggered.connect(lambda: self.view_story_json("Rooms with Exits"))
+        view_rooms_without_exits_action = view_story_data_menu.addAction("Rooms without Exits")
+        view_rooms_without_exits_action.triggered.connect(lambda: self.view_story_json("Rooms without Exits"))
+        view_room_count_action = view_story_data_menu.addAction("Room Count")
+        view_room_count_action.triggered.connect(lambda: self.view_story_json("Room Count"))
 
         # Settings action
-        settingsAction = settingsMenu.addAction("Settings")
-        settingsAction.triggered.connect(self.showSettingsWindow)
+        settings_action = settings_menu.addAction("Settings")
+        settings_action.triggered.connect(self.show_settings_window)
 
         # About action
-        aboutAction = helpMenu.addAction("About")
-        aboutAction.triggered.connect(self.showAboutDialog)
+        about_action = help_menu.addAction("About")
+        about_action.triggered.connect(self.show_about_dialog)
 
         # Connect signals and slots
-        self.storyEditorWidget.buttonColorButton.clicked.connect(self.showColorDialog)
-        self.storyEditorWidget.coverImageButton.clicked.connect(self.openCoverImageDialog)
+        self.story_editor_widget.buttonColorButton.clicked.connect(self.show_color_dialog)
+        self.story_editor_widget.coverImageButton.clicked.connect(self.open_cover_image_dialog)
 
-    def toggleSidebar(self, checked):
+    def toggle_sidebar(self, checked):
         if checked:
-            self.storyEditorWidget.leftColumn.show()
+            self.story_editor_widget.leftColumn.show()
         else:
-            self.storyEditorWidget.leftColumn.hide()
+            self.story_editor_widget.leftColumn.hide()
 
-    def showColorDialog(self):
+    def show_color_dialog(self):
         color = QColorDialog.getColor()
         if color.isValid():
-            self.storyEditorWidget.buttonColorButton.setStyleSheet(
+            self.story_editor_widget.buttonColorButton.setStyleSheet(
                 f"background-color: {color.name()};"
             )
 
-    def openCoverImageDialog(self):
-        fileDialog = QFileDialog()
-        fileDialog.setNameFilter("Image Files (*.png *.jpg *.bmp)")
-        if fileDialog.exec():
-            selectedFiles = fileDialog.selectedFiles()
-            if selectedFiles:
-                pixmap = QPixmap(selectedFiles[0])
-                scaledPixmap = pixmap.scaled(
+    def open_cover_image_dialog(self):
+        file_dialog = QFileDialog()
+        file_dialog.setNameFilter("Image Files (*.png *.jpg *.bmp)")
+        if file_dialog.exec():
+            selected_files = file_dialog.selectedFiles()
+            if selected_files:
+                pixmap = QPixmap(selected_files[0])
+                scaled_pixmap = pixmap.scaled(
                     QSize(256, 192), Qt.KeepAspectRatio, Qt.SmoothTransformation
                 )
-                self.storyEditorWidget.coverImageLabel.setPixmap(scaledPixmap)
+                self.story_editor_widget.coverImageLabel.setPixmap(scaled_pixmap)
 
-    def showAboutDialog(self):
-        aboutDialog = AboutDialog(self)
-        aboutDialog.exec_()
+    def show_about_dialog(self):
+        about_dialog = AboutDialog(self)
+        about_dialog.exec_()
 
-    def showSettingsWindow(self):
+    def show_settings_window(self):
         settings_window = SettingsWindow(self)
         settings_window.exec_()
 
-    def updateApplicationFont(self, font):
+    def update_application_font(self, font):
         QApplication.setFont(font)
-        self.storyEditorWidget.updateFonts(font)
-        self.storyEditorWidget.setStyleSheet("QWidget {font-family: '" + font.family() + "';}")
+        self.story_editor_widget.updateFonts(font)
+        self.story_editor_widget.setStyleSheet("QWidget {font-family: '" + font.family() + "';}")
 
-    def viewStoryJson(self, mode):
+    def view_story_json(self, mode):
         # Load the story data from the storyEditorWidget
         story_data = {
-            'name': self.storyEditorWidget.storyNameInput.text(),
-            'button_color': self.storyEditorWidget.buttonColorButton.styleSheet().split(':')[1].strip(),
-            'start_room': self.storyEditorWidget.startRoomInput.currentText(),
+            'name': self.story_editor_widget.storyNameInput.text(),
+            'button_color': self.story_editor_widget.buttonColorButton.styleSheet().split(':')[1].strip(),
+            'start_room': self.story_editor_widget.startRoomInput.currentText(),
             'rooms': {}
         }
 
-        for i in range(self.storyEditorWidget.roomsTabWidget.count()):
-            roomWidget = self.storyEditorWidget.roomsTabWidget.widget(i)
-            roomName = roomWidget.roomNameInput.text()
-            roomDescription = roomWidget.roomDescriptionInput.toPlainText()
-            roomExits = {}
+        for i in range(self.story_editor_widget.roomsTabWidget.count()):
+            room_widget = self.story_editor_widget.roomsTabWidget.widget(i)
+            room_name = room_widget.roomNameInput.text()
+            room_description = room_widget.roomDescriptionInput.toPlainText()
+            room_exits = {}
 
-            for j in range(roomWidget.exitsLayout.count()):
-                exitWidget = roomWidget.exitsLayout.itemAt(j).widget()
-                exitNameInput = exitWidget.findChild(QLineEdit, "exitNameInput")
-                exitName = exitNameInput.text() if exitNameInput else ''
-                exitDestinationInput = exitWidget.findChild(QLineEdit, "exitDestinationInput")
-                exitDestination = exitDestinationInput.text() if exitDestinationInput else ''
+            for j in range(room_widget.exitsLayout.count()):
+                exit_widget = room_widget.exitsLayout.itemAt(j).widget()
+                exit_name_input = exit_widget.findChild(QLineEdit, "exitNameInput")
+                exit_name = exit_name_input.text() if exit_name_input else ''
+                exit_destination_input = exit_widget.findChild(QLineEdit, "exitDestinationInput")
+                exit_destination = exit_destination_input.text() if exit_destination_input else ''
 
-                if exitWidget.skillCheckData:
-                    roomExits[exitName] = {'skill_check': exitWidget.skillCheckData}
+                if exit_widget.skillCheckData:
+                    room_exits[exit_name] = {'skill_check': exit_widget.skillCheckData}
                 else:
-                    roomExits[exitName] = exitDestination
+                    room_exits[exit_name] = exit_destination
 
-            roomData = {
-                'description': roomDescription,
-                'exits': roomExits
+            room_data = {
+                'description': room_description,
+                'exits': room_exits
             }
 
-            story_data['rooms'][roomName] = roomData
+            story_data['rooms'][room_name] = room_data
 
         # Create and show the JsonViewDialog
         json_view_dialog = JsonViewDialog(self, story_data, mode)
         json_view_dialog.exec_()
+
+    def load_raw_json_dialog(self):
+        file_dialog = QFileDialog()
+        file_dialog.setNameFilter("JSON Files (*.json)")
+        if file_dialog.exec():
+            selected_files = file_dialog.selectedFiles()
+            if selected_files:
+                self.loadRawJsonData(selected_files[0])
+
+    def loadRawJsonData(self, filename):
+        self.errors = []  # Clear the errors list
+        try:
+            with open(filename, 'r') as json_file:
+                raw_json_data = json.load(json_file)
+
+            # Clear existing data
+            self.story_editor_widget.storyNameInput.clear()
+            self.story_editor_widget.buttonColorButton.setStyleSheet("background-color: #000000;")
+            self.story_editor_widget.coverImageLabel.clear()
+            self.story_editor_widget.summaryInput.clear()
+            self.story_editor_widget.startRoomInput.clear()
+            self.story_editor_widget.roomsTabWidget.clear()
+
+            # Populate fields from raw JSON data
+            self.story_editor_widget.storyNameInput.setText(raw_json_data.get('name', ''))
+            button_color = raw_json_data.get('button_color', '#000000')
+            self.story_editor_widget.buttonColorButton.setStyleSheet(f"background-color: {button_color};")
+            self.story_editor_widget.summaryInput.setText(raw_json_data.get('summary', ''))
+            self.story_editor_widget.startRoomInput.addItem(raw_json_data.get('start_room', ''))
+
+            # Load rooms
+            for room_name, room_data in raw_json_data.get('rooms', {}).items():
+                self.story_editor_widget.addRoom()
+                room_widget = self.story_editor_widget.roomsTabWidget.widget(self.story_editor_widget.roomsTabWidget.count() - 1)
+                room_widget.roomNameInput.setText(room_name)
+                room_widget.roomDescriptionInput.setText(room_data.get('description', ''))
+
+                # Load exits
+                for exit_name, exit_data in room_data.get('exits', {}).items():
+                    room_widget.addExit()
+                    exit_widget = room_widget.exitsLayout.itemAt(room_widget.exitsLayout.count() - 1).widget()
+                    exit_widget.exitNameInput.setText(exit_name)
+                    if isinstance(exit_data, str):
+                        exit_widget.exitDestinationInput.setText(exit_data)
+                    elif isinstance(exit_data, dict):
+                        exit_widget.skillCheckData = exit_data.get('skill_check', None)
+                        if exit_widget.skillCheckData:
+                            exit_widget.skillCheckIndicator.setVisible(True)
+                        else:
+                            exit_widget.skillCheckIndicator.setVisible(False)
+
+                # Remove any invalid exits from the roomWidget
+                room_widget.removeInvalidExits()
+
+                # Update icons
+                room_widget.updateIcons()
+
+        except json.JSONDecodeError as e:
+            error_message = str(e)
+            error_dialog, current_error_index, total_errors = show_json_error_dialog(error_message, filename)
+            if error_dialog is not None:
+                error_dialog.exec_()
+                if current_error_index is not None:
+                    self.errors.append(f"Error {current_error_index} of {total_errors}: {error_message}")
+                else:
+                    self.errors.append(f"Error: {error_message}")
+            else:
+                self.errors.append(f"Error: {error_message}")
+        except Exception as e:
+            self.errors.append(f"Error: {str(e)}")
+
+        if self.errors:
+            self.save_errors_to_file(filename)
+
+    def save_errors_to_file(self, filename):
+        try:
+            # Remove the extra 'json' extension from the filename
+            filename_without_ext = filename.rsplit('.', 1)[0]
+
+            with open("errors.log", "w", encoding="utf-8") as file:
+                file.write(f"Attempted to load {filename_without_ext}\n\n")
+                file.write(f"Total errors: {len(self.errors)}\n\n")
+                for error in self.errors:
+                    file.write(error + "\n")
+        except Exception as e:
+            QMessageBox.warning(self, "Error", f"Failed to save errors to file: {str(e)}")
 
 if __name__ == "__main__":
     application = QApplication(sys.argv)
