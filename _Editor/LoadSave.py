@@ -117,49 +117,27 @@ def load_story(story_editor_widget, filename):
 def save_story(story_editor_widget, filename):
     try:
         story_data = {
-            'name': story_editor_widget.storyNameInput.text() if story_editor_widget.storyNameInput else '',
-            'button_color': story_editor_widget.buttonColorButton.styleSheet().split(':')[1].strip() if story_editor_widget.buttonColorButton else '',
-            'start_room': story_editor_widget.startRoomInput.currentText() if story_editor_widget.startRoomInput else '',
+            'name': story_editor_widget.storyNameInput.text(),
+            'button_color': story_editor_widget.buttonColorButton.styleSheet().split(':')[1].strip(),
+            'start_room': story_editor_widget.startRoomInput.currentText(),
             'rooms': {}
         }
 
         with zipfile.ZipFile(filename, 'w') as zip_file:
             # Save story.json
-            json_data = json.dumps(story_data, indent=2).encode('utf-8')
-            zip_file.writestr('story.json', json_data)
-
-            # Save summary.txt
-            summary_text = story_editor_widget.summaryInput.toPlainText().encode('utf-8')
-            zip_file.writestr('summary.txt', summary_text)
-
-            # Save cover image
-            pixmap = story_editor_widget.coverImageLabel.pixmap()
-            if pixmap:
-                image = pixmap.toImage()
-                byte_array = QByteArray()
-                buffer = QBuffer(byte_array)
-                buffer.open(QIODevice.WriteOnly)
-                image.save(buffer, "JPG")
-                zip_file.writestr('cover.jpg', byte_array.data())
-
-            # Save room data
             for i in range(story_editor_widget.roomsTabWidget.count()):
                 room_widget = story_editor_widget.roomsTabWidget.widget(i)
-                room_name = room_widget.roomNameInput.text() if room_widget.roomNameInput else ''
-                room_description = room_widget.roomDescriptionInput.toPlainText() if room_widget.roomDescriptionInput else ''
+                room_name = room_widget.roomNameInput.text()
+                room_description = room_widget.roomDescriptionInput.toPlainText()
                 room_exits = {}
 
                 for j in range(room_widget.exitsLayout.count()):
                     exit_widget = room_widget.exitsLayout.itemAt(j).widget()
-                    exit_name_input = exit_widget.findChild(QLineEdit, "exitNameInput")
-                    exit_name = exit_name_input.text() if exit_name_input else ''
-                    exit_destination_input = exit_widget.findChild(QLineEdit, "exitDestinationInput")
-                    exit_destination = exit_destination_input.text() if exit_destination_input else ''
-
+                    exit_name = exit_widget.exitNameInput.text()
                     if exit_widget.skillCheckData:
                         room_exits[exit_name] = {'skill_check': exit_widget.skillCheckData}
                     else:
-                        room_exits[exit_name] = exit_destination
+                        room_exits[exit_name] = exit_widget.exitDestinationInput.text()
 
                 room_data = {
                     'description': room_description,
@@ -176,8 +154,27 @@ def save_story(story_editor_widget, filename):
                     room_image_filename = f"room_{i + 1}.jpg"
                     room_data['image'] = room_image_filename
                     zip_file.write(room_widget.room_image_path, room_image_filename)
+                else:
+                    room_data['image'] = None
 
                 story_data['rooms'][room_name] = room_data
+
+            json_data = json.dumps(story_data, indent=2).encode('utf-8')
+            zip_file.writestr('story.json', json_data)
+
+            # Save summary.txt
+            summary_text = story_editor_widget.summaryInput.toPlainText().encode('utf-8')
+            zip_file.writestr('summary.txt', summary_text)
+
+            # Save cover image
+            pixmap = story_editor_widget.coverImageLabel.pixmap()
+            if pixmap:
+                image = pixmap.toImage()
+                byte_array = QByteArray()
+                buffer = QBuffer(byte_array)
+                buffer.open(QIODevice.WriteOnly)
+                image.save(buffer, "JPG")
+                zip_file.writestr('cover.jpg', byte_array.data())
 
         QMessageBox.information(story_editor_widget, "Success", "Story saved successfully.")
     except Exception as e:

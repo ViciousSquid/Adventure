@@ -14,18 +14,18 @@ from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLineEdit,
     QPushButton, QTextEdit, QFileDialog, QLabel, QColorDialog, QComboBox,
     QTabWidget, QScrollArea, QMessageBox, QMenu, QAction, QDialog, QSplitter,
-    QCheckBox, QPlainTextEdit, QDialogButtonBox
+    QCheckBox, QPlainTextEdit, QDialogButtonBox, QSizePolicy
 )
 from PyQt5.QtGui import QPixmap, QColor, QFont, QImage, QIcon
 from PyQt5.QtCore import Qt, QRect, QSize, QByteArray, QBuffer, QIODevice, pyqtSignal
 
 from widgets.skill_check_widget import SkillCheckWidget
-from widgets.load_raw_json import loadRawJson
+from widgets.json import loadRawJson
 from widgets.exit_widget import ExitWidget
 from widgets.revisit_dialog import RevisitDialog
 from widgets.RoomWidget import RoomWidget
 from widgets.skill_check_dialog import SkillCheckDialog
-from widgets.rawjson import show_json_error_dialog
+from widgets.json import show_json_error_dialog
 from theme import set_theme, CURRENT_THEME
 from settings_window import SettingsWindow
 
@@ -73,18 +73,19 @@ class StoryEditorWidget(QWidget):
         mainLayout = QHBoxLayout()
 
         # Left column
-        self.leftColumn = QWidget()
-        self.leftColumn.setFixedWidth(300)
-        leftLayout = QVBoxLayout()
+        self.left_column = QWidget()
+        self.left_column.setFixedWidth(300)
+        left_layout = QVBoxLayout()
+        left_layout.setSpacing(4)  # Reduce the spacing between elements
 
         # Story name input
         storyNameLayout = QHBoxLayout()
         storyNameLabel = QLabel("Story Name:")
         self.storyNameInput = QLineEdit()
-        self.storyNameInput.setMaxLength(25)
+        self.storyNameInput.setMaxLength(60)
         storyNameLayout.addWidget(storyNameLabel)
         storyNameLayout.addWidget(self.storyNameInput)
-        leftLayout.addLayout(storyNameLayout)
+        left_layout.addLayout(storyNameLayout)
 
         # Button color input
         buttonColorLayout = QHBoxLayout()
@@ -93,7 +94,7 @@ class StoryEditorWidget(QWidget):
         self.buttonColorButton.setStyleSheet("background-color: #000000;")
         buttonColorLayout.addWidget(buttonColorLabel)
         buttonColorLayout.addWidget(self.buttonColorButton)
-        leftLayout.addLayout(buttonColorLayout)
+        left_layout.addLayout(buttonColorLayout)
 
         # Cover image input
         coverImageLayout = QHBoxLayout()
@@ -102,18 +103,20 @@ class StoryEditorWidget(QWidget):
         self.coverImageButton.setObjectName("chooseImageButton")
         coverImageLayout.addWidget(coverImageLabel)
         coverImageLayout.addWidget(self.coverImageButton)
-        leftLayout.addLayout(coverImageLayout)
+        left_layout.addLayout(coverImageLayout)
 
         # Cover image preview
         self.coverImageLabel = QLabel()
-        leftLayout.addWidget(self.coverImageLabel)
+        left_layout.addWidget(self.coverImageLabel)
 
         # Summary input
+        summaryLayout = QVBoxLayout()
         summaryLabel = QLabel("Summary:")
         self.summaryInput = QTextEdit()
         self.summaryInput.setMaximumHeight(100)
-        leftLayout.addWidget(summaryLabel)
-        leftLayout.addWidget(self.summaryInput)
+        summaryLayout.addWidget(summaryLabel)
+        summaryLayout.addWidget(self.summaryInput)
+        left_layout.addLayout(summaryLayout)
 
         # Start room input
         startRoomLayout = QHBoxLayout()
@@ -121,35 +124,13 @@ class StoryEditorWidget(QWidget):
         self.startRoomInput = QComboBox()
         startRoomLayout.addWidget(startRoomLabel)
         startRoomLayout.addWidget(self.startRoomInput)
-        leftLayout.addLayout(startRoomLayout)
+        left_layout.addLayout(startRoomLayout)
 
-        self.leftColumn.setLayout(leftLayout)
-        mainLayout.addWidget(self.leftColumn)
+        self.left_column.setLayout(left_layout)
+        mainLayout.addWidget(self.left_column)
 
         # Splitter for right section
         splitter = QSplitter(Qt.Vertical)
-
-        # Top section (room details)
-        topSection = QWidget()
-        topLayout = QVBoxLayout()
-
-        # Room name input
-        roomNameLayout = QHBoxLayout()
-        roomNameLabel = QLabel("Room Name:")
-        self.roomNameInput = QLineEdit()
-        self.roomNameInput.setMaxLength(60)
-        roomNameLayout.addWidget(roomNameLabel)
-        roomNameLayout.addWidget(self.roomNameInput)
-        topLayout.addLayout(roomNameLayout)
-
-        # Room description input
-        roomDescriptionLabel = QLabel("Room Description:")
-        self.roomDescriptionInput = QTextEdit()
-        topLayout.addWidget(roomDescriptionLabel)
-        topLayout.addWidget(self.roomDescriptionInput)
-
-        topSection.setLayout(topLayout)
-        splitter.addWidget(topSection)
 
         # Bottom section
         bottomSection = QWidget()
@@ -181,12 +162,13 @@ class StoryEditorWidget(QWidget):
         self.setLayout(mainLayout)
 
     def updateFonts(self, font):
-        def updateWidgetFont(widget):
+        def updateWidgetFont(widget, font):
             widget.setFont(font)
-            for child in widget.findChildren(QWidget):
-                updateWidgetFont(child)
+            for child in widget.children():
+                if isinstance(child, QWidget):
+                    updateWidgetFont(child, font)
 
-        updateWidgetFont(self)
+        updateWidgetFont(self, font)
         self.setStyleSheet("QWidget {font-family: '" + font.family() + "';}")
 
     def addRoom(self):
@@ -217,7 +199,7 @@ class StoryEditorWidget(QWidget):
         confirmation = QMessageBox.question(
             self,
             "Delete Room",
-            "Are you sure you want to delete this room?",
+            "Are you sure?",
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.No
         )
@@ -288,7 +270,15 @@ class JsonViewDialog(QDialog):
 
 import json
 from PyQt5.QtWidgets import QMainWindow, QFileDialog, QMessageBox
-from widgets.rawjson import show_json_error_dialog
+from widgets.json import show_json_error_dialog
+
+import json
+from PyQt5.QtWidgets import QMainWindow, QFileDialog, QMessageBox
+from widgets.json import show_json_error_dialog
+
+import json
+from PyQt5.QtWidgets import QMainWindow, QFileDialog, QMessageBox
+from widgets.json import show_json_error_dialog
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -308,8 +298,12 @@ class MainWindow(QMainWindow):
         self.menu_bar = self.menuBar()
         file_menu = self.menu_bar.addMenu("File")
         view_menu = self.menu_bar.addMenu("View")
-        settings_menu = self.menu_bar.addMenu("Settings")  # Add Settings menu
-        help_menu = self.menu_bar.addMenu("Help")  # Move Help menu after Settings
+        settings_menu = self.menu_bar.addMenu("Settings")
+        help_menu = self.menu_bar.addMenu("Help")
+
+        # New Story action
+        new_story_action = file_menu.addAction("New Story")
+        new_story_action.triggered.connect(self.new_story)
 
         # Load story action
         load_story_action = file_menu.addAction("Load Story")
@@ -334,14 +328,12 @@ class MainWindow(QMainWindow):
         view_story_data_menu = view_menu.addMenu("View Story Data")
         view_story_json_action = view_story_data_menu.addAction("Complete")
         view_story_json_action.triggered.connect(lambda: self.view_story_json("Complete"))
-        view_rooms_action = view_story_data_menu.addAction("Rooms")
-        view_rooms_action.triggered.connect(lambda: self.view_story_json("Rooms"))
+        view_room_count_action = view_story_data_menu.addAction("Room Count")
+        view_room_count_action.triggered.connect(lambda: self.view_story_json("Room Count"))
         view_rooms_with_exits_action = view_story_data_menu.addAction("Rooms with Exits")
         view_rooms_with_exits_action.triggered.connect(lambda: self.view_story_json("Rooms with Exits"))
         view_rooms_without_exits_action = view_story_data_menu.addAction("Rooms without Exits")
         view_rooms_without_exits_action.triggered.connect(lambda: self.view_story_json("Rooms without Exits"))
-        view_room_count_action = view_story_data_menu.addAction("Room Count")
-        view_room_count_action.triggered.connect(lambda: self.view_story_json("Room Count"))
 
         # Settings action
         settings_action = settings_menu.addAction("Settings")
@@ -357,9 +349,9 @@ class MainWindow(QMainWindow):
 
     def toggle_sidebar(self, checked):
         if checked:
-            self.story_editor_widget.leftColumn.show()
+            self.story_editor_widget.left_column.show()
         else:
-            self.story_editor_widget.leftColumn.hide()
+            self.story_editor_widget.left_column.hide()
 
     def show_color_dialog(self):
         color = QColorDialog.getColor()
@@ -371,14 +363,14 @@ class MainWindow(QMainWindow):
     def open_cover_image_dialog(self):
         file_dialog = QFileDialog()
         file_dialog.setNameFilter("Image Files (*.png *.jpg *.bmp)")
-        if file_dialog.exec():
+        if file_dialog.exec_():
             selected_files = file_dialog.selectedFiles()
             if selected_files:
                 pixmap = QPixmap(selected_files[0])
                 scaled_pixmap = pixmap.scaled(
                     QSize(256, 192), Qt.KeepAspectRatio, Qt.SmoothTransformation
                 )
-                self.story_editor_widget.coverImageLabel.setPixmap(scaled_pixmap)
+                self.story_editor_widget.cover_image_label.setPixmap(scaled_pixmap)
 
     def show_about_dialog(self):
         about_dialog = AboutDialog(self)
@@ -394,7 +386,7 @@ class MainWindow(QMainWindow):
         self.story_editor_widget.setStyleSheet("QWidget {font-family: '" + font.family() + "';}")
 
     def view_story_json(self, mode):
-        # Load the story data from the storyEditorWidget
+        # Load the story data from the story_editor_widget
         story_data = {
             'name': self.story_editor_widget.storyNameInput.text(),
             'button_color': self.story_editor_widget.buttonColorButton.styleSheet().split(':')[1].strip(),
@@ -434,12 +426,12 @@ class MainWindow(QMainWindow):
     def load_raw_json_dialog(self):
         file_dialog = QFileDialog()
         file_dialog.setNameFilter("JSON Files (*.json)")
-        if file_dialog.exec():
+        if file_dialog.exec_():
             selected_files = file_dialog.selectedFiles()
             if selected_files:
-                self.loadRawJsonData(selected_files[0])
+                self.load_raw_json_data(selected_files[0])
 
-    def loadRawJsonData(self, filename):
+    def load_raw_json_data(self, filename):
         self.errors = []  # Clear the errors list
         try:
             with open(filename, 'r') as json_file:
@@ -481,7 +473,7 @@ class MainWindow(QMainWindow):
                         else:
                             exit_widget.skillCheckIndicator.setVisible(False)
 
-                # Remove any invalid exits from the roomWidget
+                # Remove any invalid exits from the room_widget
                 room_widget.removeInvalidExits()
 
                 # Update icons
@@ -516,6 +508,26 @@ class MainWindow(QMainWindow):
                     file.write(error + "\n")
         except Exception as e:
             QMessageBox.warning(self, "Error", f"Failed to save errors to file: {str(e)}")
+
+    def new_story(self):
+        confirmation = QMessageBox.question(
+            self,
+            "New Story",
+            "Are you sure you want to start a new story? All unsaved data will be lost.",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No
+        )
+        if confirmation == QMessageBox.Yes:
+            self.clear_editor_fields()
+
+    def clear_editor_fields(self):
+        # Clear fields in the story_editor_widget
+        self.story_editor_widget.storyNameInput.clear()
+        self.story_editor_widget.buttonColorButton.setStyleSheet("background-color: #000000;")
+        self.story_editor_widget.coverImageLabel.clear()
+        self.story_editor_widget.summaryInput.clear()
+        self.story_editor_widget.startRoomInput.clear()
+        self.story_editor_widget.roomsTabWidget.clear()
 
 if __name__ == "__main__":
     application = QApplication(sys.argv)

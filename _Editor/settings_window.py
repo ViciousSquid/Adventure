@@ -1,57 +1,48 @@
-from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QCheckBox, QHBoxLayout, QPushButton, QApplication
+from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QSpinBox
 from PyQt5.QtGui import QFont
 
 class SettingsWindow(QDialog):
-    def __init__(self, parent=None):
+    def __init__(self, main_window, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Settings")
-        self.main_window = parent
-        self.default_font_size = QApplication.font().pointSize()  # Store the default font size
-        self.initUI()
+        self.main_window = main_window
+        self.initializeUserInterface()
 
-    def initUI(self):
+    def initializeUserInterface(self):
         layout = QVBoxLayout()
 
-        # Font size buttons
+        # Font size settings
         font_size_layout = QHBoxLayout()
-        self.font_size_label = QLabel("Font Size:")
-        font_size_layout.addWidget(self.font_size_label)
-
-        decrease_font_button = QPushButton("-")
-        decrease_font_button.setMaximumWidth(30)  # Set maximum width for the decrease button
-        decrease_font_button.clicked.connect(self.decreaseFontSize)
-        font_size_layout.addWidget(decrease_font_button)
-
-        self.font_size_value_label = QLabel(str(self.default_font_size))  # Set the default font size label
-        font_size_layout.addWidget(self.font_size_value_label)
-
-        increase_font_button = QPushButton("+")
-        increase_font_button.setMaximumWidth(30)  # Set maximum width for the increase button
-        increase_font_button.clicked.connect(self.increaseFontSize)
-        font_size_layout.addWidget(increase_font_button)
-
-        reset_font_button = QPushButton("Reset")
-        reset_font_button.setMaximumWidth(60)  # Set maximum width for the reset button
-        font_size_layout.addWidget(reset_font_button)
-        reset_font_button.clicked.connect(self.resetFontSize)
-
+        font_size_label = QLabel("Font Size:")
+        self.font_size_spin_box = QSpinBox()
+        self.font_size_spin_box.setRange(8, 24)
+        self.font_size_spin_box.setValue(12)
+        self.font_size_spin_box.valueChanged.connect(self.update_application_font)
+        increase_font_size_button = QPushButton("+")
+        increase_font_size_button.clicked.connect(self.increase_font_size)
+        decrease_font_size_button = QPushButton("-")
+        decrease_font_size_button.clicked.connect(self.decrease_font_size)
+        font_size_layout.addWidget(font_size_label)
+        font_size_layout.addWidget(self.font_size_spin_box)
+        font_size_layout.addWidget(increase_font_size_button)
+        font_size_layout.addWidget(decrease_font_size_button)
         layout.addLayout(font_size_layout)
+
         self.setLayout(layout)
 
-    def increaseFontSize(self):
-        font = QApplication.font()
-        font.setPointSize(font.pointSize() + 1)
-        self.main_window.updateApplicationFont(font)
-        self.font_size_value_label.setText(str(font.pointSize()))
+    def update_application_font(self):
+        font = self.main_window.font()
+        font.setPointSize(self.font_size_spin_box.value())
+        self.main_window.update_application_font(font)
 
-    def decreaseFontSize(self):
-        font = QApplication.font()
-        font.setPointSize(max(font.pointSize() - 1, 9))  # Minimum font size of 9
-        self.main_window.updateApplicationFont(font)
-        self.font_size_value_label.setText(str(font.pointSize()))
+    def increase_font_size(self):
+        current_size = self.font_size_spin_box.value()
+        new_size = current_size + 1
+        self.font_size_spin_box.setValue(new_size)
+        self.update_application_font()
 
-    def resetFontSize(self):
-        default_font = QApplication.font()
-        default_font.setPointSize(self.default_font_size)  # Set the font size to the stored default
-        self.main_window.updateApplicationFont(default_font)
-        self.font_size_value_label.setText(str(self.default_font_size))
+    def decrease_font_size(self):
+        current_size = self.font_size_spin_box.value()
+        new_size = current_size - 1
+        self.font_size_spin_box.setValue(new_size)
+        self.update_application_font()
