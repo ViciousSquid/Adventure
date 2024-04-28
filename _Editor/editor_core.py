@@ -1,8 +1,10 @@
 print("== STORY EDITOR == (beta) \nstarting up..")
 try:
-    from LoadSave import openLoadStoryDialog, openSaveStoryDialog
+    from LoadSave import open_load_story_dialog, openSaveStoryDialog
 except ImportError:
     pass
+
+from LoadSave import open_load_story_dialog, open_save_story_dialog
 
 import sys
 import os
@@ -311,11 +313,11 @@ class MainWindow(QMainWindow):
 
         # Load story action
         load_story_action = file_menu.addAction("Load Story")
-        load_story_action.triggered.connect(lambda: openLoadStoryDialog(self.story_editor_widget))
+        load_story_action.triggered.connect(lambda: open_load_story_dialog(self.story_editor_widget))
 
         # Save story action
         save_story_action = file_menu.addAction("Save Story")
-        save_story_action.triggered.connect(lambda: openSaveStoryDialog(self.story_editor_widget))
+        save_story_action.triggered.connect(lambda: open_save_story_dialog(self.story_editor_widget))
 
         # Import menu
         import_menu = file_menu.addMenu("Import")
