@@ -1,6 +1,6 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QTextEdit, QPushButton, QCheckBox
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QTextEdit, QPushButton, QCheckBox, QSizePolicy, QFileDialog
 from PyQt5.QtGui import QPixmap, QIcon
-from PyQt5.QtCore import pyqtSignal, Qt
+from PyQt5.QtCore import pyqtSignal, Qt, QSize
 from widgets.exit_widget import ExitWidget
 from widgets.revisit_dialog import RevisitDialog
 
@@ -12,6 +12,7 @@ class RoomWidget(QWidget):
         self.initUserInterface()
         self.revisit_data = {}
         self.revisitDialog = None
+        self.room_image_path = None
 
     def initUserInterface(self):
         layout = QVBoxLayout()
@@ -41,19 +42,32 @@ class RoomWidget(QWidget):
         roomImageLayout = QHBoxLayout()
         roomImageLabel = QLabel("Room Image:")
         self.roomImageButton = QPushButton("Choose Image")
+        self.roomImageButton.clicked.connect(self.openImageDialog)
+        self.clearImageButton = QPushButton("Clear Image")
+        self.clearImageButton.clicked.connect(self.clearImage)
         roomImageLayout.addWidget(roomImageLabel)
         roomImageLayout.addWidget(self.roomImageButton)
+        roomImageLayout.addWidget(self.clearImageButton)
         layout.addLayout(roomImageLayout)
 
         # Room image preview
         self.roomImageLabel = QLabel()
         layout.addWidget(self.roomImageLabel)
 
-        # Skill check and revisit icon
-        self.iconLabel = QLabel()
-        self.iconLabel.setVisible(False)
-        self.iconLabel.mousePressEvent = self.showRevisitDialog
-        layout.addWidget(self.iconLabel)
+        # Skill check and revisit icons
+        iconLayout = QHBoxLayout()
+        iconLayout.setSpacing(2)  # Adjust the spacing between icons
+        iconWidget = QWidget()
+        iconWidget.setLayout(iconLayout)
+        iconWidget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)  # Set size policy to fixed
+        self.skillCheckIconLabel = QLabel()
+        self.skillCheckIconLabel.setVisible(False)
+        self.revisitIconLabel = QLabel()
+        self.revisitIconLabel.setVisible(False)
+        self.revisitIconLabel.mousePressEvent = self.showRevisitDialog
+        iconLayout.addWidget(self.skillCheckIconLabel)
+        iconLayout.addWidget(self.revisitIconLabel)
+        layout.addWidget(iconWidget)
 
         # Exits
         self.exitsLayout = QVBoxLayout()
@@ -63,6 +77,19 @@ class RoomWidget(QWidget):
         layout.addLayout(self.exitsLayout)
 
         self.setLayout(layout)
+
+    def openImageDialog(self):
+        file_dialog = QFileDialog()
+        file_dialog.setNameFilter("Image Files (*.png *.jpg *.bmp)")
+        if file_dialog.exec_():
+            selected_file = file_dialog.selectedFiles()[0]
+            self.room_image_path = selected_file
+            pixmap = QPixmap(selected_file)
+            self.roomImageLabel.setPixmap(pixmap.scaled(256, 192, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+
+    def clearImage(self):
+        self.room_image_path = None
+        self.roomImageLabel.clear()
 
     def onTrackRevisitsStateChanged(self, state):
         if state == Qt.Checked:
@@ -103,17 +130,17 @@ class RoomWidget(QWidget):
         return bool(self.revisit_data)
 
     def updateIcons(self):
-        if self.hasSkillCheck() and self.hasRevisitData():
-            self.iconLabel.setPixmap(QPixmap("editordata/both.png").scaled(48, 24))
-            self.iconLabel.setVisible(True)
-        elif self.hasSkillCheck():
-            self.iconLabel.setPixmap(QPixmap("editordata/dice.png").scaled(24, 24))
-            self.iconLabel.setVisible(True)
-        elif self.hasRevisitData():
-            self.iconLabel.setPixmap(QPixmap("editordata/revisit.png").scaled(24, 24))
-            self.iconLabel.setVisible(True)
+        if self.hasSkillCheck():
+            self.skillCheckIconLabel.setPixmap(QPixmap("editordata/dice.png").scaled(24, 24))
+            self.skillCheckIconLabel.setVisible(True)
         else:
-            self.iconLabel.setVisible(False)
+            self.skillCheckIconLabel.setVisible(False)
+
+        if self.hasRevisitData():
+            self.revisitIconLabel.setPixmap(QPixmap("editordata/revisit.png").scaled(24, 24))
+            self.revisitIconLabel.setVisible(True)
+        else:
+            self.revisitIconLabel.setVisible(False)
 
         self.updateTabIcon()
 
@@ -121,11 +148,16 @@ class RoomWidget(QWidget):
         tabWidget = self.parent().parent()
         tabIndex = tabWidget.indexOf(self)
         if self.hasSkillCheck() and self.hasRevisitData():
-            tabWidget.setTabIcon(tabIndex, QIcon("editordata/both.png"))
+            icon = QIcon("editordata/both.png")
+            icon.addPixmap(QPixmap("editordata/both.png"), QIcon.Normal, QIcon.Off)
+            tabWidget.setTabIcon(tabIndex, icon)
+            tabWidget.setIconSize(QSize(34, 18))  # Set the icon size to 32x24 pixels
         elif self.hasSkillCheck():
             tabWidget.setTabIcon(tabIndex, QIcon("editordata/dice.png"))
+            tabWidget.setIconSize(QSize(18, 18))  # Set the icon size to 24x24 pixels
         elif self.hasRevisitData():
             tabWidget.setTabIcon(tabIndex, QIcon("editordata/revisit.png"))
+            tabWidget.setIconSize(QSize(18, 18))  # Set the icon size to 24x24 pixels
         else:
             tabWidget.setTabIcon(tabIndex, QIcon())
 
