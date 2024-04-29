@@ -1,2 +1,4 @@
 Placeholder document for Editor User Manual
-![image](https://github.com/ViciousSquid/Adventure/assets/161540961/afde042b-699f-49e4-b3ae-f3ce2db308f4)
+
+![image](https://github.com/ViciousSquid/Adventure/assets/161540961/28b8bff9-2403-4a1e-ad88-f6764d52360d)
+
