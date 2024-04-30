@@ -1,8 +1,9 @@
 import zipfile
 import json
-from PyQt5.QtWidgets import QMessageBox, QFileDialog
+from PyQt5.QtWidgets import QMessageBox, QFileDialog, QLineEdit, QTextEdit, QWidget, QLabel, QPushButton, QVBoxLayout
 from PyQt5.QtGui import QPixmap
-from PyQt5.QtCore import Qt, QByteArray, QBuffer, QIODevice
+from PyQt5.QtCore import QByteArray, QBuffer, QIODevice
+from editordata.skill_check_widget import SkillCheckWidget
 from editordata.exit_widget import ExitWidget
 
 def open_load_story_dialog(story_editor_widget):
@@ -84,18 +85,7 @@ def load_story(story_editor_widget, filename):
                         room_image_data = zip_file.read(room_image_filename)
                         pixmap = QPixmap()
                         pixmap.loadFromData(room_image_data)
-                        room_widget.roomImageLabel.setPixmap(pixmap.scaled(256, 192, Qt.KeepAspectRatio, Qt.SmoothTransformation))
-
-                # Load inventory data
-                if 'inventory' in room_data:
-                    room_widget.inventoryWidget.setInventoryData(
-                        True,
-                        room_data.get('item_requirement', ''),
-                        room_data.get('use_item', {}),
-                        room_data['inventory']
-                    )
-                else:
-                    room_widget.inventoryWidget.setInventoryData(False, '', {}, [])
+                        room_widget.roomImageLabel.setPixmap(pixmap.scaled(256, 192, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation))
 
                 # Load exits
                 for exit_name, exit_data in room_data.get('exits', {}).items():
@@ -105,6 +95,7 @@ def load_story(story_editor_widget, filename):
                     if isinstance(exit_data, str):
                         exit_widget.exitDestinationInput.setText(exit_data)
                     elif isinstance(exit_data, dict):
+                        # Load skill check data only if exitWidget is an instance of ExitWidget
                         if isinstance(exit_widget, ExitWidget):
                             exit_widget.skillCheckData = exit_data.get('skill_check', None)
                             if exit_widget.skillCheckData:
@@ -114,11 +105,18 @@ def load_story(story_editor_widget, filename):
                         else:
                             QMessageBox.warning(story_editor_widget, "Error", f"Invalid exit widget encountered: {type(exit_widget)}")
 
-                # Remove any invalid exits from the room_widget
+                # Remove any invalid exits from the roomWidget
                 room_widget.removeInvalidExits()
 
                 # Update icons
                 room_widget.updateIcons()
+
+                # Load inventory data
+                room_widget.inventory_data = {
+                    "item": room_data.get("item", ""),
+                    "item_needed": room_data.get("item_needed", "")
+                }
+                room_widget.hasInventoryCheckbox.setChecked(bool(room_widget.inventory_data.get("item", "") or room_widget.inventory_data.get("item_needed", "")))
 
     except Exception as e:
         QMessageBox.warning(story_editor_widget, "Error", f"Failed to load story: {str(e)}")
@@ -126,56 +124,14 @@ def load_story(story_editor_widget, filename):
 def save_story(story_editor_widget, filename):
     try:
         story_data = {
-            'name': story_editor_widget.storyNameInput.text(),
-            'button_color': story_editor_widget.buttonColorButton.styleSheet().split(':')[1].strip(),
-            'start_room': story_editor_widget.startRoomInput.currentText(),
+            'name': story_editor_widget.storyNameInput.text() if story_editor_widget.storyNameInput else '',
+            'button_color': story_editor_widget.buttonColorButton.styleSheet().split(':')[1].strip() if story_editor_widget.buttonColorButton else '',
+            'start_room': story_editor_widget.startRoomInput.currentText() if story_editor_widget.startRoomInput else '',
             'rooms': {}
         }
 
         with zipfile.ZipFile(filename, 'w') as zip_file:
             # Save story.json
-            for i in range(story_editor_widget.roomsTabWidget.count()):
-                room_widget = story_editor_widget.roomsTabWidget.widget(i)
-                room_name = room_widget.roomNameInput.text()
-                room_description = room_widget.roomDescriptionInput.toPlainText()
-                room_exits = {}
-
-                for j in range(room_widget.exitsLayout.count()):
-                    exit_widget = room_widget.exitsLayout.itemAt(j).widget()
-                    exit_name = exit_widget.exitNameInput.text()
-                    if exit_widget.skillCheckData:
-                        room_exits[exit_name] = {'skill_check': exit_widget.skillCheckData}
-                    else:
-                        room_exits[exit_name] = exit_widget.exitDestinationInput.text()
-
-                room_data = {
-                    'description': room_description,
-                    'exits': room_exits
-                }
-
-                if hasattr(room_widget, 'revisitDialog') and room_widget.revisitDialog is not None:
-                    revisit_data = room_widget.revisitDialog.getRevisitData()
-                    if revisit_data["revisit_count"] > 0 or revisit_data["revisit_content"]:
-                        room_data["revisit_count"] = revisit_data["revisit_count"]
-                        room_data["revisit_content"] = revisit_data["revisit_content"]
-
-                if room_widget.room_image_path:
-                    room_image_filename = f"room_{i + 1}.jpg"
-                    room_data['image'] = room_image_filename
-                    zip_file.write(room_widget.room_image_path, room_image_filename)
-                else:
-                    room_data['image'] = None
-
-                has_inventory, item_requirement, use_item_data, inventory_items = room_widget.inventoryWidget.getInventoryData()
-                if has_inventory:
-                    room_data['inventory'] = inventory_items
-                    if item_requirement:
-                        room_data['item_requirement'] = item_requirement
-                    if use_item_data:
-                        room_data['use_item'] = use_item_data
-
-                story_data['rooms'][room_name] = room_data
-
             json_data = json.dumps(story_data, indent=2).encode('utf-8')
             zip_file.writestr('story.json', json_data)
 
@@ -192,6 +148,46 @@ def save_story(story_editor_widget, filename):
                 buffer.open(QIODevice.WriteOnly)
                 image.save(buffer, "JPG")
                 zip_file.writestr('cover.jpg', byte_array.data())
+
+            # Save room data
+            for i in range(story_editor_widget.roomsTabWidget.count()):
+                room_widget = story_editor_widget.roomsTabWidget.widget(i)
+                room_name = room_widget.roomNameInput.text() if room_widget.roomNameInput else ''
+                room_description = room_widget.roomDescriptionInput.toPlainText() if room_widget.roomDescriptionInput else ''
+                room_exits = {}
+
+                for j in range(room_widget.exitsLayout.count()):
+                    exit_widget = room_widget.exitsLayout.itemAt(j).widget()
+                    exit_name_input = exit_widget.findChild(QLineEdit, "exitNameInput")
+                    exit_name = exit_name_input.text() if exit_name_input else ''
+                    exit_destination_input = exit_widget.findChild(QLineEdit, "exitDestinationInput")
+                    exit_destination = exit_destination_input.text() if exit_destination_input else ''
+
+                    if exit_widget.skillCheckData:
+                        room_exits[exit_name] = {'skill_check': exit_widget.skillCheckData}
+                    else:
+                        room_exits[exit_name] = exit_destination
+
+                room_data = {
+                    'description': room_description,
+                    'exits': room_exits
+                }
+
+                if hasattr(room_widget, 'revisitDialog') and room_widget.revisitDialog is not None:
+                    revisit_data = room_widget.revisitDialog.getRevisitData()
+                    if revisit_data["revisit_count"] > 0 or revisit_data["revisit_content"]:
+                        room_data["revisit_count"] = revisit_data["revisit_count"]
+                        room_data["revisit_content"] = revisit_data["revisit_content"]
+
+                room_data["item"] = room_widget.inventory_data.get("item", "")
+                room_data["item_needed"] = room_widget.inventory_data.get("item_needed", "")
+
+                if room_widget.room_image_path:
+                    room_image_filename = f"room_{i + 1}.jpg"
+                    room_data['image'] = room_image_filename
+                    zip_file.write(room_widget.room_image_path, room_image_filename)
+
+                story_data['rooms'][room_name] = room_data
 
         QMessageBox.information(story_editor_widget, "Success", "Story saved successfully.")
     except Exception as e:

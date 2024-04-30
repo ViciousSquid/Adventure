@@ -1,19 +1,24 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QTextEdit, QPushButton, QCheckBox, QSizePolicy, QFileDialog
-from PyQt5.QtGui import QPixmap, QIcon
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QTextEdit, QPushButton, QCheckBox, QSizePolicy, QFileDialog, QMessageBox
+from PyQt5.QtGui import QPixmap, QIcon, QColor
 from PyQt5.QtCore import pyqtSignal, Qt, QSize
 from editordata.exit_widget import ExitWidget
 from editordata.revisit_dialog import RevisitDialog
-from editordata.inventory import InventoryWidget, InventoryDialog
+from editordata.inventory import InventoryDialog
 
 class RoomWidget(QWidget):
     roomNameChanged = pyqtSignal(str)
+    addRoomSignal = pyqtSignal(object)
+    removeRoomSignal = pyqtSignal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.initUserInterface()
         self.revisit_data = {}
         self.revisitDialog = None
+        self.inventoryDialog = None
         self.room_image_path = None
+        self.inventory_data = {}
+        self.exits = []
 
     def initUserInterface(self):
         layout = QVBoxLayout()
@@ -34,17 +39,16 @@ class RoomWidget(QWidget):
         layout.addWidget(roomDescriptionLabel)
         layout.addWidget(self.roomDescriptionInput)
 
-        # Track revisits and Has Inventory checkboxes
-        checkboxLayout = QHBoxLayout()
+        # Track revisits and Has inventory checkboxes
+        checkboxesLayout = QHBoxLayout()
         self.trackRevisitsCheckbox = QCheckBox("Track revisits")
+        self.trackRevisitsCheckbox.setFixedWidth(100)
         self.trackRevisitsCheckbox.stateChanged.connect(self.onTrackRevisitsStateChanged)
-        checkboxLayout.addWidget(self.trackRevisitsCheckbox)
-
-        self.inventoryWidget = InventoryWidget(self)
-        self.inventoryWidget.inventoryChanged.connect(self.onInventoryChanged)
-        checkboxLayout.addWidget(self.inventoryWidget)
-
-        layout.addLayout(checkboxLayout)
+        self.hasInventoryCheckbox = QCheckBox("Has inventory")
+        self.hasInventoryCheckbox.stateChanged.connect(self.onHasInventoryStateChanged)
+        checkboxesLayout.addWidget(self.trackRevisitsCheckbox)
+        checkboxesLayout.addWidget(self.hasInventoryCheckbox)
+        layout.addLayout(checkboxesLayout)
 
         # Room image input
         roomImageLayout = QHBoxLayout()
@@ -62,31 +66,42 @@ class RoomWidget(QWidget):
         self.roomImageLabel = QLabel()
         layout.addWidget(self.roomImageLabel)
 
-        # Skill check, revisit, and inventory icons
+        # Skill check and revisit/inventory icons
         iconLayout = QHBoxLayout()
-        iconLayout.setSpacing(2)
+        iconLayout.setSpacing(2)  # Adjust the spacing between icons
         iconWidget = QWidget()
         iconWidget.setLayout(iconLayout)
-        iconWidget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        iconWidget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)  # Set size policy to fixed
         self.skillCheckIconLabel = QLabel()
         self.skillCheckIconLabel.setVisible(False)
         self.revisitIconLabel = QLabel()
         self.revisitIconLabel.setVisible(False)
         self.revisitIconLabel.mousePressEvent = self.showRevisitDialog
-        self.inventoryIconLabel = QLabel()
-        self.inventoryIconLabel.setVisible(False)
-        self.inventoryIconLabel.mousePressEvent = self.showInventoryDialog
+        self.itemIconLabel = QLabel()
+        self.itemIconLabel.setVisible(False)
+        self.itemIconLabel.mousePressEvent = self.showInventoryDialog
+        self.itemNeededIconLabel = QLabel()
+        self.itemNeededIconLabel.setVisible(False)
+        self.itemNeededIconLabel.mousePressEvent = self.showInventoryDialog
         iconLayout.addWidget(self.skillCheckIconLabel)
         iconLayout.addWidget(self.revisitIconLabel)
-        iconLayout.addWidget(self.inventoryIconLabel)
+        iconLayout.addWidget(self.itemIconLabel)
+        iconLayout.addWidget(self.itemNeededIconLabel)
         layout.addWidget(iconWidget)
 
-        # Exits
-        self.exitsLayout = QVBoxLayout()
-        self.exitsLayout.setSpacing(2)
-        exitsLabel = QLabel("Exits:")
-        self.exitsLayout.addWidget(exitsLabel)
-        layout.addLayout(self.exitsLayout)
+        # Room buttons
+        roomButtonsLayout = QHBoxLayout()
+        self.addExitButton = QPushButton("Add Exit")
+        self.addExitButton.setFixedWidth(150)
+        self.addExitButton.setStyleSheet("background-color: green; color: white;")
+        self.addExitButton.clicked.connect(self.addExit)
+        self.removeExitButton = QPushButton("Remove Exit")
+        self.removeExitButton.setFixedWidth(150)
+        self.removeExitButton.setStyleSheet("background-color: red; color: white;")
+        self.removeExitButton.clicked.connect(self.removeExit)
+        roomButtonsLayout.addWidget(self.addExitButton)
+        roomButtonsLayout.addWidget(self.removeExitButton)
+        layout.addLayout(roomButtonsLayout)
 
         self.setLayout(layout)
 
@@ -97,7 +112,7 @@ class RoomWidget(QWidget):
             selected_file = file_dialog.selectedFiles()[0]
             self.room_image_path = selected_file
             pixmap = QPixmap(selected_file)
-            self.roomImageLabel.setPixmap(pixmap.scaled(256, 192, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+            self.roomImageLabel.setPixmap(pixmap.scaled(100, 100, Qt.KeepAspectRatio, Qt.SmoothTransformation))
 
     def clearImage(self):
         self.room_image_path = None
@@ -114,7 +129,7 @@ class RoomWidget(QWidget):
     def showRevisitDialog(self, event=None):
         if self.revisitDialog is None:
             self.revisitDialog = RevisitDialog(self)
-            self.revisitDialog.accepted.connect(self.revisitDialog.saveRevisitData)
+            self.revisitDialog.accepted.connect(self.saveRevisitData)
         self.revisitDialog.setRevisitData(self.revisit_data)
         self.revisitDialog.show()
 
@@ -123,26 +138,63 @@ class RoomWidget(QWidget):
             self.revisitDialog.close()
             self.revisitDialog = None
 
+    def saveRevisitData(self):
+        self.revisit_data = self.revisitDialog.getRevisitData()
+        self.updateIcons()
+
+    def onHasInventoryStateChanged(self, state):
+        if state == Qt.Checked:
+            self.showInventoryDialog()
+        else:
+            self.inventory_data = {}
+        self.updateIcons()
+
+    def showInventoryDialog(self, event=None):
+        if self.inventoryDialog is None:
+            self.inventoryDialog = InventoryDialog(self)
+            self.inventoryDialog.accepted.connect(self.saveInventoryData)
+        self.inventoryDialog.setInventoryData(self.inventory_data)
+        self.inventoryDialog.show()
+
+    def saveInventoryData(self):
+        self.inventory_data = self.inventoryDialog.getInventoryData()
+        self.updateIcons()
+
     def addExit(self):
         exitWidget = ExitWidget(self)
-        self.exitsLayout.addWidget(exitWidget)
+        exitLayout = QHBoxLayout()
+        exitLayout.addWidget(exitWidget)
+        self.exits.append(exitWidget)
+        self.layout().addLayout(exitLayout)
+        self.updateIcons()
+
+    def removeExit(self):
+        if self.exits:
+            exitWidget = self.exits.pop()
+            for layout in self.findChildren(QHBoxLayout):
+                if layout.indexOf(exitWidget) != -1:
+                    layout.removeWidget(exitWidget)
+                    exitWidget.deleteLater()
+                    break
         self.updateIcons()
 
     def emitRoomNameChanged(self):
         self.roomNameChanged.emit(self.roomNameInput.text())
 
     def hasSkillCheck(self):
-        for index in range(self.exitsLayout.count()):
-            widget = self.exitsLayout.itemAt(index).widget()
-            if isinstance(widget, ExitWidget) and widget.skillCheckData:
+        for exitWidget in self.exits:
+            if exitWidget.skillCheckData:
                 return True
         return False
 
     def hasRevisitData(self):
         return bool(self.revisit_data)
 
-    def hasInventory(self):
-        return self.inventoryWidget.inventoryCheckbox.isChecked()
+    def hasItem(self):
+        return bool(self.inventory_data.get("item", ""))
+
+    def hasItemNeeded(self):
+        return bool(self.inventory_data.get("item_needed", ""))
 
     def updateIcons(self):
         if self.hasSkillCheck():
@@ -157,70 +209,82 @@ class RoomWidget(QWidget):
         else:
             self.revisitIconLabel.setVisible(False)
 
-        if self.hasInventory():
-            self.inventoryIconLabel.setPixmap(QPixmap("editordata/key.png").scaled(24, 24))
-            self.inventoryIconLabel.setVisible(True)
+        if self.hasItem():
+            self.itemIconLabel.setPixmap(QPixmap("editordata/key.png").scaled(24, 24))
+            self.itemIconLabel.setVisible(True)
         else:
-            self.inventoryIconLabel.setVisible(False)
+            self.itemIconLabel.setVisible(False)
+
+        if self.hasItemNeeded():
+            self.itemNeededIconLabel.setPixmap(QPixmap("editordata/key.png").scaled(24, 24))
+            self.itemNeededIconLabel.setVisible(True)
+        else:
+            self.itemNeededIconLabel.setVisible(False)
 
         self.updateTabIcon()
 
     def updateTabIcon(self):
         tabWidget = self.parent().parent()
         tabIndex = tabWidget.indexOf(self)
-        if self.hasSkillCheck() and self.hasRevisitData() and self.hasInventory():
-            icon = QIcon("editordata/all_three.png")
-            icon.addPixmap(QPixmap("editordata/all_three.png"), QIcon.Normal, QIcon.Off)
+        if self.hasSkillCheck() and self.hasRevisitData() and self.hasItem() and self.hasItemNeeded():
+            icon = QIcon("editordata/all.png")
+            icon.addPixmap(QPixmap("editordata/all.png"), QIcon.Normal, QIcon.Off)
             tabWidget.setTabIcon(tabIndex, icon)
-            tabWidget.setIconSize(QSize(64, 24))
+            tabWidget.setIconSize(QSize(34, 18))  # Set the icon size to 32x24 pixels
+        elif self.hasSkillCheck() and self.hasRevisitData() and self.hasItem():
+            # Add a new icon for skill check, revisit, and item
+            pass
+        elif self.hasSkillCheck() and self.hasRevisitData() and self.hasItemNeeded():
+            # Add a new icon for skill check, revisit, and item needed
+            pass
+        elif self.hasSkillCheck() and self.hasItem() and self.hasItemNeeded():
+            # Add a new icon for skill check, item, and item needed
+            pass
+        elif self.hasRevisitData() and self.hasItem() and self.hasItemNeeded():
+            # Add a new icon for revisit, item, and item needed
+            pass
         elif self.hasSkillCheck() and self.hasRevisitData():
             icon = QIcon("editordata/both.png")
             icon.addPixmap(QPixmap("editordata/both.png"), QIcon.Normal, QIcon.Off)
             tabWidget.setTabIcon(tabIndex, icon)
-            tabWidget.setIconSize(QSize(34, 18))
-        elif self.hasSkillCheck() and self.hasInventory():
-            icon = QIcon("editordata/skill_inventory.png")
-            icon.addPixmap(QPixmap("editordata/skill_inventory.png"), QIcon.Normal, QIcon.Off)
-            tabWidget.setTabIcon(tabIndex, icon)
-            tabWidget.setIconSize(QSize(34, 18))
-        elif self.hasRevisitData() and self.hasInventory():
-            icon = QIcon("editordata/revisit_inventory.png")
-            icon.addPixmap(QPixmap("editordata/revisit_inventory.png"), QIcon.Normal, QIcon.Off)
-            tabWidget.setTabIcon(tabIndex, icon)
-            tabWidget.setIconSize(QSize(34, 18))
+            tabWidget.setIconSize(QSize(34, 18))  # Set the icon size to 32x24 pixels
+        elif self.hasSkillCheck() and self.hasItem():
+            # Add a new icon for skill check and item
+            pass
+        elif self.hasSkillCheck() and self.hasItemNeeded():
+            # Add a new icon for skill check and item needed
+            pass
+        elif self.hasRevisitData() and self.hasItem():
+            # Add a new icon for revisit and item
+            pass
+        elif self.hasRevisitData() and self.hasItemNeeded():
+            # Add a new icon for revisit and item needed
+            pass
+        elif self.hasItem() and self.hasItemNeeded():
+            # Add a new icon for item and item needed
+            pass
         elif self.hasSkillCheck():
             tabWidget.setTabIcon(tabIndex, QIcon("editordata/dice.png"))
-            tabWidget.setIconSize(QSize(18, 18))
+            tabWidget.setIconSize(QSize(18, 18))  # Set the icon size to 24x24 pixels
         elif self.hasRevisitData():
             tabWidget.setTabIcon(tabIndex, QIcon("editordata/revisit.png"))
-            tabWidget.setIconSize(QSize(18, 18))
-        elif self.hasInventory():
+            tabWidget.setIconSize(QSize(18, 18))  # Set the icon size to 24x24 pixels
+        elif self.hasItem():
             tabWidget.setTabIcon(tabIndex, QIcon("editordata/key.png"))
-            tabWidget.setIconSize(QSize(18, 18))
+            tabWidget.setIconSize(QSize(18, 18))  # Set the icon size to 24x24 pixels
+        elif self.hasItemNeeded():
+            tabWidget.setTabIcon(tabIndex, QIcon("editordata/key.png"))
+            tabWidget.setIconSize(QSize(18, 18))  # Set the icon size to 24x24 pixels
         else:
             tabWidget.setTabIcon(tabIndex, QIcon())
 
-    def removeInvalidExits(self):
-        for index in range(self.exitsLayout.count() - 1, -1, -1):
-            widget = self.exitsLayout.itemAt(index).widget()
-            if not isinstance(widget, ExitWidget):
-                self.exitsLayout.removeWidget(widget)
-                widget.deleteLater()
-
-    def showInventoryDialog(self, event):
-        dialog = InventoryDialog(self)
-        dialog.setInventoryData(
-            self.inventoryWidget.inventoryCheckbox.isChecked(),
-            self.inventoryWidget.item_requirement,
-            self.inventoryWidget.use_item_data,
-            self.inventoryWidget.inventory_items
+    def confirmRemoveRoom(self):
+        confirmation = QMessageBox.question(
+            self,
+            "Remove Room",
+            "Are you sure you want to remove this room?",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No
         )
-        dialog.exec_()
-
-    def onInventoryChanged(self, has_inventory, item_requirement, use_item_data, inventory_items):
-        self.updateIcons()
-
-    def setRevisitData(self, revisit_data):
-        self.revisit_data = revisit_data
-        self.trackRevisitsCheckbox.setChecked(bool(revisit_data))
-        self.updateIcons()
+        if confirmation == QMessageBox.Yes:
+            self.removeRoomSignal.emit()
