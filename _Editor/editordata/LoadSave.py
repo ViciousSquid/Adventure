@@ -1,6 +1,6 @@
 import zipfile
 import json
-from PyQt5.QtWidgets import QMessageBox, QFileDialog
+from PyQt5.QtWidgets import QMessageBox, QFileDialog, QLineEdit
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import QByteArray, QBuffer, QIODevice
 from editordata.exit_widget import ExitWidget
@@ -112,13 +112,12 @@ def load_story(story_editor_widget, filename):
                 # Update icons
                 room_widget.updateIcons()
 
-                # Load inventory data
+                # Load item-related data
                 room_widget.inventory_data = {
-                    "item": room_data.get("item", ""),
-                    "item_needed": room_data.get("item_needed", ""),
-                    "skill_check": room_data.get("inventory_skill_check", None)
+                    "items": room_data.get("items", []),
+                    "item_needed": room_data.get("item_needed", None),
+                    "skill_check": room_data.get("item_skill_check", None)
                 }
-                room_widget.hasInventoryCheckbox.setChecked(bool(room_widget.inventory_data.get("item", "") or room_widget.inventory_data.get("item_needed", "")))
 
     except Exception as e:
         QMessageBox.warning(story_editor_widget, "Error", f"Failed to load story: {str(e)}")
@@ -183,10 +182,10 @@ def save_story(story_editor_widget, filename):
                     'exits': room_exits
                 }
 
-                # Save inventory data
-                room_data["item"] = room_widget.inventory_data.get("item", "")
-                room_data["item_needed"] = room_widget.inventory_data.get("item_needed", "")
-                room_data["inventory_skill_check"] = room_widget.inventory_data.get("skill_check", None)
+                # Save item-related data
+                room_data["items"] = room_widget.inventory_data.get("items", [])
+                room_data["item_needed"] = room_widget.inventory_data.get("item_needed", None)
+                room_data["item_skill_check"] = room_widget.inventory_data.get("skill_check", None)
 
                 if room_widget.room_image_path:
                     room_image_filename = f"room_{i + 1}.jpg"
