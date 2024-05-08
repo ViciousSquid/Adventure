@@ -151,7 +151,7 @@ class StoryEditorWidget(QWidget):
         # Add room and add exit buttons
         buttonsLayout = QHBoxLayout()
         self.addRoomButton = QPushButton("Add Room")
-        self.addRoomButton.setStyleSheet("background-color: orange; color: black;")
+        self.addRoomButton.setStyleSheet("background-color: green; color: white;")
         self.addRoomButton.setObjectName("addRoomButton")
         self.addExitButton = QPushButton("Add Exit")
         self.addExitButton.setObjectName("addExitButton")
