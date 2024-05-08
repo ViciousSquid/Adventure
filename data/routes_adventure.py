@@ -164,6 +164,13 @@ def adventure_game():
     roll_dice_button = ""  # Initialize roll_dice_button with an empty string
     dice_notation = ""  # Initialize dice_notation with an empty string
 
+    # Retrieve the player's inventory from the session or database
+    player_inventory = []  # Replace with actual player inventory retrieval logic
+
+    # Retrieve the available items and required items for the current room
+    available_items = room.get('items', [])
+    item_needed = room.get('item_needed', None)
+
     if request.method == 'POST':
         direction = request.form.get('direction')
         if direction:
@@ -196,7 +203,7 @@ def adventure_game():
                 else:
                     # Display the room description and the "Roll Dice" button
                     content = escape(renderMarkup(room['description']))  # Use escape and renderMarkup here
-                    roll_dice_button = f'<form method="post"><input type="hidden" name="direction" value="{direction}"><input type="submit" name="roll_dice" value="Roll Dice" style="font-size: 24px; padding: 10px 20px;"></form>'
+                    roll_dice_button = f'<form method="post"><input type="hidden" name="direction" value="{direction}"><button type="submit" name="roll_dice" id="roll-dice-button">Roll Dice</button></form>'
             elif isinstance(next_room, str):
                 # Simple room transition
                 current_room = next_room
@@ -228,7 +235,9 @@ def adventure_game():
     return render_template('adventure.html', content=content, exits=exits, room=room, show_map=show_map,
                            action_history=action_history, button_color=button_color, story_title=story_title,
                            skill_check=skill_check, player_roll=player_roll, animation_html=animation_html,
-                           roll_dice_button=roll_dice_button, dice_notation=dice_notation)
+                           roll_dice_button=roll_dice_button, dice_notation=dice_notation,
+                           player_inventory=player_inventory, available_items=available_items,
+                           item_needed=item_needed)
 
 @app.route('/dice_roll_image')
 def serve_dice_roll_image():
