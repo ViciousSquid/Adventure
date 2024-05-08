@@ -7,7 +7,7 @@ The Story Editor offers several advanced features to enhance the storytelling ex
 
 Skill checks allow you to incorporate randomized challenges into your story, adding an element of uncertainty and excitement. When configuring an exit, you can associate it with a skill check by defining the following parameters:
 
-- **Dice Type**: Specify the type of dice to be rolled for the skill check (e.g., d6, d8, d10).
+- **Dice Type**: Specify the type of dice to be rolled for the skill check (e.g., 2d6, 1d8, 1d10).
 - **Target**: Set the target number that the player needs to roll equal to or higher than to succeed.
 - **Success Consequence**: Define the consequence when the player succeeds the skill check, including a description and the destination room.
 - **Failure Consequence**: Specify the consequence when the player fails the skill check, including a description and the destination room.
