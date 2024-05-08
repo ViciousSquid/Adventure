@@ -26,8 +26,8 @@ Rooms are the fundamental building blocks of your interactive story. Here's how 
 1. Click the "Add Room" button to create a new room.
 2. A new tab will appear in the "Rooms" section, representing the new room.
 3. In the room tab, enter the room's name and description in the respective fields.
-4. **Track Revisits**: Check this box if you want to enable revisit tracking for the room. This allows you to define unique content that will be displayed when the player revisits the room a specified number of times.
-5. **Has Inventory**: Check this box if you want to enable inventory management for the room. This lets you define items that the player can acquire or require in the room.
+4. **Track Revisits**: Check this box if you want to enable `revisit tracking` for the room. This allows you to define unique content that will be displayed when the player revisits the room a specified number of times.
+5. **Has Inventory**: Check this box if you want to enable `inventory management` for the room. This lets you define items that the player can acquire or require in the room.
 6. **Room Image**: Click the "Choose Image" button to set an image for the room.
 7. You can add or remove exits from the room using the "Add Exit" and "Remove Exit" buttons, respectively.
 
