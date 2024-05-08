@@ -370,7 +370,7 @@ class MainWindow(QMainWindow):
                 scaled_pixmap = pixmap.scaled(
                     QSize(256, 192), Qt.KeepAspectRatio, Qt.SmoothTransformation
                 )
-                self.story_editor_widget.cover_image_label.setPixmap(scaled_pixmap)
+                self.story_editor_widget.coverImageLabel.setPixmap(scaled_pixmap)
 
     def show_about_dialog(self):
         about_dialog = AboutDialog(self)
