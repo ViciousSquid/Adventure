@@ -65,6 +65,11 @@
             border-radius: 5px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             transition: background-color 0.5s ease, color 0.5s ease;
+            display: none;
+        }
+
+        .history.show {
+            display: block;
         }
 
         .history-item {
@@ -78,7 +83,8 @@
             z-index: 9999;
             width: 200px;
             height: 200px;
-            background-color: #e0e0e0;
+            background-color: transparent;
+            color: #adadad;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -153,21 +159,64 @@
             font-family: 'OpenDyslexic', Arial, sans-serif;
         }
 
-        .main-menu-button {
+        .hamburger-menu {
             position: absolute;
             top: 20px;
             left: 20px;
-            padding: 10px 20px;
-            background-color: #555;
-            color: #fff;
-            text-decoration: none;
-            border-radius: 5px;
-            font-size: 16px;
-            transition: background-color 0.3s ease;
+            cursor: pointer;
+            z-index: 1;
         }
 
-        .main-menu-button:hover {
-            background-color: #777;
+        .hamburger-icon {
+            width: 66px;
+            height: 66px;
+            background-image: url('{{ url_for('static', filename='hamburger.png') }}');
+            background-size: cover;
+            background-repeat: no-repeat;
+        }
+
+        .hamburger-menu.open .hamburger-icon {
+            background-image: url('{{ url_for('static', filename='hamburger.png') }}');
+        }
+
+        .menu-overlay {
+            position: absolute;
+            top: 75px;
+            left: 0px;
+            background-color: #2E3696;
+            padding: 5px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            color: #dbdada;
+            text-align: left;
+            display: none;
+            z-index: 999;
+            width: 260px;
+            height: 500px;
+        }
+
+        .menu-overlay.open {
+            display: block;
+        }
+
+        .menu-content a,
+        .menu-content button {
+            display: block;
+            padding: 10px;
+            text-decoration: none;
+            color: #ffffff;
+            transition: background-color 0.3s ease;
+            border: none;
+            background-color: transparent;
+            cursor: pointer;
+            font-size: 24px;
+            text-align: left;
+            width: 100%;
+        }
+
+        .menu-content a:hover,
+        .menu-content button:hover {
+            background-color: #333;
         }
 
         .room-image {
@@ -221,7 +270,15 @@
     </style>
 </head>
 <body>
-    <a href="{{ url_for('main_menu') }}" class="main-menu-button">Return to Main Menu</a>
+    <div class="hamburger-menu">
+        <div class="hamburger-icon"></div>
+        <div class="menu-overlay">
+            <div class="menu-content">
+                <a href="{{ url_for('main_menu') }}">Return to Main Menu</a>
+                <button id="history-toggle-button">Show Action History</button>
+            </div>
+        </div>
+    </div>
 
     <div class="mode-toggle">
         <label>
@@ -323,6 +380,17 @@
     </div>
     {% endif %}
 
+    {% if player_inventory %}
+    <div class="inventory-section">
+        <h2>Inventory:</h2>
+        <ul>
+            {% for item in player_inventory %}
+            <li>{{ item }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
     <script>
         const form = document.getElementById('adventure-form');
         const buttons = document.querySelectorAll('.buttons button');
@@ -340,6 +408,7 @@
 
         const modeToggleCheckbox = document.getElementById('mode-toggle-checkbox');
         const dyslexicToggleCheckbox = document.getElementById('dyslexic-toggle-checkbox');
+        const historySection = document.querySelector('.history');
 
         // Load the light mode setting from localStorage
         const isLightModeEnabled = localStorage.getItem('isLightModeEnabled') === 'true';
@@ -384,6 +453,23 @@
             // Store the dyslexic font setting in localStorage
             localStorage.setItem('isDyslexicFontEnabled', dyslexicToggleCheckbox.checked);
         });
+
+        const historyToggleButton = document.getElementById('history-toggle-button');
+        const menuOverlay = document.querySelector('.menu-overlay');
+        const hamburgerMenu = document.querySelector('.hamburger-menu');
+
+        historyToggleButton.addEventListener('click', () => {
+            historySection.classList.toggle('show');
+            historyToggleButton.textContent = historySection.classList.contains('show') ? 'Hide Action History' : 'Show Action History';
+            toggleMenuOverlay();
+        });
+
+        hamburgerMenu.addEventListener('click', toggleMenuOverlay);
+
+        function toggleMenuOverlay() {
+            menuOverlay.classList.toggle('open');
+            hamburgerMenu.classList.toggle('open');
+        }
     </script>
 </body>
 </html>
