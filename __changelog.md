@@ -1,10 +1,15 @@
 ### changelog
+* build 107.1
+
+Story engine and editor are now being developed in unison. The web-version of the editor has been depreceted.
+Support is being added for an inventory system which will be showcased in future stories.
 
 
 * build 107
 
 Story editor has been completely rewritten from scratch to support diceroll features.
-Backwards compatibility with pre-107 stories has been maintained (buggy)
+A new standalone python application can be found in the '_Editor' folder
+Backwards compatibility with pre-107 stories has been maintained via the (buggy JS) web editor
 
 -----
 
