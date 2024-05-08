@@ -196,7 +196,7 @@ def adventure_game():
                 else:
                     # Display the room description and the "Roll Dice" button
                     content = escape(renderMarkup(room['description']))  # Use escape and renderMarkup here
-                    roll_dice_button = f'<form method="post"><input type="hidden" name="direction" value="{direction}"><button type="submit" name="roll_dice">Roll Dice</button></form>'
+                    roll_dice_button = f'<form method="post"><input type="hidden" name="direction" value="{direction}"><input type="submit" name="roll_dice" value="Roll Dice" style="font-size: 24px; padding: 10px 20px;"></form>'
             elif isinstance(next_room, str):
                 # Simple room transition
                 current_room = next_room
