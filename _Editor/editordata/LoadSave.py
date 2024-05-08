@@ -1,9 +1,8 @@
 import zipfile
 import json
-from PyQt5.QtWidgets import QMessageBox, QFileDialog, QLineEdit, QTextEdit, QWidget, QLabel, QPushButton, QVBoxLayout
+from PyQt5.QtWidgets import QMessageBox, QFileDialog
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import QByteArray, QBuffer, QIODevice
-from editordata.skill_check_widget import SkillCheckWidget
 from editordata.exit_widget import ExitWidget
 
 def open_load_story_dialog(story_editor_widget):
@@ -85,25 +84,27 @@ def load_story(story_editor_widget, filename):
                         room_image_data = zip_file.read(room_image_filename)
                         pixmap = QPixmap()
                         pixmap.loadFromData(room_image_data)
-                        room_widget.roomImageLabel.setPixmap(pixmap.scaled(256, 192, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation))
+                        room_widget.roomImageLabel.setPixmap(pixmap)
 
                 # Load exits
                 for exit_name, exit_data in room_data.get('exits', {}).items():
                     room_widget.addExit()
                     exit_widget = room_widget.exitsLayout.itemAt(room_widget.exitsLayout.count() - 1).widget()
-                    exit_widget.exitNameInput.setText(exit_name)
-                    if isinstance(exit_data, str):
-                        exit_widget.exitDestinationInput.setText(exit_data)
-                    elif isinstance(exit_data, dict):
-                        # Load skill check data only if exitWidget is an instance of ExitWidget
+                    if exit_widget is not None:
                         if isinstance(exit_widget, ExitWidget):
-                            exit_widget.skillCheckData = exit_data.get('skill_check', None)
-                            if exit_widget.skillCheckData:
-                                exit_widget.skillCheckIndicator.setVisible(True)
-                            else:
-                                exit_widget.skillCheckIndicator.setVisible(False)
+                            exit_widget.exitNameInput.setText(exit_name)
+                            if isinstance(exit_data, str):
+                                exit_widget.exitDestinationInput.setText(exit_data)
+                            elif isinstance(exit_data, dict):
+                                exit_widget.skillCheckData = exit_data.get('skill_check', None)
+                                if exit_widget.skillCheckData:
+                                    exit_widget.skillCheckIndicator.setVisible(True)
+                                else:
+                                    exit_widget.skillCheckIndicator.setVisible(False)
                         else:
                             QMessageBox.warning(story_editor_widget, "Error", f"Invalid exit widget encountered: {type(exit_widget)}")
+                    else:
+                        QMessageBox.warning(story_editor_widget, "Error", "Failed to retrieve exit widget from layout.")
 
                 # Remove any invalid exits from the roomWidget
                 room_widget.removeInvalidExits()
@@ -114,7 +115,8 @@ def load_story(story_editor_widget, filename):
                 # Load inventory data
                 room_widget.inventory_data = {
                     "item": room_data.get("item", ""),
-                    "item_needed": room_data.get("item_needed", "")
+                    "item_needed": room_data.get("item_needed", ""),
+                    "skill_check": room_data.get("inventory_skill_check", None)
                 }
                 room_widget.hasInventoryCheckbox.setChecked(bool(room_widget.inventory_data.get("item", "") or room_widget.inventory_data.get("item_needed", "")))
 
@@ -156,6 +158,14 @@ def save_story(story_editor_widget, filename):
                 room_description = room_widget.roomDescriptionInput.toPlainText() if room_widget.roomDescriptionInput else ''
                 room_exits = {}
 
+                # Save revisit data
+                if hasattr(room_widget, 'revisitDialog') and room_widget.revisitDialog is not None:
+                    revisit_data = room_widget.revisitDialog.getRevisitData()
+                    if revisit_data["revisit_count"] > 0 or revisit_data["revisit_content"]:
+                        room_data["revisit_count"] = revisit_data["revisit_count"]
+                        room_data["revisit_content"] = revisit_data["revisit_content"]
+
+                # Save exits
                 for j in range(room_widget.exitsLayout.count()):
                     exit_widget = room_widget.exitsLayout.itemAt(j).widget()
                     exit_name_input = exit_widget.findChild(QLineEdit, "exitNameInput")
@@ -173,14 +183,10 @@ def save_story(story_editor_widget, filename):
                     'exits': room_exits
                 }
 
-                if hasattr(room_widget, 'revisitDialog') and room_widget.revisitDialog is not None:
-                    revisit_data = room_widget.revisitDialog.getRevisitData()
-                    if revisit_data["revisit_count"] > 0 or revisit_data["revisit_content"]:
-                        room_data["revisit_count"] = revisit_data["revisit_count"]
-                        room_data["revisit_content"] = revisit_data["revisit_content"]
-
+                # Save inventory data
                 room_data["item"] = room_widget.inventory_data.get("item", "")
                 room_data["item_needed"] = room_widget.inventory_data.get("item_needed", "")
+                room_data["inventory_skill_check"] = room_widget.inventory_data.get("skill_check", None)
 
                 if room_widget.room_image_path:
                     room_image_filename = f"room_{i + 1}.jpg"
