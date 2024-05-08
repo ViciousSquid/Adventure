@@ -1,5 +1,8 @@
+For
+
 ![image](https://github.com/ViciousSquid/Adventure/assets/161540961/1e79ca44-9425-4629-92ef-7dbf3e80b1c6)
 
+#Editor overview
 
 The Story Editor offers several advanced features to enhance the storytelling experience and provide more flexibility in creating interactive adventures.
 
