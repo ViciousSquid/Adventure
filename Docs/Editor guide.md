@@ -85,27 +85,10 @@ To import JSON data:
 1. Go to the "File" menu and select "Import" > "Import Raw JSON".
 2. Select the JSON file containing the story data.
 3. The editor will be populated with the imported data, including rooms, exits, skill checks, and inventory items.
-
-To export the current story as JSON data:
-
-1. Go to the "View" menu and select "View Story Data" > "Complete".
-2. A dialog will appear, displaying the complete JSON representation of your story.
-3. You can copy the JSON data or use the "Maximize" button to view it in a larger window.
-
-## Customizing the Application
-
-To customize the appearance of the Story Editor:
-
-1. Go to the "Settings" menu and select "Settings".
-2. In the Settings window, you can change the font family and size used throughout the application.
-3. You can also select a predefined theme or create a custom theme by modifying colors and styles.
-4. Click "OK" to apply the changes and close the Settings window.
+4. Selecting this option also allows for syntax and formatting debugging of story json files.
 
 ## Additional Features
 
 The Story Editor provides several other helpful features:
 
-- **View Story Data**: Under the "View" menu, you can view various subsets of your story data, such as room count, rooms with exits, and rooms without exits.
-- **About**: Access information about the Story Editor and its version from the "Help" menu.
-
-Congratulations! You now have a solid understanding of how to create and manage interactive stories using the Story Editor application. Happy storytelling!
+- **View Story Data**: Under the "View" menu, you can view various subsets of your story data, such as room count & exits
