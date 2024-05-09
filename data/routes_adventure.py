@@ -66,6 +66,7 @@ def new_story():
         current_adventure = story_name
         current_room = story_data['start_room']
         action_history = []  # Reset action history for new story
+        session['inventory'] = []  # Clear the player's inventory
         print(">>Starting a New Game:")
 
         # Remove the temporary file and clear the session data
@@ -85,6 +86,7 @@ def new_story():
                 story_data = json.load(f)
         current_room = story_data['start_room']
         action_history = []  # Reset action history for new story
+        session['inventory'] = []  # Clear the player's inventory
         print(">>Starting a New Game:")
         return redirect(url_for('adventure_game'))
     else:
@@ -164,8 +166,8 @@ def adventure_game():
     roll_dice_button = ""  # Initialize roll_dice_button with an empty string
     dice_notation = ""  # Initialize dice_notation with an empty string
 
-    # Retrieve the player's inventory from the session or database
-    player_inventory = []  # Replace with actual player inventory retrieval logic
+    # Retrieve the player's inventory from the session
+    player_inventory = session.get('inventory', [])
 
     # Retrieve the available items and required items for the current room
     available_items = room.get('items', [])
@@ -219,7 +221,7 @@ def adventure_game():
 
     # Check if the player has reached an ending
     if not room['exits']:
-        print("\033[92m>Player reached an ending\033[0m")
+        print("! Player reached an ending")
 
     exits = [(direction, room_data) for direction, room_data in room['exits'].items() if room_data]
     show_map = room.get('show_map', True)
@@ -352,3 +354,60 @@ def load_game():
     show_map = room.get('show_map', True)
     button_color = story_data.get('button_color', '#4CAF50')
     return render_template('adventure.html', content=content, exits=exits, room=room, show_map=show_map, action_history=action_history, button_color=button_color)
+
+@app.route('/acquire_item', methods=['POST'])
+def acquire_item():
+    global current_room
+    item_name = request.form.get('item_name')
+    
+    # Load the story data
+    adventures = load_adventures()
+    adventure = adventures[current_adventure]
+    with zipfile.ZipFile(adventure, 'r') as zip_ref:
+        with zip_ref.open('story.json', 'r') as f:
+            story_data = json.load(f)
+    
+    if item_name:
+        # Check if the item is available in the current room
+        room = story_data['rooms'][current_room]
+        available_items = room.get('items', [])
+        
+        if item_name in available_items:
+            # Add the item to the player's inventory
+            if 'inventory' not in session:
+                session['inventory'] = []
+            
+            if item_name not in session['inventory']:
+                session['inventory'].append(item_name)
+            
+            # Remove the item from the room's available items
+            room['items'].remove(item_name)
+            
+            # Check if the item acquisition requires a skill check
+            item_skill_check = room.get('item_skill_check')
+            if item_skill_check:
+                # Perform the skill check
+                dice_type = item_skill_check['dice_type']
+                target_value = item_skill_check['target']
+                
+                # Roll the dice and compare the result with the target value
+                dice_roller = dicerollAPI()
+                roll_result = dice_roller.roll_dice(dice_type)
+                
+                if roll_result['roll_result'] >= target_value:
+                    # Skill check success
+                    description = item_skill_check['success']['description']
+                    item_acquired = item_skill_check['success']['item']
+                    session['inventory'].append(item_acquired)
+                else:
+                    # Skill check failure
+                    description = item_skill_check['failure']['description']
+            else:
+                description = f"You acquired the {item_name}."
+        else:
+            description = f"The {item_name} is not available in this room."
+    else:
+        description = "No item specified."
+    
+    # Redirect back to the current room with the updated description
+    return redirect(url_for('adventure_game', description=description))
