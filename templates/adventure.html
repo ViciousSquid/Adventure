@@ -17,6 +17,14 @@
             transition: color 0.5s ease;
         }
 
+        .skill-check-text {
+            color: #adadad; /* Default color for dark mode */
+        }
+
+        body.light-mode .skill-check-text {
+            color: #333; /* Color for light mode */
+        }
+
         .content {
             white-space: pre-wrap;
             text-align: left;
@@ -52,8 +60,8 @@
         }
 
         #roll-dice-button {
-            font-size: 30px;
-            padding: 20px 40px;
+            font-size: 24px;
+            padding: 10px 20px;
         }
 
         .history {
@@ -88,6 +96,14 @@
             display: flex;
             justify-content: center;
             align-items: center;
+        }
+
+        .dice-notation-text {
+            color: #adadad; /* Default color for dark mode */
+        }
+
+        body.light-mode .dice-notation-text {
+            color: #333; /* Color for light mode */
         }
 
         .mode-toggle {
@@ -192,7 +208,7 @@
             display: none;
             z-index: 999;
             width: 260px;
-            height: 500px;
+            height: 200px;
         }
 
         .menu-overlay.open {
@@ -315,7 +331,7 @@
                 <form method="post" action="{{ url_for('adventure_game') }}">
                     <input type="hidden" name="direction" value="{{ direction }}">
                     <button type="submit" style="background-color: {{ button_color }};">{{ direction.capitalize().replace('_', ' ') }}</button>
-                    <p>Skill Check: {{ room_data.skill_check.dice_type }} >= {{ room_data.skill_check.target }}</p>
+                    <p class="skill-check-text">Skill Check: {{ room_data.skill_check.dice_type }} >= {{ room_data.skill_check.target }}</p>
                 </form>
             {% else %}
                 <form method="post" action="{{ url_for('adventure_game') }}">
@@ -336,7 +352,7 @@
         {% if animation_html %}
             <div class="dice-animation-content">
                 {{ animation_html|safe }}
-                <div class="dice-notation">{{ dice_notation }}</div>
+                <div class="dice-notation dice-notation-text">{{ dice_notation }}</div>
             </div>
         {% endif %}
     </div>
@@ -371,7 +387,7 @@
         <div class="item-needed">
             <h2>Item Needed:</h2>
             <p>{{ item_needed }}</p>
-            <form method="post" action="{{ url_for('use_item') }}">
+            <form method="post" action="{{ url_for('acquire_item') }}">
                 <input type="hidden" name="item_name" value="{{ item_needed }}">
                 <button type="submit">Use</button>
             </form>
