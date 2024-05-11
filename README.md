@@ -18,7 +18,7 @@ Love Books. Love Reading. You are welcome to make stories and submit them to be 
 * Can track room re-visits and trigger extra content
 * Supports skill-checks and saving-throws within stories (see examples)
 * Example stories included with multiple endings and more
-* NEW: Image support!
+* Basic Inventory system is currently being developed
 _____
 Please read the changelog: https://github.com/ViciousSquid/Adventure/blob/main/__changelog.md
 _____
