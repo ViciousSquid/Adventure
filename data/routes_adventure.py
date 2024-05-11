@@ -93,9 +93,16 @@ def new_story():
         return redirect(url_for('main_menu'))
 
 def resolve_skill_check(skill_check, player_roll):
-    success_description = skill_check['success']['description']
+    # Check if the 'description' key is directly under the skill_check dictionary
+    if 'description' in skill_check:
+        success_description = skill_check['description']
+        failure_description = skill_check['description']
+    else:
+        # The 'description' key is nested under 'success' and 'failure' dictionaries
+        success_description = skill_check['success']['description']
+        failure_description = skill_check['failure']['description']
+
     success_room = skill_check['success']['room']
-    failure_description = skill_check['failure']['description']
     failure_room = skill_check['failure']['room']
 
     target_value = skill_check['target']
@@ -148,16 +155,14 @@ def adventure_game():
     adventures = load_adventures()
     adventure = adventures[current_adventure]
     with zipfile.ZipFile(adventure, 'r') as zip_ref:
-        with zip_ref.open('story.json', 'r') as f:
-            story_data = json.load(f)
+        zip_contents = zip_ref.namelist()  # Get a list of filenames in the zip file
+        with zip_ref.open('story.json', 'r') as file:
+            story_data = json.load(file)
     room = story_data['rooms'][current_room]
     button_color = story_data.get('button_color', '#4CAF50')
 
     # Count the number of times the player has visited the current room
     room_visit_count = Counter(action_history)[current_room]
-
-    if len(room['exits']) > 1:
-        print("\033[94m>choice point\033[0m")
 
     content = ""  # Initialize content with a default value
     skill_check = None  # Initialize skill_check with None
@@ -166,62 +171,75 @@ def adventure_game():
     roll_dice_button = ""  # Initialize roll_dice_button with an empty string
     dice_notation = ""  # Initialize dice_notation with an empty string
 
-    # Retrieve the player's inventory from the session
+    # Retrieve the player's inventory from the session, or an empty list if not present
     player_inventory = session.get('inventory', [])
 
-    # Retrieve the available items and required items for the current room
+    # Retrieve the available items and required items for the current room, or empty lists if not present
     available_items = room.get('items', [])
     item_needed = room.get('item_needed', None)
 
-    if request.method == 'POST':
-        direction = request.form.get('direction')
-        if direction:
-            next_room = room['exits'].get(direction)
-            if isinstance(next_room, dict) and 'skill_check' in next_room:
-                # Nested skill check
-                skill_check = next_room['skill_check']
-                dice_type = skill_check['dice_type']
-                target_value = skill_check['target']
-                dice_notation = dice_type  # Get the dice notation from the skill check
+    # Retrieve the room message if available
+    room_message = room.get('message')
 
-                if 'roll_dice' in request.form:
-                    # Perform the dice roll and handle the result
-                    dice_roller = dicerollAPI()
-                    player_roll = dice_roller.roll_dice(dice_type)
+    # Retrieve the item message if available
+    item_message = request.args.get('item_message', '')
 
-                    # Trigger the dice roll animation
-                    dice_animator = DiceAnimator()
-                    dice_color = 'blue'  # Set the desired dice color
-                    dice_roll_result = dice_roller.roll_dice(dice_type, dice_color)
-                    if dice_roll_result is not None:
-                        animation_html = dice_animator.animate_dice_roll_html(dice_type, dice_color, dice_roll_result)
+    # Check if the room has an "exits" key
+    if "exits" in room:
+        if len(room['exits']) > 1:
+            print("\033[94m>choice point\033[0m")
 
-                    skill_check_result = resolve_skill_check(skill_check, player_roll)
-                    current_room = skill_check_result['room']
-                    content = escape(renderMarkup(skill_check_result['description']))  # Use escape and renderMarkup here
+        # Handle room transitions and skill checks
+        if request.method == 'POST':
+            direction = request.form.get('direction')
+            if direction:
+                next_room = room['exits'].get(direction)
+                if isinstance(next_room, dict) and 'skill_check' in next_room:
+                    # Nested skill check
+                    skill_check = next_room['skill_check']
+                    dice_type = skill_check['dice_type']
+                    target_value = skill_check['target']
+                    dice_notation = dice_type  # Get the dice notation from the skill check
 
+                    if 'roll_dice' in request.form:
+                        # Perform the dice roll and handle the result
+                        dice_roller = dicerollAPI()
+                        player_roll = dice_roller.roll_dice(dice_type)
+
+                        # Trigger the dice roll animation
+                        dice_animator = DiceAnimator()
+                        dice_color = 'blue'  # Set the desired dice color
+                        dice_roll_result = dice_roller.roll_dice(dice_type, dice_color)
+                        if dice_roll_result is not None:
+                            animation_html = dice_animator.animate_dice_roll_html(dice_type, dice_color, dice_roll_result)
+
+                        skill_check_result = resolve_skill_check(skill_check, player_roll)
+                        current_room = skill_check_result['room']
+                        content = escape(renderMarkup(skill_check_result['description']))  # Use escape and renderMarkup here
+
+                        room = story_data['rooms'][current_room]
+                        action_history.append(current_room)
+                    else:
+                        # Display the room description and the "Roll Dice" button
+                        content = escape(renderMarkup(room['description']))  # Use escape and renderMarkup here
+                        roll_dice_button = f'<form method="post"><input type="hidden" name="direction" value="{direction}"><button type="submit" name="roll_dice" id="roll-dice-button">Roll Dice</button></form>'
+                elif isinstance(next_room, str):
+                    # Simple room transition
+                    current_room = next_room
                     room = story_data['rooms'][current_room]
                     action_history.append(current_room)
-                else:
-                    # Display the room description and the "Roll Dice" button
                     content = escape(renderMarkup(room['description']))  # Use escape and renderMarkup here
-                    roll_dice_button = f'<form method="post"><input type="hidden" name="direction" value="{direction}"><button type="submit" name="roll_dice" id="roll-dice-button">Roll Dice</button></form>'
-            elif isinstance(next_room, str):
-                # Simple room transition
-                current_room = next_room
-                room = story_data['rooms'][current_room]
-                action_history.append(current_room)
-                content = escape(renderMarkup(room['description']))  # Use escape and renderMarkup here
+                else:
+                    content = "You can't go that way."
             else:
-                content = "You can't go that way."
+                content = escape(renderMarkup(room['description']))  # Use escape and renderMarkup here
         else:
             content = escape(renderMarkup(room['description']))  # Use escape and renderMarkup here
-    else:
-        content = escape(renderMarkup(room['description']))  # Use escape and renderMarkup here
 
-    # Check if the player has reached an ending
-    if not room['exits']:
-        print("! Player reached an ending")
+    else:
+        # This room is the end of the story
+        print("! Player reached the end of the story")
+        content = escape(renderMarkup(room['description']))
 
     exits = [(direction, room_data) for direction, room_data in room['exits'].items() if room_data]
     show_map = room.get('show_map', True)
@@ -239,7 +257,8 @@ def adventure_game():
                            skill_check=skill_check, player_roll=player_roll, animation_html=animation_html,
                            roll_dice_button=roll_dice_button, dice_notation=dice_notation,
                            player_inventory=player_inventory, available_items=available_items,
-                           item_needed=item_needed)
+                           item_needed=item_needed, room_message=room_message, item_message=item_message,
+                           zip_contents=zip_contents)  # Pass the zip_contents list to the template
 
 @app.route('/dice_roll_image')
 def serve_dice_roll_image():
@@ -373,37 +392,15 @@ def acquire_item():
         available_items = room.get('items', [])
         
         if item_name in available_items:
-            # Add the item to the player's inventory
+            # Add the item to the player's inventory in the session
             if 'inventory' not in session:
                 session['inventory'] = []
-            
-            if item_name not in session['inventory']:
-                session['inventory'].append(item_name)
+            session['inventory'].append(item_name)
             
             # Remove the item from the room's available items
             room['items'].remove(item_name)
             
-            # Check if the item acquisition requires a skill check
-            item_skill_check = room.get('item_skill_check')
-            if item_skill_check:
-                # Perform the skill check
-                dice_type = item_skill_check['dice_type']
-                target_value = item_skill_check['target']
-                
-                # Roll the dice and compare the result with the target value
-                dice_roller = dicerollAPI()
-                roll_result = dice_roller.roll_dice(dice_type)
-                
-                if roll_result['roll_result'] >= target_value:
-                    # Skill check success
-                    description = item_skill_check['success']['description']
-                    item_acquired = item_skill_check['success']['item']
-                    session['inventory'].append(item_acquired)
-                else:
-                    # Skill check failure
-                    description = item_skill_check['failure']['description']
-            else:
-                description = f"You acquired the {item_name}."
+            description = f"You acquired the {item_name}."
         else:
             description = f"The {item_name} is not available in this room."
     else:
@@ -411,3 +408,83 @@ def acquire_item():
     
     # Redirect back to the current room with the updated description
     return redirect(url_for('adventure_game', description=description))
+
+@app.route('/use_item', methods=['POST'])
+def use_item():
+    global current_room, player_inventory, player_health
+    item_name = request.form.get('item_name')
+    
+    # Load the story data
+    adventures = load_adventures()
+    adventure = adventures[current_adventure]
+    with zipfile.ZipFile(adventure, 'r') as zip_ref:
+        with zip_ref.open('story.json', 'r') as f:
+            story_data = json.load(f)
+    
+    # Load the item data (if available)
+    item_data = {}
+    try:
+        with zipfile.ZipFile(adventure, 'r') as zip_ref:
+            with zip_ref.open('items.json', 'r') as f:
+                item_data = json.load(f)
+    except KeyError:
+        pass
+    
+    if item_name:
+        # Check if the item is in the player's inventory
+        if item_name in player_inventory:
+            # Check if the item has a usage scenario in the current room
+            item_usage = item_data.get(item_name, {}).get('usage', {}).get(current_room, {})
+            
+            if item_usage:
+                if 'reveal_object' in item_usage:
+                    hidden_object = item_usage['reveal_object']
+                    
+                    room = story_data['rooms'][current_room]
+                    room['items'].append(hidden_object)
+                    player_inventory.remove(item_name)
+                    
+                    item_message = item_usage.get('message', f"Using the {item_name} revealed a {hidden_object} in the room.")
+                    return redirect(url_for('adventure_game', item_message=item_message))
+                
+                elif 'trigger_event' in item_usage:
+                    event_id = item_usage['trigger_event']
+                    
+                    room = story_data['rooms'][current_room]
+                    if event_id == 'change_room_state':
+                        new_state = item_usage.get('new_state', '')
+                        room['state'] = new_state
+                        item_message = item_usage.get('message', f"Using the {item_name} changed the room's state to {new_state}.")
+                    elif event_id == 'enable_room_exit':
+                        exit_direction = item_usage.get('exit_direction', '')
+                        exit_room = item_usage.get('exit_room', '')
+                        room['exits'][exit_direction] = exit_room
+                        item_message = item_usage.get('message', f"Using the {item_name} enabled a new exit to the {exit_direction}.")
+                    
+                    player_inventory.remove(item_name)
+                    return redirect(url_for('adventure_game', item_message=item_message))
+                
+                elif 'restore_health' in item_usage:
+                    health_restored = item_usage.get('health_restored', 0)
+                    
+                    player_health += health_restored
+                    player_inventory.remove(item_name)
+                    
+                    item_message = item_usage.get('message', f"Using the {item_name} restored {health_restored} health points.")
+                    return redirect(url_for('adventure_game', item_message=item_message))
+                
+                else:
+                    item_message = "This item has no use in the current room."
+                    return redirect(url_for('adventure_game', item_message=item_message))
+            
+            else:
+                item_message = "This item has no use in the current room."
+                return redirect(url_for('adventure_game', item_message=item_message))
+        
+        else:
+            item_message = "You don't have this item in your inventory."
+            return redirect(url_for('adventure_game', item_message=item_message))
+    
+    else:
+        item_message = "No item specified."
+        return redirect(url_for('adventure_game', item_message=item_message))
