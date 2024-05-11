@@ -80,13 +80,9 @@ class RoomWidget(QWidget):
         self.itemIconLabel = QLabel()
         self.itemIconLabel.setVisible(False)
         self.itemIconLabel.mousePressEvent = self.showInventoryDialog
-        self.itemNeededIconLabel = QLabel()
-        self.itemNeededIconLabel.setVisible(False)
-        self.itemNeededIconLabel.mousePressEvent = self.showInventoryDialog
         iconLayout.addWidget(self.skillCheckIconLabel)
         iconLayout.addWidget(self.revisitIconLabel)
         iconLayout.addWidget(self.itemIconLabel)
-        iconLayout.addWidget(self.itemNeededIconLabel)
         layout.addWidget(iconWidget)
 
         # Room buttons
@@ -196,11 +192,8 @@ class RoomWidget(QWidget):
     def hasRevisitData(self):
         return bool(self.revisit_data)
 
-    def hasItem(self):
-        return bool(self.inventory_data.get("item", ""))
-
-    def hasItemNeeded(self):
-        return bool(self.inventory_data.get("item_needed", ""))
+    def hasItems(self):
+        return bool(self.inventory_data.get("items", []))
 
     def updateIcons(self):
         if self.hasSkillCheck():
@@ -215,46 +208,20 @@ class RoomWidget(QWidget):
         else:
             self.revisitIconLabel.setVisible(False)
 
-        if self.hasItem():
+        if self.hasItems():
             self.itemIconLabel.setPixmap(QPixmap("editordata/key.png").scaled(24, 24))
             self.itemIconLabel.setVisible(True)
         else:
             self.itemIconLabel.setVisible(False)
-
-        if self.hasItemNeeded():
-            self.itemNeededIconLabel.setPixmap(QPixmap("editordata/key.png").scaled(24, 24))
-            self.itemNeededIconLabel.setVisible(True)
-        else:
-            self.itemNeededIconLabel.setVisible(False)
 
         self.updateTabIcon()
 
     def updateTabIcon(self):
         tabWidget = self.parent().parent()
         tabIndex = tabWidget.indexOf(self)
-        if self.hasSkillCheck() and self.hasRevisitData() and self.hasItem() and self.hasItemNeeded():
+        if self.hasSkillCheck() and self.hasRevisitData() and self.hasItems():
             icon = QIcon("editordata/all.png")
             icon.addPixmap(QPixmap("editordata/all.png"), QIcon.Normal, QIcon.Off)
-            tabWidget.setTabIcon(tabIndex, icon)
-            tabWidget.setIconSize(QSize(34, 18))  # Set the icon size to 32x24 pixels
-        elif self.hasSkillCheck() and self.hasRevisitData() and self.hasItem():
-            icon = QIcon("editordata/skill_revisit_item.png")
-            icon.addPixmap(QPixmap("editordata/skill_revisit_item.png"), QIcon.Normal, QIcon.Off)
-            tabWidget.setTabIcon(tabIndex, icon)
-            tabWidget.setIconSize(QSize(34, 18))  # Set the icon size to 32x24 pixels
-        elif self.hasSkillCheck() and self.hasRevisitData() and self.hasItemNeeded():
-            icon = QIcon("editordata/skill_revisit_item_needed.png")
-            icon.addPixmap(QPixmap("editordata/skill_revisit_item_needed.png"), QIcon.Normal, QIcon.Off)
-            tabWidget.setTabIcon(tabIndex, icon)
-            tabWidget.setIconSize(QSize(34, 18))  # Set the icon size to 32x24 pixels
-        elif self.hasSkillCheck() and self.hasItem() and self.hasItemNeeded():
-            icon = QIcon("editordata/skill_item_item_needed.png")
-            icon.addPixmap(QPixmap("editordata/skill_item_item_needed.png"), QIcon.Normal, QIcon.Off)
-            tabWidget.setTabIcon(tabIndex, icon)
-            tabWidget.setIconSize(QSize(34, 18))  # Set the icon size to 32x24 pixels
-        elif self.hasRevisitData() and self.hasItem() and self.hasItemNeeded():
-            icon = QIcon("editordata/revisit_item_item_needed.png")
-            icon.addPixmap(QPixmap("editordata/revisit_item_item_needed.png"), QIcon.Normal, QIcon.Off)
             tabWidget.setTabIcon(tabIndex, icon)
             tabWidget.setIconSize(QSize(34, 18))  # Set the icon size to 32x24 pixels
         elif self.hasSkillCheck() and self.hasRevisitData():
@@ -262,29 +229,14 @@ class RoomWidget(QWidget):
             icon.addPixmap(QPixmap("editordata/skill_revisit.png"), QIcon.Normal, QIcon.Off)
             tabWidget.setTabIcon(tabIndex, icon)
             tabWidget.setIconSize(QSize(34, 18))  # Set the icon size to 32x24 pixels
-        elif self.hasSkillCheck() and self.hasItem():
+        elif self.hasSkillCheck() and self.hasItems():
             icon = QIcon("editordata/skill_item.png")
             icon.addPixmap(QPixmap("editordata/skill_item.png"), QIcon.Normal, QIcon.Off)
             tabWidget.setTabIcon(tabIndex, icon)
             tabWidget.setIconSize(QSize(34, 18))  # Set the icon size to 32x24 pixels
-        elif self.hasSkillCheck() and self.hasItemNeeded():
-            icon = QIcon("editordata/skill_item_needed.png")
-            icon.addPixmap(QPixmap("editordata/skill_item_needed.png"), QIcon.Normal, QIcon.Off)
-            tabWidget.setTabIcon(tabIndex, icon)
-            tabWidget.setIconSize(QSize(34, 18))  # Set the icon size to 32x24 pixels
-        elif self.hasRevisitData() and self.hasItem():
+        elif self.hasRevisitData() and self.hasItems():
             icon = QIcon("editordata/revisit_item.png")
             icon.addPixmap(QPixmap("editordata/revisit_item.png"), QIcon.Normal, QIcon.Off)
-            tabWidget.setTabIcon(tabIndex, icon)
-            tabWidget.setIconSize(QSize(34, 18))  # Set the icon size to 32x24 pixels
-        elif self.hasRevisitData() and self.hasItemNeeded():
-            icon = QIcon("editordata/revisit_item_needed.png")
-            icon.addPixmap(QPixmap("editordata/revisit_item_needed.png"), QIcon.Normal, QIcon.Off)
-            tabWidget.setTabIcon(tabIndex, icon)
-            tabWidget.setIconSize(QSize(34, 18))  # Set the icon size to 32x24 pixels
-        elif self.hasItem() and self.hasItemNeeded():
-            icon = QIcon("editordata/item_item_needed.png")
-            icon.addPixmap(QPixmap("editordata/item_item_needed.png"), QIcon.Normal, QIcon.Off)
             tabWidget.setTabIcon(tabIndex, icon)
             tabWidget.setIconSize(QSize(34, 18))  # Set the icon size to 32x24 pixels
         elif self.hasSkillCheck():
@@ -293,15 +245,11 @@ class RoomWidget(QWidget):
         elif self.hasRevisitData():
             tabWidget.setTabIcon(tabIndex, QIcon("editordata/revisit.png"))
             tabWidget.setIconSize(QSize(18, 18))  # Set the icon size to 24x24 pixels
-        elif self.hasItem():
-            tabWidget.setTabIcon(tabIndex, QIcon("editordata/key.png"))
-            tabWidget.setIconSize(QSize(18, 18))  # Set the icon size to 24x24 pixels
-        elif self.hasItemNeeded():
+        elif self.hasItems():
             tabWidget.setTabIcon(tabIndex, QIcon("editordata/key.png"))
             tabWidget.setIconSize(QSize(18, 18))  # Set the icon size to 24x24 pixels
         else:
             tabWidget.setTabIcon(tabIndex, QIcon())
-    
 
     def confirmRemoveRoom(self):
         confirmation = QMessageBox.question(

@@ -31,6 +31,12 @@ def load_story(story_editor_widget, filename):
             with zip_file.open('story.json') as json_file:
                 story_data = json.load(json_file)
 
+            # Load items.json if available
+            item_data = {}
+            if 'items.json' in zip_file.namelist():
+                with zip_file.open('items.json') as items_file:
+                    item_data = json.load(items_file)
+
             # Clear existing data
             story_editor_widget.storyNameInput.clear()
             story_editor_widget.buttonColorButton.setStyleSheet("background-color: #000000;")
@@ -112,12 +118,15 @@ def load_story(story_editor_widget, filename):
                 # Update icons
                 room_widget.updateIcons()
 
-                # Load item-related data
+                # Load inventory-related data
                 room_widget.inventory_data = {
                     "items": room_data.get("items", []),
                     "item_needed": room_data.get("item_needed", None),
                     "skill_check": room_data.get("item_skill_check", None)
                 }
+
+            # Load item data from items.json
+            story_editor_widget.item_data = item_data
 
     except Exception as e:
         QMessageBox.warning(story_editor_widget, "Error", f"Failed to load story: {str(e)}")
@@ -135,6 +144,11 @@ def save_story(story_editor_widget, filename):
             # Save story.json
             json_data = json.dumps(story_data, indent=2).encode('utf-8')
             zip_file.writestr('story.json', json_data)
+
+            # Save items.json
+            item_data = story_editor_widget.item_data
+            item_json_data = json.dumps(item_data, indent=2).encode('utf-8')
+            zip_file.writestr('items.json', item_json_data)
 
             # Save summary.txt
             summary_text = story_editor_widget.summaryInput.toPlainText().encode('utf-8')
@@ -182,7 +196,7 @@ def save_story(story_editor_widget, filename):
                     'exits': room_exits
                 }
 
-                # Save item-related data
+                # Save inventory-related data
                 room_data["items"] = room_widget.inventory_data.get("items", [])
                 room_data["item_needed"] = room_widget.inventory_data.get("item_needed", None)
                 room_data["item_skill_check"] = room_widget.inventory_data.get("skill_check", None)
