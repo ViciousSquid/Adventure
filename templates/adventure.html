@@ -2,6 +2,8 @@
 <html>
 <head>
     <title>{{ story_title }}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -18,11 +20,11 @@
         }
 
         .skill-check-text {
-            color: #adadad; /* Default color for dark mode */
+            color: #adadad;
         }
 
         body.light-mode .skill-check-text {
-            color: #333; /* Color for light mode */
+            color: #333;
         }
 
         .content {
@@ -33,7 +35,7 @@
             border-radius: 5px;
             font-size: 20px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            color: #fff;
+            color: #ffffff;
             transition: background-color 0.5s ease, color 0.5s ease;
         }
 
@@ -52,7 +54,7 @@
             font-size: 20px;
             border: none;
             border-radius: 5px;
-            color: #fff;
+            color: #ffffff;
             cursor: pointer;
             transition: background-color 0.5s ease;
             text-decoration: none;
@@ -99,11 +101,11 @@
         }
 
         .dice-notation-text {
-            color: #adadad; /* Default color for dark mode */
+            color: #adadad;
         }
 
         body.light-mode .dice-notation-text {
-            color: #333; /* Color for light mode */
+            color: #333;
         }
 
         .mode-toggle {
@@ -128,7 +130,7 @@
         }
 
         body.light-mode {
-            background-color: #fff;
+            background-color: #ffffff;
         }
 
         body.light-mode h1 {
@@ -136,7 +138,7 @@
         }
 
         body.light-mode .content {
-            background-color: #fff;
+            background-color: #ffffff;
             color: #333;
         }
 
@@ -151,14 +153,14 @@
 
         @font-face {
             font-family: 'OpenDyslexic';
-            src: url('/fonts/OpenDyslexic3-Regular.ttf') format('truetype');
+            src: url('{{ url_for('static', filename='OpenDyslexic3-Regular.ttf') }}') format('truetype');
             font-weight: normal;
             font-style: normal;
         }
 
         @font-face {
             font-family: 'OpenDyslexic';
-            src: url('/fonts/OpenDyslexic3-Bold.ttf') format('truetype');
+            src: url('{{ url_for('static', filename='OpenDyslexic3-Bold.ttf') }}') format('truetype');
             font-weight: bold;
             font-style: normal;
         }
@@ -272,7 +274,7 @@
 
         .inventory-section button {
             background-color: #555;
-            color: #fff;
+            color: #ffffff;
             border: none;
             padding: 5px 10px;
             border-radius: 3px;
@@ -364,48 +366,43 @@
         {% endfor %}
     </div>
 
-    {% if available_items or item_needed %}
-    <div class="inventory-section">
-        {% if available_items %}
-        <div class="available-items">
-            <h2>Available Items:</h2>
-            <ul>
-                {% for item in available_items %}
-                    <li>
-                        {{ item }}
-                        <form method="post" action="{{ url_for('acquire_item') }}">
-                            <input type="hidden" name="item_name" value="{{ item }}">
-                            <button type="submit">Acquire</button>
-                        </form>
-                    </li>
-                {% endfor %}
-            </ul>
-        </div>
-        {% endif %}
-
-        {% if item_needed %}
-        <div class="item-needed">
-            <h2>Item Needed:</h2>
-            <p>{{ item_needed }}</p>
+    {% if 'items.json' in zip_contents %}
+<div class="inventory-section">
+    <h2>Available Items:</h2>
+    {% if available_items %}
+    <ul>
+        {% for item in available_items %}
+        <li>
+            {{ item }}
             <form method="post" action="{{ url_for('acquire_item') }}">
-                <input type="hidden" name="item_name" value="{{ item_needed }}">
+                <input type="hidden" name="item_name" value="{{ item }}">
+                <button type="submit">Acquire</button>
+            </form>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p>There are no available items in this room.</p>
+    {% endif %}
+
+    <h2>Inventory:</h2>
+    {% if player_inventory %}
+    <ul>
+        {% for item in player_inventory %}
+        <li>
+            {{ item }}
+            <form method="post" action="{{ url_for('use_item') }}">
+                <input type="hidden" name="item_name" value="{{ item }}">
                 <button type="submit">Use</button>
             </form>
-        </div>
-        {% endif %}
-    </div>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p>Your inventory is empty.</p>
     {% endif %}
-
-    {% if player_inventory %}
-    <div class="inventory-section">
-        <h2>Inventory:</h2>
-        <ul>
-            {% for item in player_inventory %}
-            <li>{{ item }}</li>
-            {% endfor %}
-        </ul>
-    </div>
-    {% endif %}
+</div>
+{% endif %}
 
     <script>
         const form = document.getElementById('adventure-form');
@@ -465,27 +462,46 @@
 
         dyslexicToggleCheckbox.addEventListener('change', () => {
             document.body.classList.toggle('dyslexic-font');
+        
+        // Store the dyslexic font setting in localStorage
+        localStorage.setItem('isDyslexicFontEnabled', dyslexicToggleCheckbox.checked);
+    });
 
-            // Store the dyslexic font setting in localStorage
-            localStorage.setItem('isDyslexicFontEnabled', dyslexicToggleCheckbox.checked);
-        });
+    const historyToggleButton = document.getElementById('history-toggle-button');
+    const menuOverlay = document.querySelector('.menu-overlay');
+    const hamburgerMenu = document.querySelector('.hamburger-menu');
 
-        const historyToggleButton = document.getElementById('history-toggle-button');
-        const menuOverlay = document.querySelector('.menu-overlay');
-        const hamburgerMenu = document.querySelector('.hamburger-menu');
+    historyToggleButton.addEventListener('click', () => {
+        historySection.classList.toggle('show');
+        historyToggleButton.textContent = historySection.classList.contains('show') ? 'Hide Action History' : 'Show Action History';
+        toggleMenuOverlay();
+    });
 
-        historyToggleButton.addEventListener('click', () => {
-            historySection.classList.toggle('show');
-            historyToggleButton.textContent = historySection.classList.contains('show') ? 'Hide Action History' : 'Show Action History';
-            toggleMenuOverlay();
-        });
+    hamburgerMenu.addEventListener('click', toggleMenuOverlay);
 
-        hamburgerMenu.addEventListener('click', toggleMenuOverlay);
+    function toggleMenuOverlay() {
+        menuOverlay.classList.toggle('open');
+        hamburgerMenu.classList.toggle('open');
+    }
 
-        function toggleMenuOverlay() {
-            menuOverlay.classList.toggle('open');
-            hamburgerMenu.classList.toggle('open');
-        }
-    </script>
+    // Configure Toastr options
+    toastr.options = {
+        "positionClass": "toast-top-center",
+        "timeOut": 3000, // Display for 3 seconds
+        "extendedTimeOut": 1000, // Extend timeout by 1 second on hover
+        "progressBar": true, // Show progress bar
+        "closeButton": true // Show close button
+    };
+
+    // Display the room message as a toast notification
+    {% if room_message %}
+        toastr.info('{{ room_message }}');
+    {% endif %}
+
+    // Display the item message as a toast notification
+    {% if item_message %}
+        toastr.info('{{ item_message }}');
+    {% endif %}
+</script>
 </body>
 </html>
