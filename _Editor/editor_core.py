@@ -10,7 +10,6 @@ from editordata.revisit_dialog import RevisitDialog
 from editordata.exit_widget import ExitWidget
 from editordata.json import loadRawJson
 from editordata.skill_check_widget import SkillCheckWidget
-from editordata.flowchart import generate_flowchart_image
 from PyQt5.QtCore import Qt, QRect, QSize, QByteArray, QBuffer, QIODevice, pyqtSignal
 from PyQt5.QtGui import QPixmap, QColor, QFont, QImage, QIcon
 from PyQt5.QtWidgets import (
@@ -23,7 +22,6 @@ import zipfile
 import json
 import os
 import sys
-import graphviz
 from editordata.LoadSave import open_load_story_dialog, open_save_story_dialog
 print("Imports loaded \nPyQt5 loaded")
 
@@ -230,13 +228,6 @@ class MainWindow(QMainWindow):
         view_rooms_with_exits_action.triggered.connect(lambda: self.view_story_json("Rooms with Exits"))
         view_rooms_without_exits_action = view_story_data_menu.addAction("Rooms without Exits")
         view_rooms_without_exits_action.triggered.connect(lambda: self.view_story_json("Rooms without Exits"))
-
-        try:
-            import pyflowchart
-            view_flowchart_action = view_menu.addAction("View Flowchart")
-            view_flowchart_action.triggered.connect(lambda: generate_flowchart_image(self.story_editor_widget))
-        except ImportError:
-            pass
 
         # Settings action
         settings_action = settings_menu.addAction("Settings")
