@@ -35,7 +35,7 @@
             border-radius: 5px;
             font-size: 20px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            color: #ffffff;
+            color: #fff;
             transition: background-color 0.5s ease, color 0.5s ease;
         }
 
@@ -54,7 +54,7 @@
             font-size: 20px;
             border: none;
             border-radius: 5px;
-            color: #ffffff;
+            color: #fff;
             cursor: pointer;
             transition: background-color 0.5s ease;
             text-decoration: none;
@@ -130,7 +130,7 @@
         }
 
         body.light-mode {
-            background-color: #ffffff;
+            background-color: #fff;
         }
 
         body.light-mode h1 {
@@ -138,7 +138,7 @@
         }
 
         body.light-mode .content {
-            background-color: #ffffff;
+            background-color: #fff;
             color: #333;
         }
 
@@ -186,12 +186,24 @@
         }
 
         .hamburger-icon {
-            width: 66px;
-            height: 66px;
-            background-image: url('{{ url_for('static', filename='hamburger.png') }}');
-            background-size: cover;
-            background-repeat: no-repeat;
-        }
+        width: 66px;
+        height: 66px;
+        background-color: {{ button_color }};
+        position: relative;
+        transition: background-color 0.3s ease;
+    }
+
+    .hamburger-icon::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: url('{{ url_for('static', filename='hamburger_lines.png') }}');
+        background-size: cover;
+        background-repeat: no-repeat;
+    }
 
         .hamburger-menu.open .hamburger-icon {
             background-image: url('{{ url_for('static', filename='hamburger.png') }}');
@@ -201,17 +213,17 @@
             position: absolute;
             top: 75px;
             left: 0px;
-            background-color: #2E3696;
+            background-color: {{ button_color }};
             padding: 5px;
             border-radius: 5px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            color: #dbdada;
+            color: #ffffff;
             text-align: left;
             display: none;
             z-index: 999;
             width: 260px;
             height: 200px;
-        }
+    }
 
         .menu-overlay.open {
             display: block;
@@ -274,7 +286,7 @@
 
         .inventory-section button {
             background-color: #555;
-            color: #ffffff;
+            color: #fff;
             border: none;
             padding: 5px 10px;
             border-radius: 3px;
@@ -366,43 +378,50 @@
         {% endfor %}
     </div>
 
-    {% if 'items.json' in zip_contents %}
-<div class="inventory-section">
-    <h2>Available Items:</h2>
-    {% if available_items %}
-    <ul>
-        {% for item in available_items %}
-        <li>
-            {{ item }}
-            <form method="post" action="{{ url_for('acquire_item') }}">
-                <input type="hidden" name="item_name" value="{{ item }}">
-                <button type="submit">Acquire</button>
-            </form>
-        </li>
-        {% endfor %}
-    </ul>
-    {% else %}
-    <p>There are no available items in this room.</p>
+    {% if available_items or item_needed %}
+    <div class="inventory-section">
+        {% if available_items %}
+        <div class="available-items">
+            <h2>Available Items:</h2>
+            <ul>
+                {% for item in available_items %}
+                    <li>
+                        {{ item }}
+                        <form method="post" action="{{ url_for('acquire_item') }}">
+                            <input type="hidden" name="item_name" value="{{ item }}">
+                            <button type="submit">Acquire</button>
+                        </form>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        {% if item_needed %}
+        <div class="item-needed">
+            <h2>Item Needed:</h2>
+            <p>{{ item_needed }}</p>
+        </div>
+        {% endif %}
+    </div>
     {% endif %}
 
-    <h2>Inventory:</h2>
     {% if player_inventory %}
-    <ul>
-        {% for item in player_inventory %}
-        <li>
-            {{ item }}
-            <form method="post" action="{{ url_for('use_item') }}">
-                <input type="hidden" name="item_name" value="{{ item }}">
-                <button type="submit">Use</button>
-            </form>
-        </li>
-        {% endfor %}
-    </ul>
-    {% else %}
-    <p>Your inventory is empty.</p>
+    <div class="inventory-section">
+        <h2>Inventory:</h2>
+        <ul>
+            {% for item in player_inventory %}
+            <li>
+                {{ item }}
+                <form method="post" action="{{ url_for('use_item') }}">
+                    <input type="hidden" name="item_name" value="{{ item }}">
+                    <button type="submit">Use</button>
+                </form>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
     {% endif %}
-</div>
-{% endif %}
 
     <script>
         const form = document.getElementById('adventure-form');
@@ -459,10 +478,9 @@
         const isDyslexicFontEnabled = localStorage.getItem('isDyslexicFontEnabled') === 'true';
         dyslexicToggleCheckbox.checked = isDyslexicFontEnabled;
         document.body.classList.toggle('dyslexic-font', isDyslexicFontEnabled);
-
         dyslexicToggleCheckbox.addEventListener('change', () => {
-            document.body.classList.toggle('dyslexic-font');
-        
+        document.body.classList.toggle('dyslexic-font');
+
         // Store the dyslexic font setting in localStorage
         localStorage.setItem('isDyslexicFontEnabled', dyslexicToggleCheckbox.checked);
     });
@@ -502,6 +520,44 @@
     {% if item_message %}
         toastr.info('{{ item_message }}');
     {% endif %}
+
+    // Function to convert RGB color to HSL
+    function rgbToHsl(r, g, b) {
+        r /= 255, g /= 255, b /= 255;
+        let max = Math.max(r, g, b), min = Math.min(r, g, b);
+        let h, s, l = (max + min) / 2;
+
+        if (max === min) {
+            h = s = 0; // achromatic
+        } else {
+            let d = max - min;
+            s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+            switch (max) {
+                case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                case g: h = (b - r) / d + 2; break;
+                case b: h = (r - g) / d + 4; break;
+            }
+            h /= 6;
+        }
+
+        return [h, s, l];
+    }
+
+    // Function to update the hamburger menu color
+    function updateHamburgerMenuColor() {
+        const buttonColor = '{{ button_color }}';
+        const hamburgerIcon = document.querySelector('.hamburger-icon');
+
+        if (buttonColor && hamburgerIcon) {
+            const rgb = buttonColor.match(/\d+/g);
+            const [r, g, b] = rgb;
+            const [h, s, l] = rgbToHsl(r, g, b);
+            const hue = Math.round(h * 360);
+
+            hamburgerIcon.style.filter = `brightness(0) invert(1) sepia(1) saturate(1000%) hue-rotate(${hue}deg)`;
+        }
+    }
+
+    // Call the function to update the hamburger menu color
+    updateHamburgerMenuColor();
 </script>
-</body>
-</html>
