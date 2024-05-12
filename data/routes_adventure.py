@@ -392,22 +392,43 @@ def acquire_item():
         available_items = room.get('items', [])
         
         if item_name in available_items:
-            # Add the item to the player's inventory in the session
+            # Add the item to the player's inventory
             if 'inventory' not in session:
                 session['inventory'] = []
-            session['inventory'].append(item_name)
+            if item_name not in session['inventory']:
+                session['inventory'].append(item_name)
             
             # Remove the item from the room's available items
             room['items'].remove(item_name)
             
-            description = f"You acquired the {item_name}."
+            # Check if the item acquisition requires a skill check
+            item_skill_check = room.get('item_skill_check')
+            if item_skill_check:
+                # Perform the skill check
+                dice_type = item_skill_check['dice_type']
+                target_value = item_skill_check['target']
+                
+                # Roll the dice and compare the result with the target value
+                dice_roller = dicerollAPI()
+                roll_result = dice_roller.roll_dice(dice_type)
+                
+                if roll_result['roll_result'] >= target_value:
+                    # Skill check success
+                    description = item_skill_check['success']['description']
+                    item_acquired = item_skill_check['success']['item']
+                    session['inventory'].append(item_acquired)
+                else:
+                    # Skill check failure
+                    description = item_skill_check['failure']['description']
+            else:
+                description = f"You acquired the {item_name}."
         else:
             description = f"The {item_name} is not available in this room."
     else:
         description = "No item specified."
     
     # Redirect back to the current room with the updated description
-    return redirect(url_for('adventure_game', description=description))
+    return redirect(url_for('adventure_game', item_message=description))
 
 @app.route('/use_item', methods=['POST'])
 def use_item():
