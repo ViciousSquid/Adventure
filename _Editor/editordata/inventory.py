@@ -4,9 +4,12 @@ from editordata.skill_check_dialog import SkillCheckDialog
 from editordata.item_usage_dialog import ItemUsageDialog
 
 class InventoryDialog(QDialog):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, room_name=None):
         super().__init__(parent)
-        self.setWindowTitle("Inventory Settings")
+        if room_name:
+            self.setWindowTitle(f"Inventory settings for {room_name}")
+        else:
+            self.setWindowTitle("Inventory settings")
         self.skill_check_data = None
         self.items = []
         self.initUserInterface()

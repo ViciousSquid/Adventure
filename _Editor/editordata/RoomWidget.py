@@ -151,7 +151,8 @@ class RoomWidget(QWidget):
 
     def showInventoryDialog(self, event=None):
         if self.inventoryDialog is None:
-            self.inventoryDialog = InventoryDialog(self)
+            room_name = self.roomNameInput.text()
+            self.inventoryDialog = InventoryDialog(self, room_name)
             self.inventoryDialog.accepted.connect(self.saveInventoryData)
         self.inventoryDialog.setInventoryData(self.inventory_data)
         self.inventoryDialog.show()

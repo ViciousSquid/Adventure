@@ -16,7 +16,7 @@ class ItemUsageDialog(QDialog):
         layout.addWidget(self.nameInput)
 
         descriptionLabel = QLabel("Item Description:")
-        self.descriptionInput = QTextEdit()
+        self.descriptionInput = QLineEdit()
         layout.addWidget(descriptionLabel)
         layout.addWidget(self.descriptionInput)
 
@@ -80,7 +80,7 @@ class ItemUsageDialog(QDialog):
     def getItemData(self):
         item_data = {
             "name": self.sanitizeInput(self.nameInput.text()),
-            "description": self.sanitizeInput(self.descriptionInput.toPlainText()),
+            "description": self.sanitizeInput(self.descriptionInput.text()),
             "usage": {}
         }
 
