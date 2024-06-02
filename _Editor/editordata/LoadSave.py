@@ -75,11 +75,14 @@ def load_story(story_editor_widget, filename):
                 room_widget.roomNameInput.setText(room_name)
                 room_widget.roomDescriptionInput.setText(room_data.get('description', ''))
 
-                if "revisit_count" in room_data and "revisit_content" in room_data:
-                    room_widget.revisit_data = {
-                        "revisit_count": room_data["revisit_count"],
-                        "revisit_content": room_data["revisit_content"]
-                    }
+                if "revisits" in room_data:
+                    revisits = room_data["revisits"]
+                    if isinstance(revisits, list):
+                        room_widget.revisit_data = {
+                            "revisit_count": revisits[-1]["count"] if revisits else 0,
+                            "revisit_content": revisits[-1]["content"] if revisits else "",
+                            "show_all_revisits": room_data.get("show_all_revisits", False)
+                        }
                 else:
                     room_widget.revisit_data = {}
 
@@ -175,8 +178,13 @@ def save_story(story_editor_widget, filename):
                 if hasattr(room_widget, 'revisitDialog') and room_widget.revisitDialog is not None:
                     revisit_data = room_widget.revisitDialog.getRevisitData()
                     if revisit_data["revisit_count"] > 0 or revisit_data["revisit_content"]:
-                        room_data["revisit_count"] = revisit_data["revisit_count"]
-                        room_data["revisit_content"] = revisit_data["revisit_content"]
+                        room_data["revisits"] = [
+                            {
+                                "count": revisit_data["revisit_count"],
+                                "content": revisit_data["revisit_content"]
+                            }
+                        ]
+                        room_data["show_all_revisits"] = revisit_data["show_all_revisits"]
 
                 # Save exits
                 for j in range(room_widget.exitsLayout.count()):

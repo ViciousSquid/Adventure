@@ -1,7 +1,7 @@
 import json
 from PyQt5.QtWidgets import QPlainTextEdit, QDialog, QVBoxLayout, QPushButton, QMessageBox
 from PyQt5.QtCore import Qt
-from editordata.exit_widget import ExitWidget
+from .editordata.exit_widget import ExitWidget
 
 def show_json_error_dialog(error_message, filename):
     try:

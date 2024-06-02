@@ -19,6 +19,7 @@ class RoomWidget(QWidget):
         self.room_image_path = None
         self.inventory_data = {}
         self.exits = []
+        self.show_all_revisits = True
 
     def initUserInterface(self):
         layout = QVBoxLayout()
@@ -49,6 +50,11 @@ class RoomWidget(QWidget):
         checkboxesLayout.addWidget(self.trackRevisitsCheckbox)
         checkboxesLayout.addWidget(self.hasInventoryCheckbox)
         layout.addLayout(checkboxesLayout)
+
+        # Show all revisits checkbox
+        self.showAllRevisitsCheckbox = QCheckBox("Show all revisits")
+        self.showAllRevisitsCheckbox.setChecked(True)
+        layout.addWidget(self.showAllRevisitsCheckbox)
 
         # Room image input
         roomImageLayout = QHBoxLayout()
@@ -140,6 +146,7 @@ class RoomWidget(QWidget):
 
     def saveRevisitData(self):
         self.revisit_data = self.revisitDialog.getRevisitData()
+        self.show_all_revisits = self.showAllRevisitsCheckbox.isChecked()
         self.updateIcons()
 
     def onHasInventoryStateChanged(self, state):
@@ -194,7 +201,8 @@ class RoomWidget(QWidget):
         return bool(self.revisit_data)
 
     def hasItems(self):
-        return bool(self.inventory_data.get("items", []))
+        items = self.inventory_data.get("items", [])
+        return bool(items)
 
     def updateIcons(self):
         if self.hasSkillCheck():

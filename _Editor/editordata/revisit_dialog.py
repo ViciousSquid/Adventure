@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QDialog, QVBoxLayout, QGridLayout, QLabel, QTextEdit, QSpinBox, QDialogButtonBox
+from PyQt5.QtWidgets import QDialog, QVBoxLayout, QGridLayout, QLabel, QTextEdit, QSpinBox, QDialogButtonBox, QCheckBox
 
 class RevisitDialog(QDialog):
     def __init__(self, parent=None):
@@ -25,6 +25,11 @@ class RevisitDialog(QDialog):
 
         layout.addLayout(revisitSettingsLayout)
 
+        # Show All Revisits Checkbox
+        self.showAllRevisitsCheckbox = QCheckBox("Show All Revisits")
+        self.showAllRevisitsCheckbox.setChecked(True)
+        layout.addWidget(self.showAllRevisitsCheckbox)
+
         buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         buttonBox.accepted.connect(self.accept)
         buttonBox.rejected.connect(self.reject)
@@ -35,10 +40,12 @@ class RevisitDialog(QDialog):
     def getRevisitData(self):
         revisit_data = {
             "revisit_count": self.revisitCountSpinBox.value(),
-            "revisit_content": self.revisitContentInput.toPlainText()
+            "revisit_content": self.revisitContentInput.toPlainText(),
+            "show_all_revisits": self.showAllRevisitsCheckbox.isChecked()
         }
         return revisit_data
 
     def setRevisitData(self, revisit_data):
         self.revisitCountSpinBox.setValue(revisit_data.get("revisit_count", 0))
         self.revisitContentInput.setPlainText(revisit_data.get("revisit_content", ""))
+        self.showAllRevisitsCheckbox.setChecked(revisit_data.get("show_all_revisits", True))
