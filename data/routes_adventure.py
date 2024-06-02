@@ -245,12 +245,26 @@ def adventure_game():
     show_map = room.get('show_map', True)
     story_title = story_data['name']
 
-    # Check if the player has visited the current room enough times to unlock a new branch
-    revisit_count = room.get('revisit_count', 0)
-    if room_visit_count >= revisit_count:
-        # Add additional content or options from the story.json file
-        additional_content = room.get('revisit_content', "")
-        content += "\n" + escape(renderMarkup(additional_content))  # Use escape and renderMarkup here
+    # Check if the player has visited the current room enough times to unlock new content
+    revisits = room.get('revisits', [])
+    show_all_revisits = room.get('show_all_revisits', False)
+
+    if show_all_revisits:
+        # Show all revisit_content
+        for revisit in revisits:
+            if room_visit_count >= revisit['count']:
+                additional_content = revisit['content']
+                content += "\n" + escape(renderMarkup(additional_content))
+    else:
+        # Show only the most recent revisit_content
+        most_recent_revisit = None
+        for revisit in revisits:
+            if room_visit_count >= revisit['count']:
+                most_recent_revisit = revisit
+
+        if most_recent_revisit:
+            additional_content = most_recent_revisit['content']
+            content += "\n" + escape(renderMarkup(additional_content))
 
     return render_template('adventure.html', content=content, exits=exits, room=room, show_map=show_map,
                            action_history=action_history, button_color=button_color, story_title=story_title,
