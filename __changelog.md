@@ -1,6 +1,6 @@
 ### changelog5
 
-*build 108.50
+* build 108.50
 
 Rudimentary inventory support has been added to the engine and editor (work in progress)
 
