@@ -1,4 +1,10 @@
-### changelog
+### changelog5
+
+*build 108.50
+
+Rudimentary inventory support has been added to the engine and editor (work in progress)
+Story rooms now support multiple revisit_data
+
 * build 107.1
 
 Story engine and editor are now being developed in unison. The web-version of the editor has been depreceted.
