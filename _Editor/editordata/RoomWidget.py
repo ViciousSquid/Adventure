@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QTextEdit, QPushButton, QCheckBox, QSizePolicy, QFileDialog, QMessageBox, QGroupBox
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QTextEdit, QPushButton, QCheckBox, QSizePolicy, QFileDialog, QMessageBox
 from PyQt5.QtGui import QPixmap, QIcon, QColor
 from PyQt5.QtCore import pyqtSignal, Qt, QSize
 from editordata.exit_widget import ExitWidget
@@ -13,12 +13,13 @@ class RoomWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.initUserInterface()
-        self.revisit_data_list = []
+        self.revisit_data = {}
         self.revisitDialog = None
         self.inventoryDialog = None
         self.room_image_path = None
         self.inventory_data = {}
         self.exits = []
+        self.show_all_revisits = True
 
     def initUserInterface(self):
         layout = QVBoxLayout()
@@ -33,29 +34,27 @@ class RoomWidget(QWidget):
         roomNameLayout.addWidget(self.roomNameInput)
         layout.addLayout(roomNameLayout)
 
-        # Room options group box
-        roomOptionsGroupBox = QGroupBox("")
-        roomOptionsLayout = QHBoxLayout()
-
-        # Track revisits checkbox
-        self.trackRevisitsCheckbox = QCheckBox("Track revisits")
-        self.trackRevisitsCheckbox.setFixedWidth(100)
-        self.trackRevisitsCheckbox.stateChanged.connect(self.onTrackRevisitsStateChanged)
-        roomOptionsLayout.addWidget(self.trackRevisitsCheckbox)
-
-        # Has inventory checkbox
-        self.hasInventoryCheckbox = QCheckBox("Has inventory")
-        self.hasInventoryCheckbox.stateChanged.connect(self.onHasInventoryStateChanged)
-        roomOptionsLayout.addWidget(self.hasInventoryCheckbox)
-
-        roomOptionsGroupBox.setLayout(roomOptionsLayout)
-        layout.addWidget(roomOptionsGroupBox)
-
         # Room description input
         roomDescriptionLabel = QLabel("Room Description:")
         self.roomDescriptionInput = QTextEdit()
         layout.addWidget(roomDescriptionLabel)
         layout.addWidget(self.roomDescriptionInput)
+
+        # Track revisits and Has inventory checkboxes
+        checkboxesLayout = QHBoxLayout()
+        self.trackRevisitsCheckbox = QCheckBox("Track revisits")
+        self.trackRevisitsCheckbox.setFixedWidth(100)
+        self.trackRevisitsCheckbox.stateChanged.connect(self.onTrackRevisitsStateChanged)
+        self.hasInventoryCheckbox = QCheckBox("Has inventory")
+        self.hasInventoryCheckbox.stateChanged.connect(self.onHasInventoryStateChanged)
+        checkboxesLayout.addWidget(self.trackRevisitsCheckbox)
+        checkboxesLayout.addWidget(self.hasInventoryCheckbox)
+        layout.addLayout(checkboxesLayout)
+
+        # Show all revisits checkbox
+        self.showAllRevisitsCheckbox = QCheckBox("Show all revisits")
+        self.showAllRevisitsCheckbox.setChecked(True)
+        layout.addWidget(self.showAllRevisitsCheckbox)
 
         # Room image input
         roomImageLayout = QHBoxLayout()
@@ -129,7 +128,7 @@ class RoomWidget(QWidget):
         if state == Qt.Checked:
             self.showRevisitDialog()
         else:
-            self.revisit_data_list = []
+            self.revisit_data = {}
             self.closeRevisitDialog()
         self.updateIcons()
 
@@ -137,7 +136,7 @@ class RoomWidget(QWidget):
         if self.revisitDialog is None:
             self.revisitDialog = RevisitDialog(self)
             self.revisitDialog.accepted.connect(self.saveRevisitData)
-        self.revisitDialog.setRevisitDataList(self.revisit_data_list)
+        self.revisitDialog.setRevisitData(self.revisit_data)
         self.revisitDialog.show()
 
     def closeRevisitDialog(self):
@@ -146,7 +145,8 @@ class RoomWidget(QWidget):
             self.revisitDialog = None
 
     def saveRevisitData(self):
-        self.revisit_data_list = self.revisitDialog.getRevisitDataList()
+        self.revisit_data = self.revisitDialog.getRevisitData()
+        self.show_all_revisits = self.showAllRevisitsCheckbox.isChecked()
         self.updateIcons()
 
     def onHasInventoryStateChanged(self, state):
@@ -198,7 +198,7 @@ class RoomWidget(QWidget):
         return False
 
     def hasRevisitData(self):
-        return bool(self.revisit_data_list)
+        return bool(self.revisit_data)
 
     def hasItems(self):
         items = self.inventory_data.get("items", [])
