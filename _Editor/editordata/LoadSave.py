@@ -134,88 +134,124 @@ def load_story(story_editor_widget, filename):
     except Exception as e:
         QMessageBox.warning(story_editor_widget, "Error", f"Failed to load story: {str(e)}")
 
+def collect_room_data(story_editor_widget):
+    room_data = {}
+    for i in range(story_editor_widget.roomsTabWidget.count()):
+        room_widget = story_editor_widget.roomsTabWidget.widget(i)
+        room_name = room_widget.roomNameInput.text() if room_widget.roomNameInput else ''
+
+       # print(f"Collecting room data for room {i + 1}: {room_name}")  Debug logging
+
+        if not room_name:
+            raise ValueError(f"Empty room name for room at index {i}")
+
+        room_description = room_widget.roomDescriptionInput.toPlainText() if room_widget.roomDescriptionInput else ''
+
+        # print(f"Room description: {room_description}")  # Debug logging
+
+        room_exits = {}
+
+        # Collect revisit data
+        revisit_data = {}
+        if hasattr(room_widget, 'revisitDialog') and room_widget.revisitDialog is not None:
+            revisit_data = room_widget.revisitDialog.getRevisitData()
+            if revisit_data["revisit_count"] > 0 or revisit_data["revisit_content"]:
+                revisit_data = [
+                    {
+                        "count": revisit_data["revisit_count"],
+                        "content": revisit_data["revisit_content"]
+                    }
+                ]
+                revisit_data["show_all_revisits"] = revisit_data["show_all_revisits"]
+
+        # Collect exits
+        for j in range(room_widget.exitsLayout.count()):
+            exit_widget = room_widget.exitsLayout.itemAt(j).widget()
+            exit_name_input = exit_widget.findChild(QLineEdit, "exitNameInput")
+            exit_name = exit_name_input.text() if exit_name_input else ''
+            exit_destination_input = exit_widget.findChild(QLineEdit, "exitDestinationInput")
+            exit_destination = exit_destination_input.text() if exit_destination_input else ''
+
+#            print(f"Exit {j + 1}: {exit_name} - Destination: {exit_destination}")  # Debug logging
+
+            if exit_widget.skillCheckData:
+                room_exits[exit_name] = {'skill_check': exit_widget.skillCheckData}
+            else:
+                room_exits[exit_name] = exit_destination
+
+        room_data[room_name] = {
+            'description': room_description,
+            'exits': room_exits,
+            'revisits': revisit_data,
+            'items': room_widget.inventory_data.get("items", []),
+            'item_needed': room_widget.inventory_data.get("item_needed", None),
+            'item_skill_check': room_widget.inventory_data.get("skill_check", None)
+        }
+
+        if room_widget.room_image_path:
+            room_image_filename = f"room_{i + 1}.jpg"
+            room_data[room_name]['image'] = room_image_filename
+            # The image file will be written to the ZIP file in the save_story function
+
+        # print(f"Collected room data for room {room_name}: {room_data[room_name]}")  # Debug logging
+
+    return room_data
+
 def save_story(story_editor_widget, filename):
     try:
         story_data = {
             'name': story_editor_widget.storyNameInput.text() if story_editor_widget.storyNameInput else '',
             'button_color': story_editor_widget.buttonColorButton.styleSheet().split(':')[1].strip() if story_editor_widget.buttonColorButton else '',
             'start_room': story_editor_widget.startRoomInput.currentText() if story_editor_widget.startRoomInput else '',
-            'rooms': {}
+            'rooms': collect_room_data(story_editor_widget)
         }
 
+        # print(f"Collected story data: {story_data}")  # Debug logging
+
         with zipfile.ZipFile(filename, 'w') as zip_file:
-            # Save story.json
-            json_data = json.dumps(story_data, indent=2).encode('utf-8')
-            zip_file.writestr('story.json', json_data)
+            try:
+                # Save story.json
+                zip_file.writestr('story.json', json.dumps(story_data, indent=2))
+                print("story.json written to ZIP file")  # Debug logging
 
-            # Save items.json
-            item_data = story_editor_widget.item_data
-            item_json_data = json.dumps(item_data, indent=2).encode('utf-8')
-            zip_file.writestr('items.json', item_json_data)
+                # Save items.json
+                item_data = story_editor_widget.item_data
+                item_json_data = json.dumps(item_data, indent=2).encode('utf-8')
+                zip_file.writestr('items.json', item_json_data)
+                print("items.json written to ZIP file")  # Debug logging
 
-            # Save summary.txt
-            summary_text = story_editor_widget.summaryInput.toPlainText().encode('utf-8')
-            zip_file.writestr('summary.txt', summary_text)
+                # Save summary.txt
+                summary_text = story_editor_widget.summaryInput.toPlainText().encode('utf-8')
+                zip_file.writestr('summary.txt', summary_text)
+                print("summary.txt written to ZIP file")  # Debug logging
 
-            # Save cover image
-            pixmap = story_editor_widget.coverImageLabel.pixmap()
-            if pixmap:
-                image = pixmap.toImage()
-                byte_array = QByteArray()
-                buffer = QBuffer(byte_array)
-                buffer.open(QIODevice.WriteOnly)
-                image.save(buffer, "JPG")
-                zip_file.writestr('cover.jpg', byte_array.data())
+                # Save cover image
+                pixmap = story_editor_widget.coverImageLabel.pixmap()
+                if pixmap:
+                    image = pixmap.toImage()
+                    byte_array = QByteArray()
+                    buffer = QBuffer(byte_array)
+                    buffer.open(QIODevice.WriteOnly)
+                    image.save(buffer, "JPG")
+                    zip_file.writestr('cover.jpg', byte_array.data())
+                    print("cover.jpg written to ZIP file")  # Debug logging
 
-            # Save room data
-            for i in range(story_editor_widget.roomsTabWidget.count()):
-                room_widget = story_editor_widget.roomsTabWidget.widget(i)
-                room_name = room_widget.roomNameInput.text() if room_widget.roomNameInput else ''
-                room_description = room_widget.roomDescriptionInput.toPlainText() if room_widget.roomDescriptionInput else ''
-                room_exits = {}
+                # Save room images
+                for room_name, room_data in story_data['rooms'].items():
+                    if 'image' in room_data:
+                        room_image_filename = room_data['image']
+                        room_widget = story_editor_widget.roomsTabWidget.widget(story_editor_widget.startRoomInput.findText(room_name))
+                        if room_widget.room_image_path:
+                            zip_file.write(room_widget.room_image_path, room_image_filename)
+                            print(f"Room image {room_image_filename} written to ZIP file")  # Debug logging
 
-                # Save revisit data
-                if hasattr(room_widget, 'revisitDialog') and room_widget.revisitDialog is not None:
-                    revisit_data = room_widget.revisitDialog.getRevisitData()
-                    if revisit_data["revisit_count"] > 0 or revisit_data["revisit_content"]:
-                        room_data["revisits"] = [
-                            {
-                                "count": revisit_data["revisit_count"],
-                                "content": revisit_data["revisit_content"]
-                            }
-                        ]
-                        room_data["show_all_revisits"] = revisit_data["show_all_revisits"]
+            except Exception as e:
+                print(f"Error writing files to ZIP: {str(e)}")  # Debug logging
+                raise
 
-                # Save exits
-                for j in range(room_widget.exitsLayout.count()):
-                    exit_widget = room_widget.exitsLayout.itemAt(j).widget()
-                    exit_name_input = exit_widget.findChild(QLineEdit, "exitNameInput")
-                    exit_name = exit_name_input.text() if exit_name_input else ''
-                    exit_destination_input = exit_widget.findChild(QLineEdit, "exitDestinationInput")
-                    exit_destination = exit_destination_input.text() if exit_destination_input else ''
-
-                    if exit_widget.skillCheckData:
-                        room_exits[exit_name] = {'skill_check': exit_widget.skillCheckData}
-                    else:
-                        room_exits[exit_name] = exit_destination
-
-                room_data = {
-                    'description': room_description,
-                    'exits': room_exits
-                }
-
-                # Save inventory-related data
-                room_data["items"] = room_widget.inventory_data.get("items", [])
-                room_data["item_needed"] = room_widget.inventory_data.get("item_needed", None)
-                room_data["item_skill_check"] = room_widget.inventory_data.get("skill_check", None)
-
-                if room_widget.room_image_path:
-                    room_image_filename = f"room_{i + 1}.jpg"
-                    room_data['image'] = room_image_filename
-                    zip_file.write(room_widget.room_image_path, room_image_filename)
-
-                story_data['rooms'][room_name] = room_data
-
+        print(f"Story saved to: {filename}")  # Debug logging
         QMessageBox.information(story_editor_widget, "Success", "Story saved successfully.")
+
     except Exception as e:
         QMessageBox.warning(story_editor_widget, "Error", f"Failed to save story: {str(e)}")
+        print(f"Error saving story: {str(e)}")  # Debug logging
