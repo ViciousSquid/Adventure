@@ -1,72 +1,34 @@
-
 print("== STORY EDITOR == (beta) \nstarting up..")
-<<<<<<< HEAD
-<<<<<<< HEAD
-from PyQt5.QtWidgets import QMainWindow, QFileDialog, QMessageBox, QLabel, QApplication
-from PyQt5.QtGui import QPixmap
-from editordata.settings_window import SettingsWindow
-from editordata.theme import set_theme, CURRENT_THEME
-from editordata.json import show_json_error_dialog
-from editordata.skill_check_dialog import SkillCheckDialog
-from editordata.RoomWidget import RoomWidget
-from editordata.revisit_dialog import RevisitDialog
-from editordata.exit_widget import ExitWidget
-from editordata.json import loadRawJson
-from editordata.inventory import InventoryDialog
-from editordata.skill_check_widget import SkillCheckWidget
-from PyQt5.QtCore import Qt, QRect, QSize, QByteArray, QBuffer, QIODevice, pyqtSignal
-from PyQt5.QtGui import QPixmap, QColor, QFont, QImage, QIcon
-=======
-=======
->>>>>>> parent of a6c83b5 (Stable version 107a)
 try:
-    from editordata.LoadSave import open_load_story_dialog, openSaveStoryDialog
+    from LoadSave import open_load_story_dialog, openSaveStoryDialog
 except ImportError:
     pass
 
-from editordata.LoadSave import open_load_story_dialog, open_save_story_dialog
+from LoadSave import open_load_story_dialog, open_save_story_dialog
 
 import sys
 import os
 import json
 import zipfile
-<<<<<<< HEAD
->>>>>>> parent of a6c83b5 (Stable version 107a)
-=======
->>>>>>> parent of a6c83b5 (Stable version 107a)
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLineEdit,
     QPushButton, QTextEdit, QFileDialog, QLabel, QColorDialog, QComboBox,
     QTabWidget, QScrollArea, QMessageBox, QMenu, QAction, QDialog, QSplitter,
     QCheckBox, QPlainTextEdit, QDialogButtonBox, QSizePolicy
 )
-<<<<<<< HEAD
-<<<<<<< HEAD
-import zipfile
-import json
-import os
-import sys
-from editordata.LoadSave import open_load_story_dialog, open_save_story_dialog
-=======
-=======
->>>>>>> parent of a6c83b5 (Stable version 107a)
 from PyQt5.QtGui import QPixmap, QColor, QFont, QImage, QIcon
 from PyQt5.QtCore import Qt, QRect, QSize, QByteArray, QBuffer, QIODevice, pyqtSignal
 
-from editordata.skill_check_widget import SkillCheckWidget
-from editordata.json import loadRawJson
-from editordata.exit_widget import ExitWidget
-from editordata.revisit_dialog import RevisitDialog
-from editordata.RoomWidget import RoomWidget
-from editordata.skill_check_dialog import SkillCheckDialog
-from editordata.json import show_json_error_dialog
-from editordata.theme import set_theme, CURRENT_THEME
-from editordata.settings_window import SettingsWindow
+from widgets.skill_check_widget import SkillCheckWidget
+from widgets.json import loadRawJson
+from widgets.exit_widget import ExitWidget
+from widgets.revisit_dialog import RevisitDialog
+from widgets.RoomWidget import RoomWidget
+from widgets.skill_check_dialog import SkillCheckDialog
+from widgets.json import show_json_error_dialog
+from theme import set_theme, CURRENT_THEME
+from settings_window import SettingsWindow
 
-<<<<<<< HEAD
->>>>>>> parent of a6c83b5 (Stable version 107a)
-=======
->>>>>>> parent of a6c83b5 (Stable version 107a)
 print("Imports loaded \nPyQt5 loaded")
 
 class SkillCheckDialog(QDialog):
@@ -91,7 +53,6 @@ class SkillCheckDialog(QDialog):
         buttonLayout.addWidget(cancelButton)
 
         layout.addLayout(buttonLayout)
-        layout.setSizeConstraint(QLayout.SetFixedSize)
 
         self.setLayout(layout)
 
@@ -106,10 +67,7 @@ class StoryEditorWidget(QWidget):
         super().__init__(parent)
         self.initUserInterface()
         self.addRoomButton.clicked.connect(self.addRoom)
-        self.addRoomButton.setStyleSheet("background-color: orange; color: black;")
-        self.addRoomButton.setFixedHeight(35)
-        self.addRoomButton.setFixedWidth(160)
-        self.item_data = {}  # Add this line to initialize item_data attribute
+        self.addExitButton.clicked.connect(self.addExit)
 
     def initUserInterface(self):
         mainLayout = QHBoxLayout()
@@ -189,11 +147,11 @@ class StoryEditorWidget(QWidget):
         # Add room and add exit buttons
         buttonsLayout = QHBoxLayout()
         self.addRoomButton = QPushButton("Add Room")
-        self.addRoomButton.setStyleSheet("background-color: green; color: white;")
         self.addRoomButton.setObjectName("addRoomButton")
         self.addExitButton = QPushButton("Add Exit")
         self.addExitButton.setObjectName("addExitButton")
         buttonsLayout.addWidget(self.addRoomButton)
+        buttonsLayout.addWidget(self.addExitButton)
         bottomLayout.addLayout(buttonsLayout)
 
         bottomSection.setLayout(bottomLayout)
@@ -249,23 +207,16 @@ class StoryEditorWidget(QWidget):
             self.roomsTabWidget.removeTab(tabIndex)
             self.startRoomInput.removeItem(tabIndex)
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-=======
->>>>>>> parent of a6c83b5 (Stable version 107a)
 class AboutDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Story Editor")
+        self.setWindowTitle("About Story Editor")
         self.initUI()
-<<<<<<< HEAD
-=======
 
     def initUI(self):
         layout = QVBoxLayout()
 
-        about_label = QLabel("Development build \nInv107")
+        about_label = QLabel("Development build 107")
         layout.addWidget(about_label)
 
         informative_label = QLabel("https://github.com/ViciousSquid/Adventure")
@@ -319,77 +270,16 @@ class JsonViewDialog(QDialog):
 
 import json
 from PyQt5.QtWidgets import QMainWindow, QFileDialog, QMessageBox
-from editordata.json import show_json_error_dialog
+from widgets.json import show_json_error_dialog
 
 import json
 from PyQt5.QtWidgets import QMainWindow, QFileDialog, QMessageBox
-from editordata.json import show_json_error_dialog
->>>>>>> parent of a6c83b5 (Stable version 107a)
-
-    def initUI(self):
-        layout = QVBoxLayout()
-
-        about_label = QLabel("Development build \nInv107")
-        layout.addWidget(about_label)
-
-        informative_label = QLabel("https://github.com/ViciousSquid/Adventure")
-        layout.addWidget(informative_label)
-
-        button_box = QDialogButtonBox(QDialogButtonBox.Ok)
-        button_box.accepted.connect(self.accept)
-        layout.addWidget(button_box)
-
-        self.setLayout(layout)
-
-    def sizeHint(self):
-        return QSize(400, 200)  # Adjust the size as needed
-
-class JsonViewDialog(QDialog):
-    def __init__(self, parent=None, json_data=None, mode="Complete"):
-        super().__init__(parent)
-        self.setWindowTitle("View Story JSON")
-        self.initUI(json_data, mode)
-
-    def initUI(self, json_data, mode):
-        layout = QVBoxLayout()
-
-        json_text_edit = QPlainTextEdit()
-        json_text_edit.setReadOnly(True)
-
-        if mode == "Complete":
-            json_text_edit.setPlainText(json.dumps(json_data, indent=2))
-        elif mode == "Rooms":
-            json_text_edit.setPlainText(json.dumps(list(json_data['rooms'].keys()), indent=2))
-        elif mode == "Rooms with Exits":
-            rooms_with_exits = {room: data['exits'] for room, data in json_data['rooms'].items() if data['exits']}
-            json_text_edit.setPlainText(json.dumps(rooms_with_exits, indent=2))
-        elif mode == "Rooms without Exits":
-            rooms_without_exits = [room for room, data in json_data['rooms'].items() if not data['exits']]
-            json_text_edit.setPlainText(json.dumps(rooms_without_exits, indent=2))
-        elif mode == "Room Count":
-            room_count = len(json_data['rooms'])
-            room_names = list(json_data['rooms'].keys())
-            text = f"Number of rooms: {room_count}\n\nRoom names:\n"
-            text += "\n".join(room_names)
-            json_text_edit.setPlainText(text)
-
-        # Add a maximize button control
-        maximize_button = QPushButton("Maximize")  # Use QPushButton instead of QToolButton
-        maximize_button.clicked.connect(self.showMaximized)
-
-        layout.addWidget(json_text_edit)
-        layout.addWidget(maximize_button, alignment=Qt.AlignRight)  # Add the maximize button to the layout
-        self.setLayout(layout)
+from widgets.json import show_json_error_dialog
 
 import json
 from PyQt5.QtWidgets import QMainWindow, QFileDialog, QMessageBox
-from editordata.json import show_json_error_dialog
+from widgets.json import show_json_error_dialog
 
-import json
-from PyQt5.QtWidgets import QMainWindow, QFileDialog, QMessageBox
-from editordata.json import show_json_error_dialog
-
->>>>>>> parent of a6c83b5 (Stable version 107a)
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -466,19 +356,9 @@ class MainWindow(QMainWindow):
     def show_color_dialog(self):
         color = QColorDialog.getColor()
         if color.isValid():
-<<<<<<< HEAD
-<<<<<<< HEAD
-            self.story_editor_widget.buttonColorButton.setStyleSheet("background-color: " + color.name() + ";")
-=======
             self.story_editor_widget.buttonColorButton.setStyleSheet(
                 f"background-color: {color.name()};"
             )
->>>>>>> parent of a6c83b5 (Stable version 107a)
-=======
-            self.story_editor_widget.buttonColorButton.setStyleSheet(
-                f"background-color: {color.name()};"
-            )
->>>>>>> parent of a6c83b5 (Stable version 107a)
 
     def open_cover_image_dialog(self):
         file_dialog = QFileDialog()
@@ -490,11 +370,11 @@ class MainWindow(QMainWindow):
                 scaled_pixmap = pixmap.scaled(
                     QSize(256, 192), Qt.KeepAspectRatio, Qt.SmoothTransformation
                 )
-                self.story_editor_widget.coverImageLabel.setPixmap(scaled_pixmap)
+                self.story_editor_widget.cover_image_label.setPixmap(scaled_pixmap)
 
     def show_about_dialog(self):
-        QMessageBox.about(self, "Story Editor", "Story Editor (beta) 108.50\nhttps://github.com/ViciousSquid/Adventure")
-
+        about_dialog = AboutDialog(self)
+        about_dialog.exec_()
 
     def show_settings_window(self):
         settings_window = SettingsWindow(self)
@@ -507,7 +387,37 @@ class MainWindow(QMainWindow):
 
     def view_story_json(self, mode):
         # Load the story data from the story_editor_widget
-        story_data = self.get_story_data()
+        story_data = {
+            'name': self.story_editor_widget.storyNameInput.text(),
+            'button_color': self.story_editor_widget.buttonColorButton.styleSheet().split(':')[1].strip(),
+            'start_room': self.story_editor_widget.startRoomInput.currentText(),
+            'rooms': {}
+        }
+
+        for i in range(self.story_editor_widget.roomsTabWidget.count()):
+            room_widget = self.story_editor_widget.roomsTabWidget.widget(i)
+            room_name = room_widget.roomNameInput.text()
+            room_description = room_widget.roomDescriptionInput.toPlainText()
+            room_exits = {}
+
+            for j in range(room_widget.exitsLayout.count()):
+                exit_widget = room_widget.exitsLayout.itemAt(j).widget()
+                exit_name_input = exit_widget.findChild(QLineEdit, "exitNameInput")
+                exit_name = exit_name_input.text() if exit_name_input else ''
+                exit_destination_input = exit_widget.findChild(QLineEdit, "exitDestinationInput")
+                exit_destination = exit_destination_input.text() if exit_destination_input else ''
+
+                if exit_widget.skillCheckData:
+                    room_exits[exit_name] = {'skill_check': exit_widget.skillCheckData}
+                else:
+                    room_exits[exit_name] = exit_destination
+
+            room_data = {
+                'description': room_description,
+                'exits': room_exits
+            }
+
+            story_data['rooms'][room_name] = room_data
 
         # Create and show the JsonViewDialog
         json_view_dialog = JsonViewDialog(self, story_data, mode)
@@ -538,8 +448,9 @@ class MainWindow(QMainWindow):
             # Populate fields from raw JSON data
             self.story_editor_widget.storyNameInput.setText(raw_json_data.get('name', ''))
             button_color = raw_json_data.get('button_color', '#000000')
-            self.story_editor_widget.buttonColorButton.setStyleSheet("background-color: " + button_color + ";")
+            self.story_editor_widget.buttonColorButton.setStyleSheet(f"background-color: {button_color};")
             self.story_editor_widget.summaryInput.setText(raw_json_data.get('summary', ''))
+            self.story_editor_widget.startRoomInput.addItem(raw_json_data.get('start_room', ''))
 
             # Load rooms
             for room_name, room_data in raw_json_data.get('rooms', {}).items():
@@ -547,11 +458,6 @@ class MainWindow(QMainWindow):
                 room_widget = self.story_editor_widget.roomsTabWidget.widget(self.story_editor_widget.roomsTabWidget.count() - 1)
                 room_widget.roomNameInput.setText(room_name)
                 room_widget.roomDescriptionInput.setText(room_data.get('description', ''))
-
-                # Load revisit data
-                room_widget.revisit_data_list = room_data.get('revisits', [])
-                room_widget.showAllRevisitsCheckbox.setChecked(room_data.get('show_all_revisits', True))
-                room_widget.updateIcons()
 
                 # Load exits
                 for exit_name, exit_data in room_data.get('exits', {}).items():
@@ -567,35 +473,41 @@ class MainWindow(QMainWindow):
                         else:
                             exit_widget.skillCheckIndicator.setVisible(False)
 
-            # Remove any invalid exits from the room_widget
-            room_widget.removeInvalidExits()
+                # Remove any invalid exits from the room_widget
+                room_widget.removeInvalidExits()
 
-            # Update icons
-            room_widget.updateIcons()
+                # Update icons
+                room_widget.updateIcons()
 
-            # Add room names to the startRoomInput combobox
-            self.story_editor_widget.startRoomInput.addItems(raw_json_data.get('rooms', {}).keys())
-
-            # Load item data from items.json
-            if 'items.json' in zip_file.namelist():
-                with zip_file.open('items.json') as items_file:
-                    item_data = json.load(items_file)
-                    self.story_editor_widget.item_data = item_data
-
-        except json.JSONDecodeError as error:
-            error_message = str(error)
+        except json.JSONDecodeError as e:
+            error_message = str(e)
             error_dialog, current_error_index, total_errors = show_json_error_dialog(error_message, filename)
             if error_dialog is not None:
                 error_dialog.exec_()
-            if current_error_index is not None:
-                self.errors.append("Error " + str(current_error_index) + " of " + str(total_errors) + ": " + error_message)
+                if current_error_index is not None:
+                    self.errors.append(f"Error {current_error_index} of {total_errors}: {error_message}")
+                else:
+                    self.errors.append(f"Error: {error_message}")
             else:
-                self.errors.append("Error: " + error_message)
-        except Exception as error:
-            self.errors.append("Error: " + str(error))
+                self.errors.append(f"Error: {error_message}")
+        except Exception as e:
+            self.errors.append(f"Error: {str(e)}")
 
-            if self.errors:
-                self.save_errors_to_file(filename)
+        if self.errors:
+            self.save_errors_to_file(filename)
+
+    def save_errors_to_file(self, filename):
+        try:
+            # Remove the extra 'json' extension from the filename
+            filename_without_ext = filename.rsplit('.', 1)[0]
+
+            with open("errors.log", "w", encoding="utf-8") as file:
+                file.write(f"Attempted to load {filename_without_ext}\n\n")
+                file.write(f"Total errors: {len(self.errors)}\n\n")
+                for error in self.errors:
+                    file.write(error + "\n")
+        except Exception as e:
+            QMessageBox.warning(self, "Error", f"Failed to save errors to file: {str(e)}")
 
     def new_story(self):
         confirmation = QMessageBox.question(
@@ -618,19 +530,11 @@ class MainWindow(QMainWindow):
         self.story_editor_widget.roomsTabWidget.clear()
 
 if __name__ == "__main__":
-    app = QApplication(sys.argv)
+    application = QApplication(sys.argv)
 
     # Set the theme
     set_theme()
 
     window = MainWindow()
     window.show()
-<<<<<<< HEAD
-<<<<<<< HEAD
-    sys.exit(app.exec_())
-=======
     sys.exit(application.exec_())
->>>>>>> parent of a6c83b5 (Stable version 107a)
-=======
-    sys.exit(application.exec_())
->>>>>>> parent of a6c83b5 (Stable version 107a)
