@@ -1,19 +1,25 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QTextEdit, QPushButton, QCheckBox, QSizePolicy, QFileDialog, QTabBar, QDialog
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QTextEdit, QPushButton, QCheckBox, QSizePolicy, QFileDialog, QTabBar, QDialog, QListWidget
 from PyQt5.QtGui import QPixmap, QIcon
 from PyQt5.QtCore import pyqtSignal, Qt, QSize
 from widgets.exit_widget import ExitWidget
 from widgets.revisit_dialog import RevisitDialog
 from widgets.skill_check_dialog import SkillCheckDialog
+from inventory_manager import InventoryManager
 
 class RoomWidget(QWidget):
     roomNameChanged = pyqtSignal(str)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, available_items=None, required_item=None):
         super().__init__(parent)
         self.initUserInterface()
         self.revisit_data = {}
         self.revisitDialog = None
         self.room_image_path = None
+
+        if available_items is not None:
+            self.availableItemsListWidget.addItems(available_items)
+        if required_item is not None:
+            self.requiredItemInput.setText(required_item)
 
     def initUserInterface(self):
         layout = QVBoxLayout()
@@ -50,10 +56,17 @@ class RoomWidget(QWidget):
         layout.addWidget(roomDescriptionLabel)
         layout.addWidget(self.roomDescriptionInput)
 
-        # Track revisits checkbox
+        # Track revisits and inventory checkboxes
+        checkboxesLayout = QHBoxLayout()
         self.trackRevisitsCheckbox = QCheckBox("Track revisits")
         self.trackRevisitsCheckbox.stateChanged.connect(self.onTrackRevisitsStateChanged)
-        layout.addWidget(self.trackRevisitsCheckbox)
+        checkboxesLayout.addWidget(self.trackRevisitsCheckbox)
+
+        self.hasInventoryCheckbox = QCheckBox("Has Inventory")
+        self.hasInventoryCheckbox.stateChanged.connect(self.onHasInventoryStateChanged)
+        checkboxesLayout.addWidget(self.hasInventoryCheckbox)
+
+        layout.addLayout(checkboxesLayout)
 
         # Room image input
         roomImageLayout = QHBoxLayout()
@@ -73,6 +86,35 @@ class RoomWidget(QWidget):
         self.roomImageLabel = QLabel()
         layout.addWidget(self.roomImageLabel)
 
+        # Available items (hidden by default)
+        self.availableItemsWidget = QWidget()
+        self.availableItemsLayout = QHBoxLayout(self.availableItemsWidget)
+        availableItemsLabel = QLabel("Available Items:")
+        self.availableItemsListWidget = QListWidget()
+        self.availableItemInput = QLineEdit()
+        self.availableItemInput.setPlaceholderText("Enter an item")
+        self.addAvailableItemButton = QPushButton("Add Item")
+        self.addAvailableItemButton.clicked.connect(self.addAvailableItem)
+        self.removeAvailableItemButton = QPushButton("Remove Item")
+        self.removeAvailableItemButton.clicked.connect(self.removeAvailableItem)
+        self.availableItemsLayout.addWidget(availableItemsLabel)
+        self.availableItemsLayout.addWidget(self.availableItemsListWidget)
+        self.availableItemsLayout.addWidget(self.availableItemInput)
+        self.availableItemsLayout.addWidget(self.addAvailableItemButton)
+        self.availableItemsLayout.addWidget(self.removeAvailableItemButton)
+        layout.addWidget(self.availableItemsWidget)
+        self.availableItemsWidget.setVisible(False)
+
+        # Required item (hidden by default)
+        self.requiredItemWidget = QWidget()
+        self.requiredItemLayout = QHBoxLayout(self.requiredItemWidget)
+        requiredItemLabel = QLabel("Required Item:")
+        self.requiredItemInput = QLineEdit()
+        self.requiredItemLayout.addWidget(requiredItemLabel)
+        self.requiredItemLayout.addWidget(self.requiredItemInput)
+        layout.addWidget(self.requiredItemWidget)
+        self.requiredItemWidget.setVisible(False)
+
         # Exits
         self.exitsLayout = QVBoxLayout()
         self.exitsLayout.setSpacing(2)
@@ -81,6 +123,14 @@ class RoomWidget(QWidget):
         layout.addLayout(self.exitsLayout)
 
         self.setLayout(layout)
+
+    def onHasInventoryStateChanged(self, state):
+        if state == Qt.Checked:
+            self.availableItemsWidget.setVisible(True)
+            self.requiredItemWidget.setVisible(True)
+        else:
+            self.availableItemsWidget.setVisible(False)
+            self.requiredItemWidget.setVisible(False)
 
     def openImageDialog(self):
         file_dialog = QFileDialog()
@@ -118,14 +168,6 @@ class RoomWidget(QWidget):
     def addExit(self):
         exitWidget = ExitWidget(self)
         self.exitsLayout.addWidget(exitWidget)
-
-        # Add a dice icon to view and edit skill check data
-        # diceIconLabel = QLabel()
-        # diceIconLabel.setPixmap(QPixmap("editordata/null.png").scaled(24, 24))
-        # diceIconLabel.setVisible(False)
-        # diceIconLabel.mousePressEvent = lambda event: self.showSkillCheckDialog(exitWidget)
-        # exitWidget.layout().addWidget(diceIconLabel)
-
         self.updateIcons()
 
     def showSkillCheckDialog(self, exitWidget):
@@ -181,7 +223,7 @@ class RoomWidget(QWidget):
             skillcheck_icon = QIcon("editordata/skillcheck.png")
             revisit_icon = QIcon("editordata/revisit.png")
             tabWidget.setTabIcon(tabIndex, QIcon())  # Clear the left icon
-            tabWidget.setIconSize(QSize(16, 16)) 
+            tabWidget.setIconSize(QSize(16, 16))
             iconWidget = QWidget()
             iconLayout = QHBoxLayout(iconWidget)
             skillcheck_label = QLabel()
@@ -214,3 +256,20 @@ class RoomWidget(QWidget):
         self.revisit_data = revisit_data
         self.trackRevisitsCheckbox.setChecked(bool(revisit_data))
         self.updateIcons()
+
+    def addAvailableItem(self):
+        item = self.availableItemInput.text().strip()
+        if item:
+            self.availableItemsListWidget.addItem(item)
+            self.availableItemInput.clear()
+
+    def removeAvailableItem(self):
+        selected_items = self.availableItemsListWidget.selectedItems()
+        for item in selected_items:
+            self.availableItemsListWidget.takeItem(self.availableItemsListWidget.row(item))
+
+    def getAvailableItems(self):
+        return [self.availableItemsListWidget.item(i).text() for i in range(self.availableItemsListWidget.count())]
+
+    def getRequiredItem(self):
+        return self.requiredItemInput.text().strip()
