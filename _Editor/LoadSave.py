@@ -2,9 +2,10 @@ import zipfile
 import json
 from PyQt5.QtWidgets import QMessageBox, QFileDialog, QLineEdit, QTextEdit, QWidget, QLabel, QPushButton, QVBoxLayout
 from PyQt5.QtGui import QPixmap
-from PyQt5.QtCore import QByteArray, QBuffer, QIODevice
+from PyQt5.QtCore import QByteArray, QBuffer, QIODevice, pyqtSignal
 from widgets.skill_check_widget import SkillCheckWidget
 from widgets.exit_widget import ExitWidget
+import subprocess
 
 def open_load_story_dialog(story_editor_widget):
     file_dialog = QFileDialog()
@@ -65,7 +66,9 @@ def load_story(story_editor_widget, filename):
 
             # Load rooms
             for room_name, room_data in story_data.get('rooms', {}).items():
-                story_editor_widget.addRoom()
+                available_items = room_data.get('available_items', [])
+                required_item = room_data.get('required_item', '')
+                story_editor_widget.addRoom(available_items, required_item)
                 room_widget = story_editor_widget.roomsTabWidget.widget(story_editor_widget.roomsTabWidget.count() - 1)
                 room_widget.roomNameInput.setText(room_name)
                 room_widget.roomDescriptionInput.setText(room_data.get('description', ''))
@@ -141,7 +144,9 @@ def save_story(story_editor_widget, filename):
 
                 room_data = {
                     'description': room_description,
-                    'exits': room_exits
+                    'exits': room_exits,
+                    'available_items': room_widget.getAvailableItems(),
+                    'required_item': room_widget.getRequiredItem()
                 }
 
                 if hasattr(room_widget, 'revisitDialog') and room_widget.revisitDialog is not None:
@@ -176,6 +181,10 @@ def save_story(story_editor_widget, filename):
                 image.save(buffer, "JPG")
                 zip_file.writestr('cover.jpg', byte_array.data())
 
-        QMessageBox.information(story_editor_widget, "Success", "Story saved successfully.")
+            QMessageBox.information(story_editor_widget, "Success", "Story saved successfully.")
+
+            # Run validate.py and pass the saved ZIP file's path as an argument
+            subprocess.run(["python", "validate.py", filename])
+
     except Exception as e:
         QMessageBox.warning(story_editor_widget, "Error", f"Failed to save story: {str(e)}")
