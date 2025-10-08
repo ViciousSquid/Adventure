@@ -4,8 +4,7 @@ Interactive story engine for designing, editing and playing **choose-your-own-ad
 
                                       Beta 1.0 build 108.51 - 01/07/2024
 
-( or you can download it, execute python main.py and it will serve via HTTP on localhost:5000 )  
-with **Flask** and **Pillow**
+(  DOWNLOAD HERE: https://github.com/ViciousSquid/Adventure/releases )
 
 Love Books. Love Reading. You are welcome to make stories and submit them to be considered for this repo.
 
