@@ -18,8 +18,6 @@ Love Books. Love Reading. You are welcome to make stories and submit them to be 
 * Example stories included with multiple endings and more
 * Basic Inventory system is currently being developed
 _____
-Please read the changelog: https://github.com/ViciousSquid/Adventure/blob/main/__changelog.md
-_____
 
 
 
