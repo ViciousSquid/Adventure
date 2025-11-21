@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+# ver2
 """
 CYOA to Interactive Fiction Converter
 Converts Choose-Your-Own-Adventure JSON files to Z-Machine or Glulx formats
