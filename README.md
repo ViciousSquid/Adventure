@@ -9,7 +9,8 @@ Interactive story engine for designing, editing and playing **choose-your-own-ad
 Love Books. Love Reading. You are welcome to make stories and submit them to be considered for this repo.
 
 * Completely free and open-source
-* Includes a story editor with full load/save support and a flowchart generator (https://github.com/ViciousSquid/Adventure/issues/3)
+* Includes a story editor with load/save support
+* Light/Dark modes and optional Dyslexia font
 * Tool included for automatic conversion to `Z-Machine (z8)` and/or Andrew Plotkin's `Glulx` format
 * Story files (.zip) can be downloaded and shared
 * Can track room re-visits and trigger extra content
