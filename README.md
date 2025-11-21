@@ -2,9 +2,9 @@
 
 Interactive story engine for designing, editing and playing **choose-your-own-adventure** stories
 
-                                      Beta 1.0 build 108.51 - 01/07/2024
-
 (  DOWNLOAD HERE: https://github.com/ViciousSquid/Adventure/releases )
+
+![image](https://github.com/ViciousSquid/Adventure/assets/161540961/7d236ef0-9129-4b63-8e12-9b104d54bc01)
 
 Love Books. Love Reading. You are welcome to make stories and submit them to be considered for this repo.
 
@@ -19,9 +19,6 @@ Love Books. Love Reading. You are welcome to make stories and submit them to be 
 _____
 Please read the changelog: https://github.com/ViciousSquid/Adventure/blob/main/__changelog.md
 _____
-
-
-![image](https://github.com/ViciousSquid/Adventure/assets/161540961/7d236ef0-9129-4b63-8e12-9b104d54bc01)
 
 
 
