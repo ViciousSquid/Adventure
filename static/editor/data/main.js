@@ -1,9 +1,10 @@
-import { addRoom, reattachEventHandlers } from './storyEditor.js';
+import { addRoom, setupEventDelegation, showFlowchart, getStoryData } from './storyEditor.js';
 import { saveStoryAsJsonFile, loadStoryFromZip } from './storyIO.js';
-import { handleLoadStoryClick, handleSaveStoryClick, handleAddRoomClick, handleFormSubmit, handleNewStoryClick } from './eventHandlers.js';
 
 console.log("Editor > Init event listeners..");
+
 document.addEventListener('DOMContentLoaded', function() {
+  // Create summary textarea
   const summaryInput = document.createElement('textarea');
   summaryInput.id = 'summary';
   summaryInput.name = 'summary';
@@ -14,18 +15,48 @@ document.addEventListener('DOMContentLoaded', function() {
   const roomsHeading = document.querySelector('h2');
   storyForm.insertBefore(summaryInput, roomsHeading);
 
-  const roomsContainer = document.getElementById('roomsContainer');
-  const addRoomLink = document.getElementById('addRoomLink');
-  addRoomLink.addEventListener('click', handleAddRoomClick);
+  // Set up event delegation for dynamic room/exit buttons (call once!)
+  setupEventDelegation();
 
-  const loadStoryLink = document.getElementById('loadStoryLink');
-  loadStoryLink.addEventListener('click', handleLoadStoryClick);
+  // Top bar button handlers - these are static, so simple addEventListener works
+  document.getElementById('addRoomLink').addEventListener('click', function(event) {
+    event.preventDefault();
+    addRoom();
+  });
 
-  const saveStoryLink = document.getElementById('saveStoryLink');
-  saveStoryLink.addEventListener('click', handleSaveStoryClick);
+  document.getElementById('loadStoryLink').addEventListener('click', function(event) {
+    event.preventDefault();
+    loadStoryFromZip();
+  });
 
-  const newStoryLink = document.getElementById('newStoryLink');
-  newStoryLink.addEventListener('click', handleNewStoryClick);
+  document.getElementById('saveStoryLink').addEventListener('click', function(event) {
+    event.preventDefault();
+    const storyJson = getStoryData();
+    saveStoryAsJsonFile(storyJson);
+  });
 
-  storyForm.addEventListener('submit', handleFormSubmit);
+  document.getElementById('flowchartLink').addEventListener('click', function(event) {
+    event.preventDefault();
+    showFlowchart();
+  });
+
+  document.getElementById('newStoryLink').addEventListener('click', function(event) {
+    event.preventDefault();
+    
+    // Clear existing form fields
+    document.getElementById('storyName').value = '';
+    document.getElementById('buttonColor').value = '#000000';
+    document.getElementById('startRoom').value = '';
+    document.getElementById('roomsContainer').innerHTML = '';
+    document.getElementById('summary').value = '';
+    document.getElementById('cover-thumbnail').src = '';
+
+    // Add a new room
+    addRoom();
+  });
+
+  storyForm.addEventListener('submit', function(event) {
+    event.preventDefault();
+    // Add form submission logic here
+  });
 });

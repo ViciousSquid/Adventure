@@ -1,4 +1,4 @@
-import { addRoom, addExit, addSkillCheck, reattachEventHandlers } from './storyEditor.js';
+import { addRoom, addExit, addSkillCheck } from './storyEditor.js';
 
 export function saveStoryAsJsonFile(storyJson) {
   const storyName = document.getElementById('storyName').value || 'untitled_story';
@@ -40,9 +40,6 @@ export function saveStoryAsJsonFile(storyJson) {
       downloadLink.download = storyFileName;
       downloadLink.click();
       URL.revokeObjectURL(downloadLink.href);
-    })
-    .then(function () {
-      reattachEventHandlers();
     })
     .catch(function (error) {
       console.error('Error saving story:', error);
@@ -95,7 +92,6 @@ export function loadStoryFromZip() {
           storyData.summary = summaryText;
           storyData.cover_thumbnail = coverImageData;
           populateEditorFields(storyData);
-          reattachEventHandlers();
         })
         .catch(function (error) {
           console.error('Error loading story:', error);
@@ -107,7 +103,8 @@ export function loadStoryFromZip() {
 
 export function populateEditorFields(storyData) {
   console.log("Attempting to extract and populate data from JSON", storyData);
-  // Walk the story.json tree and populate the editor fields with the data
+  
+  const roomsContainer = document.getElementById('roomsContainer');
 
   // Clear existing fields
   roomsContainer.innerHTML = '';
@@ -116,6 +113,12 @@ export function populateEditorFields(storyData) {
   document.getElementById('storyName').value = storyData.name || '';
   document.getElementById('buttonColor').value = storyData.button_color || '#000000';
   document.getElementById('startRoom').value = storyData.start_room || '';
+
+  // Populate summary if it exists
+  const summaryElement = document.getElementById('summary');
+  if (summaryElement && storyData.summary) {
+    summaryElement.value = storyData.summary;
+  }
 
   // Populate rooms
   for (const [roomName, roomData] of Object.entries(storyData.rooms)) {
@@ -133,7 +136,14 @@ export function populateEditorFields(storyData) {
     if (roomData.image) {
       const roomImagePreviewContainer = roomContainer.querySelector('.room-image-preview');
       const thumbnailElement = document.createElement('img');
-      thumbnailElement.src = roomData.image;
+      // Check if it's already base64 data or a filename
+      if (roomData.image.startsWith('data:') || roomData.image.length > 100) {
+        thumbnailElement.src = roomData.image.startsWith('data:') 
+          ? roomData.image 
+          : `data:image/jpeg;base64,${roomData.image}`;
+      } else {
+        thumbnailElement.src = roomData.image;
+      }
       thumbnailElement.alt = 'Room Thumbnail';
       thumbnailElement.classList.add('room-thumbnail');
       roomImagePreviewContainer.innerHTML = '';
@@ -148,7 +158,7 @@ export function populateEditorFields(storyData) {
 
       if (typeof exitData === 'string') {
         exitContainer.querySelector('input[name="exitDestination[]"]').value = exitData;
-      } else if (typeof exitData === 'object' && exitData.skill_check) {
+      } else if (typeof exitData === 'object' && exitData && exitData.skill_check) {
         addSkillCheck(exitContainer);
         const skillCheckContainer = exitContainer.querySelector('.skill-check-container:last-child');
         skillCheckContainer.querySelector('input[name="skillCheckDiceType[]"]').value = exitData.skill_check.dice_type || '';
@@ -166,7 +176,4 @@ export function populateEditorFields(storyData) {
     const coverThumbnailImg = document.getElementById('cover-thumbnail');
     coverThumbnailImg.src = `data:image/jpeg;base64,${storyData.cover_thumbnail}`;
   }
-
-  // Reattach event listeners after populating the fields
-  reattachEventHandlers();
 }

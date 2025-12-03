@@ -1,4 +1,18 @@
+import { replaceSpacesWithUnderscores } from './uiUtils.js';
+
+// Cache DOM reference
+let roomsContainer = null;
+
+function getRoomsContainer() {
+  if (!roomsContainer) {
+    roomsContainer = document.getElementById('roomsContainer');
+  }
+  return roomsContainer;
+}
+
 export function addRoom() {
+  const container = getRoomsContainer();
+  
   const roomContainer = document.createElement('div');
   roomContainer.classList.add('room-container');
 
@@ -16,14 +30,14 @@ export function addRoom() {
   roomNameInput.placeholder = 'Room Name';
   roomNameInput.maxLength = 25;
   roomNameInput.addEventListener('input', function () {
-    const roomIndex = Array.from(roomsContainer.children).indexOf(roomContainer) + 1;
+    const roomIndex = Array.from(container.children).indexOf(roomContainer) + 1;
     roomNameInput.value = replaceSpacesWithUnderscores(roomNameInput.value);
     const roomNameWithSpaces = roomNameInput.value.replace(/_/g, ' ');
     roomSidebar.textContent = roomNameWithSpaces ? roomNameWithSpaces : `Room ${roomIndex}`;
 
     const lineHeight = parseInt(window.getComputedStyle(roomSidebar).lineHeight);
     const numLines = Math.ceil(roomSidebar.textContent.length / 14);
-    const newHeight = numLines * lineHeight + 20; // Add 20px for padding
+    const newHeight = numLines * lineHeight + 20;
 
     roomSidebar.style.height = `${newHeight}px`;
     roomContainer.style.minHeight = `${newHeight}px`;
@@ -55,10 +69,8 @@ export function addRoom() {
           const canvas = document.createElement('canvas');
           const ctx = canvas.getContext('2d');
 
-          // Calculate the aspect ratio of the original image
           const aspectRatio = imagePreview.width / imagePreview.height;
 
-          // Calculate the dimensions of the thumbnail while maintaining the aspect ratio
           let thumbnailWidth, thumbnailHeight;
           if (aspectRatio > 1) {
             thumbnailWidth = 100;
@@ -68,11 +80,9 @@ export function addRoom() {
             thumbnailHeight = 100;
           }
 
-          // Set the canvas dimensions to the thumbnail size
           canvas.width = 100;
           canvas.height = 100;
 
-          // Draw the resized image on the canvas
           ctx.drawImage(
             imagePreview,
             0,
@@ -85,11 +95,9 @@ export function addRoom() {
             thumbnailHeight
           );
 
-          // Create a new image element and set its source to the thumbnail data URL
           const thumbnailImage = new Image();
           thumbnailImage.src = canvas.toDataURL();
 
-          // Add the thumbnail image to the preview container
           roomImagePreviewContainer.innerHTML = '';
           roomImagePreviewContainer.appendChild(thumbnailImage);
         };
@@ -109,58 +117,24 @@ export function addRoom() {
   clearImageLink.href = '#';
   clearImageLink.textContent = 'Clear Image';
   clearImageLink.classList.add('button', 'clear-image');
-  clearImageLink.addEventListener('click', function (event) {
-    event.preventDefault();
-    roomImageInput.value = '';
-    roomImagePreviewContainer.innerHTML = '';
-  });
+  clearImageLink.dataset.action = 'clear-image';
   roomButtons.appendChild(clearImageLink);
 
   const addExitLink = document.createElement('a');
   addExitLink.href = '#';
   addExitLink.textContent = 'Add Exit';
   addExitLink.classList.add('button', 'add-exit');
+  addExitLink.dataset.action = 'add-exit';
   roomButtons.appendChild(addExitLink);
-  addExitLink.addEventListener('click', handleAddExitClick);
 
   const removeRoomLink = document.createElement('a');
   removeRoomLink.href = '#';
   removeRoomLink.textContent = 'Remove Room';
   removeRoomLink.classList.add('button', 'remove-room');
+  removeRoomLink.dataset.action = 'remove-room';
   roomButtons.appendChild(removeRoomLink);
-  removeRoomLink.addEventListener('click', handleRemoveRoomClick);
 
-  roomsContainer.appendChild(roomContainer);
-}
-
-export function handleAddExitClick(event) {
-  event.preventDefault();
-  const roomContainer = event.target.closest('.room-container');
-  addExit(roomContainer);
-}
-
-export function handleRemoveRoomClick(event) {
-  event.preventDefault();
-  const roomContainer = event.target.closest('.room-container');
-  const confirmRemove = window.confirm('Are you sure you want to remove this room?');
-  if (confirmRemove) {
-    roomContainer.remove();
-  }
-}
-
-export function handleAddSkillCheckClick(event) {
-  event.preventDefault();
-  const exitContainer = event.target.closest('.exit-container');
-  addSkillCheck(exitContainer);
-}
-
-export function handleRemoveExitClick(event) {
-  event.preventDefault();
-  const exitContainer = event.target.closest('.exit-container');
-  const confirmRemove = window.confirm('Are you sure you want to remove this exit?');
-  if (confirmRemove) {
-    exitContainer.remove();
-  }
+  container.appendChild(roomContainer);
 }
 
 export function addExit(roomContainer) {
@@ -191,16 +165,33 @@ export function addExit(roomContainer) {
   addSkillCheckLink.href = '#';
   addSkillCheckLink.textContent = 'Add Skill Check';
   addSkillCheckLink.classList.add('button', 'add-skill-check');
-  addSkillCheckLink.addEventListener('click', handleAddSkillCheckClick);
+  addSkillCheckLink.dataset.action = 'add-skill-check';
   exitContainer.appendChild(addSkillCheckLink);
 
-  const exitsContainer = document.createElement('div');
-  exitsContainer.classList.add('exits-container');
+  const removeExitLink = document.createElement('a');
+  removeExitLink.href = '#';
+  removeExitLink.textContent = 'Remove Exit';
+  removeExitLink.classList.add('button', 'remove-exit');
+  removeExitLink.dataset.action = 'remove-exit';
+  exitContainer.appendChild(removeExitLink);
+
+  // Find or create exits container within the room
+  let exitsContainer = roomContainer.querySelector('.exits-container');
+  if (!exitsContainer) {
+    exitsContainer = document.createElement('div');
+    exitsContainer.classList.add('exits-container');
+    roomContainer.querySelector('.room-content').appendChild(exitsContainer);
+  }
   exitsContainer.appendChild(exitContainer);
-  roomContainer.querySelector('.room-content').appendChild(exitsContainer);
 }
 
 export function addSkillCheck(exitContainer) {
+  // Remove existing skill check if present
+  const existingSkillCheck = exitContainer.querySelector('.skill-check-container');
+  if (existingSkillCheck) {
+    return; // Already has a skill check
+  }
+
   const skillCheckContainer = document.createElement('div');
   skillCheckContainer.classList.add('skill-check-container');
 
@@ -238,57 +229,118 @@ export function addSkillCheck(exitContainer) {
   failureRoomInput.placeholder = 'Failure Room';
   skillCheckContainer.appendChild(failureRoomInput);
 
-  const removeExitLink = document.createElement('a');
-  removeExitLink.href = '#';
-  removeExitLink.textContent = 'Remove Exit';
-  removeExitLink.classList.add('button', 'remove-exit');
-  removeExitLink.addEventListener('click', handleRemoveExitClick);
-  skillCheckContainer.appendChild(removeExitLink);
+  const removeSkillCheckLink = document.createElement('a');
+  removeSkillCheckLink.href = '#';
+  removeSkillCheckLink.textContent = 'Remove Skill Check';
+  removeSkillCheckLink.classList.add('button', 'remove-skill-check');
+  removeSkillCheckLink.dataset.action = 'remove-skill-check';
+  skillCheckContainer.appendChild(removeSkillCheckLink);
 
   exitContainer.appendChild(skillCheckContainer);
 }
 
+// Event delegation setup - call once on page load
+export function setupEventDelegation() {
+  const container = getRoomsContainer();
+  
+  // Single delegated handler for all dynamic room/exit/skill-check buttons
+  container.addEventListener('click', function(event) {
+    const target = event.target;
+    
+    // Check if clicked element is a button with a data-action
+    if (!target.matches('[data-action]')) {
+      return;
+    }
+    
+    event.preventDefault();
+    const action = target.dataset.action;
+    
+    switch (action) {
+      case 'add-exit': {
+        const roomContainer = target.closest('.room-container');
+        if (roomContainer) {
+          addExit(roomContainer);
+        }
+        break;
+      }
+      
+      case 'remove-room': {
+        const roomContainer = target.closest('.room-container');
+        if (roomContainer && window.confirm('Are you sure you want to remove this room?')) {
+          roomContainer.remove();
+        }
+        break;
+      }
+      
+      case 'add-skill-check': {
+        const exitContainer = target.closest('.exit-container');
+        if (exitContainer) {
+          addSkillCheck(exitContainer);
+        }
+        break;
+      }
+      
+      case 'remove-exit': {
+        const exitContainer = target.closest('.exit-container');
+        if (exitContainer && window.confirm('Are you sure you want to remove this exit?')) {
+          exitContainer.remove();
+        }
+        break;
+      }
+      
+      case 'remove-skill-check': {
+        const skillCheckContainer = target.closest('.skill-check-container');
+        if (skillCheckContainer && window.confirm('Are you sure you want to remove this skill check?')) {
+          skillCheckContainer.remove();
+        }
+        break;
+      }
+      
+      case 'clear-image': {
+        const roomContainer = target.closest('.room-container');
+        if (roomContainer) {
+          const roomImageInput = roomContainer.querySelector('input[name="roomImage[]"]');
+          const roomImagePreviewContainer = roomContainer.querySelector('.room-image-preview');
+          if (roomImageInput) roomImageInput.value = '';
+          if (roomImagePreviewContainer) roomImagePreviewContainer.innerHTML = '';
+        }
+        break;
+      }
+    }
+  });
+}
+
+// Generate flowchart markup and open in new window
+export function showFlowchart() {
+  const storyData = getStoryData();
+  let mermaidMarkup = 'graph TD\n';
+  
+  for (const [roomName, roomData] of Object.entries(storyData.rooms)) {
+    const safeRoomName = roomName.replace(/[^a-zA-Z0-9_]/g, '_');
+    
+    for (const [exitName, exitData] of Object.entries(roomData.exits)) {
+      const safeExitName = exitName.replace(/[^a-zA-Z0-9_]/g, '_');
+      
+      if (typeof exitData === 'string') {
+        const safeDestination = exitData.replace(/[^a-zA-Z0-9_]/g, '_');
+        mermaidMarkup += `  ${safeRoomName}-->|${safeExitName}|${safeDestination}\n`;
+      } else if (exitData && exitData.skill_check) {
+        const successRoom = exitData.skill_check.success.room.replace(/[^a-zA-Z0-9_]/g, '_');
+        const failureRoom = exitData.skill_check.failure.room.replace(/[^a-zA-Z0-9_]/g, '_');
+        mermaidMarkup += `  ${safeRoomName}-->|${safeExitName} ✓|${successRoom}\n`;
+        mermaidMarkup += `  ${safeRoomName}-->|${safeExitName} ✗|${failureRoom}\n`;
+      }
+    }
+  }
+  
+  const encodedMarkup = encodeURIComponent(mermaidMarkup);
+  window.open(`flowchart.html#${encodedMarkup}`, '_blank');
+}
+
+// No-op for backward compatibility - delegation handles everything now
 export function reattachEventHandlers() {
-  const addRoomLinkElement = document.getElementById('addRoomLink');
-  const loadStoryLinkElement = document.getElementById('loadStoryLink');
-  const saveStoryLinkElement = document.getElementById('saveStoryLink');
-  const flowchartLinkElement = document.getElementById('flowchartLink');
-  const newStoryLinkElement = document.getElementById('newStoryLink');
-
-  // Remove existing event listeners for all buttons
-  addRoomLinkElement.removeEventListener('click', handleAddRoomClick);
-  loadStoryLinkElement.removeEventListener('click', handleLoadStoryClick);
-  saveStoryLinkElement.removeEventListener('click', handleSaveStoryClick);
-  flowchartLinkElement.removeEventListener('click', showFlowchart);
-  newStoryLinkElement.removeEventListener('click', handleNewStoryClick);
-
-  // Reattach event handlers for all buttons
-  addRoomLinkElement.addEventListener('click', handleAddRoomClick);
-  loadStoryLinkElement.addEventListener('click', handleLoadStoryClick);
-  saveStoryLinkElement.addEventListener('click', handleSaveStoryClick);
-  flowchartLinkElement.addEventListener('click', showFlowchart);
-  newStoryLinkElement.addEventListener('click', handleNewStoryClick);
-
-  // Reattach event handlers for other buttons
-  const addExitLinks = document.querySelectorAll('.add-exit');
-  addExitLinks.forEach(function (link) {
-    link.addEventListener('click', handleAddExitClick);
-  });
-
-  const removeRoomLinks = document.querySelectorAll('.remove-room');
-  removeRoomLinks.forEach(function (link) {
-    link.addEventListener('click', handleRemoveRoomClick);
-  });
-
-  const addSkillCheckLinks = document.querySelectorAll('.add-skill-check');
-  addSkillCheckLinks.forEach(function (link) {
-    link.addEventListener('click', handleAddSkillCheckClick);
-  });
-
-  const removeExitLinks = document.querySelectorAll('.remove-exit');
-  removeExitLinks.forEach(function (link) {
-    link.addEventListener('click', handleRemoveExitClick);
-  });
+  // Event delegation means we don't need to reattach handlers
+  // This function is kept for backward compatibility with existing calls
 }
 
 export function getStoryData() {
@@ -332,13 +384,13 @@ export function getStoryData() {
 
         const successRoomInput = skillCheckContainer.querySelector('input[name="successRoom[]"]');
         const successRoom = successRoomInput ? successRoomInput.value : '';
-        
+
         const failureDescriptionInput = skillCheckContainer.querySelector('textarea[name="failureDescription[]"]');
         const failureDescription = failureDescriptionInput ? failureDescriptionInput.value : '';
-        
+
         const failureRoomInput = skillCheckContainer.querySelector('input[name="failureRoom[]"]');
         const failureRoom = failureRoomInput ? failureRoomInput.value : '';
-        
+
         const skillCheckData = {
           dice_type: diceType,
           target: target,
@@ -352,81 +404,77 @@ export function getStoryData() {
           }
         };
         exits[exitName] = { skill_check: skillCheckData };
-        } else if (exitDestination) {
-          exits[exitName] = exitDestination;
-        } else {
-          exits[exitName] = null;
-        }
-            });
-        
-            rooms[roomName] = {
-              description: roomDescription,
-              exits: exits,
-              image: roomImageFile ? roomImageFile.name : null
-            };
-          });
-        
-          return {
-            name: storyName,
-            button_color: buttonColor,
-            start_room: startRoom,
-            rooms: rooms
-          };
-        }
-        
-        export function generateJsonFromEditorData(editorData) {
-          const jsonData = {};
-        
-          // Add top-level keys
-          for (const key of ["name", "button_color", "start_room"]) {
-            if (key in editorData) {
-              jsonData[key] = editorData[key];
-            } else {
-              jsonData[key] = "";
-            }
-          }
-        
-          // Add rooms
-          jsonData["rooms"] = {};
-          if ("rooms" in editorData) {
-            for (const [roomName, roomData] of Object.entries(editorData["rooms"])) {
-              const roomJson = {};
-        
-              // Add room description
-              if ("description" in roomData) {
-                roomJson["description"] = roomData["description"];
-              } else {
-                roomJson["description"] = "";
-              }
-        
-              // Add room exits
-              roomJson["exits"] = {};
-              if ("exits" in roomData) {
-                for (const [exitName, exitData] of Object.entries(roomData["exits"])) {
-                  if (typeof exitData === "string") {
-                    roomJson["exits"][exitName] = exitData;
-                  } else {
-                    roomJson["exits"][exitName] = {
-                      "skill_check": {
-                        "dice_type": exitData["skill_check"]["dice_type"],
-                        "target": exitData["skill_check"]["target"],
-                        "success": {
-                          "description": exitData["skill_check"]["success"]["description"],
-                          "room": exitData["skill_check"]["success"]["room"]
-                        },
-                        "failure": {
-                          "description": exitData["skill_check"]["failure"]["description"],
-                          "room": exitData["skill_check"]["failure"]["room"]
-                        }
-                      }
-                    };
-                  }
+      } else if (exitDestination) {
+        exits[exitName] = exitDestination;
+      } else {
+        exits[exitName] = null;
+      }
+    });
+
+    rooms[roomName] = {
+      description: roomDescription,
+      exits: exits,
+      image: roomImageFile ? roomImageFile.name : null
+    };
+  });
+
+  return {
+    name: storyName,
+    button_color: buttonColor,
+    start_room: startRoom,
+    rooms: rooms
+  };
+}
+
+export function generateJsonFromEditorData(editorData) {
+  const jsonData = {};
+
+  for (const key of ["name", "button_color", "start_room"]) {
+    if (key in editorData) {
+      jsonData[key] = editorData[key];
+    } else {
+      jsonData[key] = "";
+    }
+  }
+
+  jsonData["rooms"] = {};
+  if ("rooms" in editorData) {
+    for (const [roomName, roomData] of Object.entries(editorData["rooms"])) {
+      const roomJson = {};
+
+      if ("description" in roomData) {
+        roomJson["description"] = roomData["description"];
+      } else {
+        roomJson["description"] = "";
+      }
+
+      roomJson["exits"] = {};
+      if ("exits" in roomData) {
+        for (const [exitName, exitData] of Object.entries(roomData["exits"])) {
+          if (typeof exitData === "string") {
+            roomJson["exits"][exitName] = exitData;
+          } else {
+            roomJson["exits"][exitName] = {
+              "skill_check": {
+                "dice_type": exitData["skill_check"]["dice_type"],
+                "target": exitData["skill_check"]["target"],
+                "success": {
+                  "description": exitData["skill_check"]["success"]["description"],
+                  "room": exitData["skill_check"]["success"]["room"]
+                },
+                "failure": {
+                  "description": exitData["skill_check"]["failure"]["description"],
+                  "room": exitData["skill_check"]["failure"]["room"]
                 }
               }
-        
-              jsonData["rooms"][roomName] = roomJson;
-            }
+            };
           }
-        
-          return jsonData;
         }
+      }
+
+      jsonData["rooms"][roomName] = roomJson;
+    }
+  }
+
+  return jsonData;
+}
