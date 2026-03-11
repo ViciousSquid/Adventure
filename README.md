@@ -1,6 +1,6 @@
 # Adventure!
 
-Interactive story engine for designing, editing and playing **choose-your-own-adventure** stories
+Interactive story engine for designing, editing and playing **choose-your-own-adventure** stories or similar branching narrative stories. With skill checks, dice rolls, images, multiple endings and room re-tracking
 
 (  DOWNLOAD HERE: https://github.com/ViciousSquid/Adventure/releases )
 
