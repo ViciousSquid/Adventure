@@ -1,7 +1,8 @@
-# ver2
+# ver3
 """
 CYOA to Interactive Fiction Converter
 Converts Choose-Your-Own-Adventure JSON files to Z-Machine or Glulx formats
+EXPERIMENTAL, please raise any issues
 """
 
 import tkinter as tk
@@ -1989,4 +1990,5 @@ def main():
 
 
 if __name__ == '__main__':
+
     main()
