@@ -1,4 +1,4 @@
-# ver3
+# ver4
 """
 CYOA to Interactive Fiction Converter
 Converts Choose-Your-Own-Adventure JSON files to Z-Machine or Glulx formats
@@ -1992,3 +1992,4 @@ def main():
 if __name__ == '__main__':
 
     main()
+
