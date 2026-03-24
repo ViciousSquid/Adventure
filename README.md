@@ -17,12 +17,5 @@ Love Books. Love Reading. You are welcome to make stories and submit them to be 
 * Supports skill-checks and saving-throws within stories (see examples)
 * Example stories included with multiple endings and more
 * Basic Inventory system is currently being developed
-_____
-
-
-
-This is my passion-project and I'd love to hear from contributors!!
-
-
-This app integrates and demonstrates the **diceroll API** : https://github.com/ViciousSquid/diceroll
+* Dice rolls with animations
 
