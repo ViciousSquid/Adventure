@@ -24,5 +24,5 @@ _____
 This is my passion-project and I'd love to hear from contributors!!
 
 
-This app integrates and demonstrates the **diceroll API** which I also made: https://github.com/ViciousSquid/diceroll
+This app integrates and demonstrates the **diceroll API** : https://github.com/ViciousSquid/diceroll
 
