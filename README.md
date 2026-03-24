@@ -6,6 +6,8 @@ Interactive story engine for designing, editing and playing **choose-your-own-ad
 
 ![image](https://github.com/ViciousSquid/Adventure/assets/161540961/7d236ef0-9129-4b63-8e12-9b104d54bc01)
 
+### WORKING STORIES:: `Three choices` and `NOIR` (COSMIC PARADOX IS BROKEN, DO NOT PLAY THAT STORY!)
+
 Love Books. Love Reading. You are welcome to make stories and submit them to be considered for this repo.
 
 * Completely free and open-source
