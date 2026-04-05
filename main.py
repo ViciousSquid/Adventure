@@ -2,6 +2,8 @@ print("* Init...")
 import re
 import json
 import zipfile
+import webbrowser
+import threading
 from flask import Flask, render_template, request, redirect, url_for, make_response, send_from_directory, jsonify, send_file, flash, session
 from adventures import load_adventures
 from data.editor_stuff import story_editor, save_story, editor_route, load_story, graph_view, serve_thumbnail, serve_image, upload_story, generate_thumbnail
@@ -13,7 +15,6 @@ import werkzeug
 from werkzeug.utils import secure_filename
 import sys
 import datetime
-import os
 import atexit
 import ast
 import random
@@ -21,10 +22,11 @@ from dicerollAPI.diceroll import DiceRoller
 from dicerollAPI.diceroll_anim import DiceAnimator
 from dicerollAPI.diceroll_api import dicerollAPI
 
+
 class Logger(object):
     def __init__(self, log_file):
         self.terminal = sys.stdout
-        self.log = open(log_file, 'a')
+        self.log = open(log_file, 'a', encoding='utf-8')  # Fixed: UTF-8 support
         self.ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
 
     def write(self, message):
@@ -37,11 +39,13 @@ class Logger(object):
         self.terminal.flush()
         self.log.flush()
 
+
 def close_log_file():
     if isinstance(sys.stdout, Logger):
         sys.stdout.log.close()
     if isinstance(sys.stderr, Logger):
         sys.stderr.log.close()
+
 
 atexit.register(close_log_file)
 
@@ -72,5 +76,14 @@ from data.routes_adventure import *
 from data.routes_editor import *
 from data.routes_utility import *
 
+
+def open_browser():
+    """Automatically open the default web browser when the server starts"""
+    webbrowser.open_new("http://127.0.0.1:5000/")
+
+
 if __name__ == '__main__':
+    # Open browser automatically after a short delay (so the server is ready)
+    threading.Timer(1.5, open_browser).start()
+    print("Server starting... Browser will open automatically.")
     app.run(debug=False)
