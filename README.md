@@ -1,5 +1,8 @@
 # Adventure!
 
+<img src="https://github.com/user-attachments/assets/699cb5cb-abbf-46dc-8ab0-f4e0a1c72f34" width="300">
+
+
 Interactive story engine for designing, editing and playing **choose-your-own-adventure** stories or similar branching narrative stories. With skill checks, dice rolls, images, multiple endings and room re-tracking
 
 (  DOWNLOAD HERE: https://github.com/ViciousSquid/Adventure/releases )
