@@ -36,13 +36,23 @@ def valid_package():
 class StoryValidationTests(unittest.TestCase):
     def test_valid_package_loads(self):
         story, checks, inventory = valid_package()
-        validated = validate_package_data(story, checks, inventory)
-        self.assertEqual(validated[0]["start_room"], "start")
+        validated = validate_package_data(
+            story,
+            checks,
+            inventory,
+        )
+        self.assertEqual(
+            validated[0]["start_room"],
+            "start",
+        )
 
     def test_schema_versions_are_required(self):
         story, checks, inventory = valid_package()
         story["schema_version"] = 2
-        with self.assertRaisesRegex(StoryValidationError, "story.schema_version"):
+        with self.assertRaisesRegex(
+            StoryValidationError,
+            "story.schema_version",
+        ):
             validate_package_data(story, checks, inventory)
 
     def test_connection_cross_reference_errors_are_path_specific(self):
@@ -58,13 +68,17 @@ class StoryValidationTests(unittest.TestCase):
             StoryValidationError,
             r"story\.connections\.bad\.to",
         ) as context:
-            validate_package_data(story, checks, inventory)
+            validate_package_data(
+                story,
+                checks,
+                inventory,
+            )
         self.assertIn(
-            "story.connections.bad.skill_check",
+            "story.connections.bad.skill_check: unknown skill check 'missing_check'",
             context.exception.errors,
         )
         self.assertIn(
-            "story.connections.bad.requires_item",
+            "story.connections.bad.requires_item: unknown item 'missing_item'",
             context.exception.errors,
         )
 
@@ -73,8 +87,14 @@ class StoryValidationTests(unittest.TestCase):
         checks["skill_checks"]["door"] = {
             "dice_type": "1d20",
             "target": 10,
-            "success": {"to": "end", "description": "Open"},
-            "failure": {"to": "missing", "description": "Fail"},
+            "success": {
+                "to": "end",
+                "description": "Open",
+            },
+            "failure": {
+                "to": "missing",
+                "description": "Fail",
+            },
         }
         story["connections"]["start__door"] = {
             "from": "start",
@@ -86,7 +106,11 @@ class StoryValidationTests(unittest.TestCase):
             StoryValidationError,
             r"skill_checks\.skill_checks\.door\.failure\.to",
         ):
-            validate_package_data(story, checks, inventory)
+            validate_package_data(
+                story,
+                checks,
+                inventory,
+            )
 
     def test_unknown_fields_are_rejected(self):
         story, checks, inventory = valid_package()
@@ -95,7 +119,11 @@ class StoryValidationTests(unittest.TestCase):
             StoryValidationError,
             r"story\.rooms\.start: unknown field 'exits'",
         ):
-            validate_package_data(story, checks, inventory)
+            validate_package_data(
+                story,
+                checks,
+                inventory,
+            )
 
     def test_item_room_reference_is_checked(self):
         story, checks, inventory = valid_package()
@@ -104,4 +132,8 @@ class StoryValidationTests(unittest.TestCase):
             StoryValidationError,
             r"inventory\.room_items\.missing: unknown room",
         ):
-            validate_package_data(story, checks, inventory)
+            validate_package_data(
+                story,
+                checks,
+                inventory,
+            )
