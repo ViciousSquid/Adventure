@@ -120,6 +120,40 @@ class ConverterTests(unittest.TestCase):
                 b"A summary",
             )
 
+    def test_legacy_revisit_fields_are_converted(self):
+        converter = LegacyConverter()
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "LegacyRevisit.zip"
+            story = {
+                "name": "LegacyRevisit",
+                "start_room": "prologue",
+                "rooms": {
+                    "prologue": {
+                        "description": "A prologue",
+                        "revisit_content": "You have been here before.",
+                        "revisit_count": 2,
+                        "exits": {},
+                    },
+                },
+            }
+            with ZipFile(source, "w") as archive:
+                archive.writestr("story.json", json.dumps(story))
+
+            converted = converter.convert_to_world(source)
+
+            self.assertEqual(
+                converted.story["revisits"]["prologue"],
+                {
+                    "show_all": False,
+                    "entries": [
+                        {
+                            "count": 2,
+                            "content": "You have been here before.",
+                        }
+                    ],
+                },
+            )
+
     def test_unknown_fields_fail_by_default(self):
         converter = LegacyConverter()
         with tempfile.TemporaryDirectory() as tmp:
