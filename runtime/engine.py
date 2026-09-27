@@ -50,6 +50,14 @@ class AdventureEngine:
                 )
             return self._resolve_pending_check(state)
 
+        if state.pending_check:
+            return self._result(
+                state,
+                ok=False,
+                text="Resolve the pending skill check before choosing another action.",
+                error="pending_roll",
+            )
+
         if action.startswith("acquire:"):
             return self.acquire_item(state, action.partition(":")[2])
 
@@ -182,8 +190,8 @@ class AdventureEngine:
         branch = check.get("success" if success else "failure", {})
         destination = branch.get("to") or connection["to"] or connection["from"]
         description = (
-            check.get("description")
-            or branch.get("description")
+            branch.get("description")
+            or check.get("description")
             or ("You succeeded!" if success else "You failed!")
         )
 
