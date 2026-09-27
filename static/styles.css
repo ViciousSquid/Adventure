@@ -1413,3 +1413,29 @@ main { padding: 1.15rem 1.35rem 3.5rem; }
   .utility-card { position: static; }
   .story-hero.has-image { min-height: 190px; }
 }
+
+
+.choice-button:disabled {
+  opacity: 0.58;
+  cursor: not-allowed;
+  filter: saturate(0.55);
+  border-color: #624c34;
+  background: #171513;
+}
+.choice-button:disabled .choice-mark {
+  background: #59452f;
+  color: #cdb28f;
+}
+.choice-button:disabled:hover {
+  transform: none;
+  border-color: #705538;
+  background: #1a1714;
+}
+
+.story-body ul,
+.story-body ol {
+  padding-left: 1.5rem;
+}
+.story-body li + li {
+  margin-top: 0.3rem;
+}
