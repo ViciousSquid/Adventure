@@ -2,47 +2,63 @@ import random
 import unittest
 
 from runtime.engine import AdventureEngine
-from runtime.state import GameState
 from story.model import Story
 
 
 def make_story():
-    return Story.from_dict(
+    return Story.from_package(
         {
+            "schema_version": 3,
             "name": "EngineTest",
             "start_room": "start",
             "rooms": {
-                "start": {
-                    "description": "Start",
-                    "exits": {
-                        "north": "end",
-                        "door": {
-                            "skill_check": {
-                                "dice_type": "1d20",
-                                "target": 10,
-                                "success": {"description": "Success", "room": "end"},
-                                "failure": {"description": "Failure", "room": "start"},
-                            }
-                        },
-                        "legacy_check": {
-                            "skill_check": {
-                                "dice_type": "1d20",
-                                "target": 10,
-                                "description": "The check resolves.",
-                                "success": {"room": "end"},
-                                "failure": {"room": "start"},
-                            }
-                        },
-                    },
-                    "items": ["key"],
+                "start": {"description": "Start"},
+                "end": {"description": "End"},
+            },
+            "connections": {
+                "start__north": {
+                    "from": "start",
+                    "to": "end",
+                    "label": "Go north",
                 },
-                "end": {
-                    "description": "End",
-                    "exits": {"back": "start"},
-                    "revisits": [{"count": 2, "content": "Again."}],
+                "start__door": {
+                    "from": "start",
+                    "to": "start",
+                    "label": "Open door",
+                    "skill_check": "door",
+                },
+                "end__back": {
+                    "from": "end",
+                    "to": "start",
+                    "label": "Go back",
                 },
             },
-        }
+            "revisits": {
+                "end": {
+                    "show_all": False,
+                    "entries": [{"count": 2, "content": "Again."}],
+                }
+            },
+            "metadata": {},
+        },
+        {
+            "schema_version": 1,
+            "skill_checks": {
+                "door": {
+                    "dice_type": "1d20",
+                    "target": 10,
+                    "description": "The check resolves.",
+                    "success": {"description": "ignored", "to": "end"},
+                    "failure": {"description": "ignored", "to": "start"},
+                }
+            },
+        },
+        {
+            "schema_version": 1,
+            "items": {"key": {"name": "Rusty Key"}},
+            "room_items": {"start": ["key"]},
+            "room_requirements": {},
+        },
     )
 
 
@@ -51,14 +67,14 @@ class EngineTests(unittest.TestCase):
         engine = AdventureEngine(make_story(), rng=random.Random(1234))
         a = engine.new_game()
         b = engine.new_game()
-        engine.step(a, "north")
+        engine.step(a, "start__north")
         self.assertEqual(a.current_room, "end")
         self.assertEqual(b.current_room, "start")
 
     def test_normal_transition_records_history_and_visits(self):
         engine = AdventureEngine(make_story())
         state = engine.new_game()
-        result = engine.execute(state, "north")
+        result = engine.execute(state, "start__north")
         self.assertTrue(result.ok)
         self.assertEqual(state.current_room, "end")
         self.assertEqual(state.history_rooms, ["end"])
@@ -67,37 +83,67 @@ class EngineTests(unittest.TestCase):
     def test_skill_check_is_deterministic_from_state(self):
         engine = AdventureEngine(make_story(), rng=random.Random(7))
         a = engine.new_game()
-        b = GameState.from_dict(a.to_dict())
+        b = type(a).from_dict(a.to_dict())
 
-        engine.step(a, "door")
+        engine.step(a, "start__door")
         result_a = engine.step(a, "roll")
-        engine.step(b, "door")
+        engine.step(b, "start__door")
         result_b = engine.step(b, "roll")
 
-        self.assertEqual(result_a.dice_results[0].to_dict(), result_b.dice_results[0].to_dict())
+        self.assertEqual(
+            result_a.dice_results[0].to_dict(),
+            result_b.dice_results[0].to_dict(),
+        )
         self.assertEqual(a.current_room, b.current_room)
 
-    def test_legacy_skill_description_is_preserved(self):
+    def test_top_level_skill_description_preserves_legacy_precedence(self):
         engine = AdventureEngine(make_story(), rng=random.Random(3))
         state = engine.new_game()
-        engine.step(state, "legacy_check")
+        engine.step(state, "start__door")
         result = engine.step(state, "roll")
         self.assertEqual(result.text, "The check resolves.")
 
     def test_revisit_content_is_state_driven(self):
         engine = AdventureEngine(make_story())
         state = engine.new_game()
-        engine.step(state, "north")
+        engine.step(state, "start__north")
         self.assertNotIn("Again.", engine.observe(state).text)
-        engine.step(state, "back")
-        engine.step(state, "north")
+        engine.step(state, "end__back")
+        engine.step(state, "start__north")
         self.assertIn("Again.", engine.observe(state).text)
         self.assertEqual(state.visit_counts["end"], 2)
 
-    def test_inventory_is_runtime_state(self):
+    def test_inventory_is_runtime_state_and_actions(self):
         engine = AdventureEngine(make_story())
         state = engine.new_game()
-        result = engine.acquire_item(state, "key")
+        result = engine.step(state, "acquire:key")
         self.assertTrue(result.ok)
         self.assertEqual(state.inventory, ["key"])
         self.assertEqual(engine.available_items(state), [])
+
+        result = engine.step(state, "use:key")
+        self.assertTrue(result.ok)
+        self.assertEqual(state.inventory, [])
+
+    def test_missing_required_item_blocks_connection(self):
+        story = make_story()
+        story = Story.from_package(
+            story.data,
+            story.skill_checks,
+            {
+                "schema_version": 1,
+                "items": {"key": {"name": "Rusty Key"}},
+                "room_items": {},
+                "room_requirements": {},
+            },
+        )
+        data = story.to_dict()
+        data["story"]["connections"]["start__north"]["requires_item"] = "key"
+        story = Story.from_package(
+            data["story"], data["skill_checks"], data["inventory"]
+        )
+        engine = AdventureEngine(story)
+        state = engine.new_game()
+        result = engine.step(state, "start__north")
+        self.assertFalse(result.ok)
+        self.assertEqual(result.error, "missing_item")

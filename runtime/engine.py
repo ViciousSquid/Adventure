@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import hashlib
 import random
-from collections.abc import Mapping
 from dataclasses import replace
 from typing import Any
 
@@ -51,93 +50,137 @@ class AdventureEngine:
                 )
             return self._resolve_pending_check(state)
 
+        if action.startswith("acquire:"):
+            return self.acquire_item(state, action.partition(":")[2])
+
+        if action.startswith("use:"):
+            return self.use_item(state, action.partition(":")[2])
+
         return self._execute_action(state, action)
 
     def observe(self, state: GameState) -> ExecutionResult:
         self._validate_state(state)
         return self._result(state, ok=True, text=self._room_text(state))
 
-    def acquire_item(self, state: GameState, item_name: str) -> ExecutionResult:
+    def acquire_item(self, state: GameState, item_id: str) -> ExecutionResult:
         self._validate_state(state)
-        if item_name not in self.available_items(state):
-            return self._result(state, ok=False, text="Item not available.", error="item_not_available")
+        if item_id not in self.available_items(state):
+            return self._result(
+                state,
+                ok=False,
+                text="Item not available.",
+                error="item_not_available",
+            )
 
-        state.inventory.append(item_name)
-        state.collected_items.append(item_name)
-        effect = {"type": "item_acquired", "item": item_name}
+        state.inventory.append(item_id)
+        state.collected_items.append(item_id)
+        effect = {"type": "item_acquired", "item": item_id}
         state.action_history.append(
             ActionRecord(
-                action_id=f"acquire:{item_name}",
+                action_id=f"acquire:{item_id}",
                 source_room=state.current_room,
                 resulting_room=state.current_room,
                 effects=(effect,),
             )
         )
-        return self._result(state, text=f"You acquired the {item_name}.", effects=(effect,))
+        name = self.story.items[item_id].get("name", item_id)
+        return self._result(
+            state,
+            text=f"You acquired the {name}.",
+            effects=(effect,),
+        )
 
-    def use_item(self, state: GameState, item_name: str) -> ExecutionResult:
+    def use_item(self, state: GameState, item_id: str) -> ExecutionResult:
         self._validate_state(state)
-        if item_name not in state.inventory:
-            return self._result(state, ok=False, text="Item not in inventory.", error="item_not_in_inventory")
+        if item_id not in state.inventory:
+            return self._result(
+                state,
+                ok=False,
+                text="Item not in inventory.",
+                error="item_not_in_inventory",
+            )
 
-        state.inventory.remove(item_name)
-        effect = {"type": "item_used", "item": item_name}
+        state.inventory.remove(item_id)
+        effect = {"type": "item_used", "item": item_id}
         state.action_history.append(
             ActionRecord(
-                action_id=f"use:{item_name}",
+                action_id=f"use:{item_id}",
                 source_room=state.current_room,
                 resulting_room=state.current_room,
                 effects=(effect,),
             )
         )
-        return self._result(state, text=f"You used the {item_name}.", effects=(effect,))
+        name = self.story.items[item_id].get("name", item_id)
+        return self._result(
+            state,
+            text=f"You used the {name}.",
+            effects=(effect,),
+        )
 
     def available_items(self, state: GameState) -> list[str]:
-        room = self.story.room(state.current_room)
+        item_ids = self.story.room_items.get(state.current_room, ())
         return [
-            item for item in room.get("items", ())
-            if item not in state.collected_items and item not in state.inventory
+            item_id
+            for item_id in item_ids
+            if item_id not in state.collected_items
+            and item_id not in state.inventory
         ]
 
     def _execute_action(self, state: GameState, action: str) -> ExecutionResult:
-        room = self.story.room(state.current_room)
-        target = room.get("exits", {}).get(action)
+        connection = self._connection_for_action(state.current_room, action)
+        if connection is None:
+            return self._result(
+                state,
+                ok=False,
+                text="You can't go that way.",
+                error="invalid_action",
+            )
 
-        if not target:
-            return self._result(state, ok=False, text="You can't go that way.", error="invalid_action")
+        required = connection.get("requires_item")
+        if required and required not in state.inventory:
+            name = self.story.items[required].get("name", required)
+            return self._result(
+                state,
+                ok=False,
+                text=f"You need the {name}.",
+                error="missing_item",
+            )
 
-        if isinstance(target, str):
-            return self._transition(state, action, target)
+        skill_id = connection.get("skill_check")
+        if skill_id:
+            check = self.story.skill_check(skill_id)
+            state.pending_check = {
+                "connection_id": action,
+                "source_room": state.current_room,
+                "skill_check_id": skill_id,
+            }
+            return self._result(
+                state,
+                text=(
+                    f"Roll {check.get('dice_type', '1d20')} "
+                    f"(target {check.get('target', 10)} or higher)."
+                ),
+                awaiting_roll=True,
+            )
 
-        skill_check = target.get("skill_check") if isinstance(target, Mapping) else None
-        if skill_check is None:
-            return self._result(state, ok=False, text="You can't go that way.", error="invalid_transition")
-
-        state.pending_check = {
-            "action_id": action,
-            "source_room": state.current_room,
-            "skill_check": _plain(skill_check),
-        }
-        dice_type = skill_check.get("dice_type", "1d20")
-        target_value = skill_check.get("target", 10)
-        return self._result(
-            state,
-            text=f"Roll {dice_type} (target {target_value} or higher).",
-            awaiting_roll=True,
-        )
+        return self._transition(state, action, connection["to"])
 
     def _resolve_pending_check(self, state: GameState) -> ExecutionResult:
         pending = state.pending_check or {}
-        check = pending["skill_check"]
+        connection = self.story.connection(pending["connection_id"])
+        check = self.story.skill_check(pending["skill_check_id"])
         target = int(check.get("target", 10))
         seed_material = f"{state.random_seed}:{state.roll_count}".encode("utf-8")
         seed = int.from_bytes(hashlib.sha256(seed_material).digest()[:16], "big")
         state.roll_count += 1
-        roll = DiceEngine(random.Random(seed)).roll(check.get("dice_type", "1d20"), target=target)
+        roll = DiceEngine(random.Random(seed)).roll(
+            check.get("dice_type", "1d20"),
+            target=target,
+        )
 
         success = bool(roll.success)
         branch = check.get("success" if success else "failure", {})
-        destination = branch.get("room") or pending["source_room"]
+        destination = branch.get("to") or connection["to"] or connection["from"]
         description = (
             check.get("description")
             or branch.get("description")
@@ -147,7 +190,7 @@ class AdventureEngine:
         state.pending_check = None
         return self._transition(
             state,
-            pending["action_id"],
+            pending["connection_id"],
             destination,
             text_override=description,
             dice_result=roll,
@@ -174,7 +217,6 @@ class AdventureEngine:
         state.current_room = destination
         state.visit_counts[destination] = state.visit_counts.get(destination, 0) + 1
         effects = ({"type": "transition", "from": source, "to": destination},)
-
         state.action_history.append(
             ActionRecord(
                 action_id=action,
@@ -187,7 +229,9 @@ class AdventureEngine:
 
         text = text_override
         if text is None:
-            text = self.story.room(destination).get("description", "You are here.")
+            text = self.story.room(destination).get(
+                "description", "You are here."
+            )
 
         return self._result(
             state,
@@ -200,38 +244,56 @@ class AdventureEngine:
     def _room_text(self, state: GameState) -> str:
         room = self.story.room(state.current_room)
         parts = [room.get("description", "You are here.")]
-        revisits = room.get("revisits", [])
+        revisit_data = self.story.revisits.get(state.current_room, {})
         count = state.visit_counts.get(state.current_room, 0)
+        entries = revisit_data.get("entries", ())
 
-        if room.get("show_all_revisits", False):
+        if revisit_data.get("show_all", False):
             parts.extend(
-                revisit.get("content", "")
-                for revisit in revisits
-                if count >= revisit.get("count", 0)
+                entry.get("content", "")
+                for entry in entries
+                if count >= entry.get("count", 0)
             )
         else:
-            for revisit in reversed(revisits):
-                if count >= revisit.get("count", 0):
-                    parts.append(revisit.get("content", ""))
+            for entry in reversed(entries):
+                if count >= entry.get("count", 0):
+                    parts.append(entry.get("content", ""))
                     break
 
         return "\n".join(part for part in parts if part)
 
     def _choices(self, state: GameState) -> tuple[dict[str, Any], ...]:
-        exits = self.story.room(state.current_room).get("exits", {})
         choices: list[dict[str, Any]] = []
-        for action_id, target in exits.items():
-            if not target:
+        for connection_id, connection in self.story.connections.items():
+            if connection.get("from") != state.current_room:
                 continue
-            choice = {"id": action_id, "label": str(action_id).replace("_", " ")}
-            if isinstance(target, Mapping) and target.get("skill_check"):
-                skill = target["skill_check"]
+            choice = {
+                "id": connection_id,
+                "label": connection["label"],
+                "to": connection["to"],
+            }
+            if connection.get("requires_item"):
+                choice["requires_item"] = connection["requires_item"]
+            skill_id = connection.get("skill_check")
+            if skill_id:
+                check = self.story.skill_check(skill_id)
                 choice["skill_check"] = {
-                    "dice_type": skill.get("dice_type", "1d20"),
-                    "target": skill.get("target", 10),
+                    "id": skill_id,
+                    "dice_type": check.get("dice_type", "1d20"),
+                    "target": check.get("target", 10),
                 }
             choices.append(choice)
         return tuple(choices)
+
+    def _connection_for_action(
+        self,
+        room_id: str,
+        action: str,
+    ) -> dict[str, Any] | None:
+        connection = self.story.connections.get(action)
+        if connection and connection.get("from") == room_id:
+            return connection
+        return None
 
     def _result(
         self,
@@ -265,23 +327,27 @@ class AdventureEngine:
             {"type": "action", "text": result.text},
         ]
         for dice in dice_results:
-            trace.append({
-                "type": "check",
-                "expression": dice.expression,
-                "rolls": list(dice.individual_rolls),
-                "modifier": dice.modifier,
-                "total": dice.total,
-                "target": dice.target,
-                "success": dice.success,
-            })
+            trace.append(
+                {
+                    "type": "check",
+                    "expression": dice.expression,
+                    "rolls": list(dice.individual_rolls),
+                    "modifier": dice.modifier,
+                    "total": dice.total,
+                    "target": dice.target,
+                    "success": dice.success,
+                }
+            )
         if transition:
             trace.append({"type": "transition", "to": transition})
-        trace.append({
-            "type": "state",
-            "current_room": state.current_room,
-            "inventory": list(state.inventory),
-            "visit_counts": dict(state.visit_counts),
-        })
+        trace.append(
+            {
+                "type": "state",
+                "current_room": state.current_room,
+                "inventory": list(state.inventory),
+                "visit_counts": dict(state.visit_counts),
+            }
+        )
         return replace(result, trace=tuple(trace))
 
     def _validate_state(self, state: GameState) -> None:
@@ -291,11 +357,3 @@ class AdventureEngine:
             )
         if state.current_room not in self.story.rooms:
             raise ValueError(f"current room {state.current_room!r} does not exist")
-
-
-def _plain(value: Any) -> Any:
-    if isinstance(value, Mapping):
-        return {key: _plain(item) for key, item in value.items()}
-    if isinstance(value, (list, tuple)):
-        return [_plain(item) for item in value]
-    return value

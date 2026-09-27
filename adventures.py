@@ -1,29 +1,32 @@
-"""Compatibility facade for the legacy adventures helper module."""
+"""Compatibility facade at the application boundary.
+
+Runtime code uses Story directly. These helpers remain only for older export tooling.
+"""
 
 from __future__ import annotations
 
 import random
 from pathlib import Path
 
-from storage.package import PackageLoader
+from storage.repository import WorldRepository
 
-_LOADER = PackageLoader(Path(__file__).resolve().parent / "adventures")
+_REPOSITORY = WorldRepository(Path(__file__).resolve().parent / "adventures")
 
 
 def load_adventures():
-    return _LOADER.list_stories()
+    return _REPOSITORY.list_stories()
 
 
 def get_adventure_data(adventure_name):
-    return _LOADER.load(adventure_name).to_dict()
+    return _REPOSITORY.load(adventure_name).to_legacy_dict()
 
 
 def get_start_room(adventure_name):
-    return _LOADER.load(adventure_name).start_room
+    return _REPOSITORY.load(adventure_name).start_room
 
 
 def get_room_data(adventure_name, room_name):
-    return _LOADER.load(adventure_name).rooms.get(room_name)
+    return _REPOSITORY.load(adventure_name).to_legacy_dict()["rooms"].get(room_name)
 
 
 def get_random_adventure():
@@ -34,11 +37,17 @@ def get_random_adventure():
 
 
 def get_cover_image_data(adventure_name):
-    try:
-        return _LOADER.read_asset(adventure_name, "cover.jpg")
-    except FileNotFoundError:
-        return None
+    for candidate in ("assets/cover.jpg", "cover.jpg"):
+        try:
+            return _REPOSITORY.read_asset(adventure_name, candidate)
+        except FileNotFoundError:
+            continue
+    return None
 
 
 def get_summary_text(adventure_name):
-    return _LOADER.read_text_asset(adventure_name, "summary.txt")
+    for candidate in ("assets/summary.txt", "summary.txt"):
+        value = _REPOSITORY.read_text_asset(adventure_name, candidate)
+        if value is not None:
+            return value
+    return None

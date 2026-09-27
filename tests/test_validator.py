@@ -1,61 +1,107 @@
 import unittest
 
-from story.validator import StoryValidationError, validate_story_data
+from story.validator import StoryValidationError, validate_package_data
 
 
-class StoryValidationTests(unittest.TestCase):
-    def base_story(self):
-        return {
+def valid_package():
+    return (
+        {
+            "schema_version": 3,
             "name": "Test",
             "start_room": "start",
             "rooms": {
-                "start": {
-                    "description": "Start",
-                    "exits": {"north": "end"},
-                    "items": ["key"],
-                },
-                "end": {"description": "End", "exits": {}},
+                "start": {"description": "Start"},
+                "end": {"description": "End"},
             },
+            "connections": {
+                "start__north": {
+                    "from": "start",
+                    "to": "end",
+                    "label": "north",
+                }
+            },
+            "revisits": {},
+            "metadata": {},
+        },
+        {"schema_version": 1, "skill_checks": {}},
+        {
+            "schema_version": 1,
+            "items": {"key": {"name": "Key"}},
+            "room_items": {"start": ["key"]},
+            "room_requirements": {},
+        },
+    )
+
+
+class StoryValidationTests(unittest.TestCase):
+    def test_valid_package_loads(self):
+        story, checks, inventory = valid_package()
+        validated = validate_package_data(story, checks, inventory)
+        self.assertEqual(validated[0]["start_room"], "start")
+
+    def test_schema_versions_are_required(self):
+        story, checks, inventory = valid_package()
+        story["schema_version"] = 2
+        with self.assertRaisesRegex(StoryValidationError, "story.schema_version"):
+            validate_package_data(story, checks, inventory)
+
+    def test_connection_cross_reference_errors_are_path_specific(self):
+        story, checks, inventory = valid_package()
+        story["connections"]["bad"] = {
+            "from": "start",
+            "to": "missing",
+            "label": "bad",
+            "skill_check": "missing_check",
+            "requires_item": "missing_item",
         }
+        with self.assertRaisesRegex(
+            StoryValidationError,
+            r"story\.connections\.bad\.to",
+        ) as context:
+            validate_package_data(story, checks, inventory)
+        self.assertIn(
+            "story.connections.bad.skill_check",
+            context.exception.errors,
+        )
+        self.assertIn(
+            "story.connections.bad.requires_item",
+            context.exception.errors,
+        )
 
-    def test_valid_story_loads(self):
-        self.assertEqual(validate_story_data(self.base_story())["start_room"], "start")
-
-    def test_historical_aliases_are_normalised(self):
-        story = {"title": "Old", "start": "start", "rooms": {"start": {"description": "Start", "exits": {}}}}
-        canonical = validate_story_data(story)
-        self.assertEqual(canonical["name"], "Old")
-        self.assertEqual(canonical["start_room"], "start")
-        self.assertNotIn("title", canonical)
-        self.assertNotIn("start", canonical)
-
-    def test_missing_start_room_rejected(self):
-        story = self.base_story()
-        story["start_room"] = "missing"
-        with self.assertRaises(StoryValidationError):
-            validate_story_data(story)
-
-    def test_missing_destination_rejected(self):
-        story = self.base_story()
-        story["rooms"]["start"]["exits"]["north"] = "roof"
-        with self.assertRaisesRegex(StoryValidationError, "rooms.start.exits.north"):
-            validate_story_data(story)
-
-    def test_malformed_skill_check_rejected(self):
-        story = self.base_story()
-        story["rooms"]["start"]["exits"]["north"] = {
-            "skill_check": {
-                "dice_type": "banana",
-                "target": "hard",
-                "success": {"room": "end"},
-                "failure": {"room": "start"},
-            }
+    def test_skill_check_destinations_and_inventory_references_are_checked(self):
+        story, checks, inventory = valid_package()
+        checks["skill_checks"]["door"] = {
+            "dice_type": "1d20",
+            "target": 10,
+            "success": {"to": "end", "description": "Open"},
+            "failure": {"to": "missing", "description": "Fail"},
         }
-        with self.assertRaises(StoryValidationError):
-            validate_story_data(story)
+        story["connections"]["start__door"] = {
+            "from": "start",
+            "to": "end",
+            "label": "door",
+            "skill_check": "door",
+        }
+        with self.assertRaisesRegex(
+            StoryValidationError,
+            r"skill_checks\.skill_checks\.door\.failure\.to",
+        ):
+            validate_package_data(story, checks, inventory)
 
-    def test_bad_item_reference_rejected(self):
-        story = self.base_story()
-        story["rooms"]["end"]["item_needed"] = "missing"
-        with self.assertRaises(StoryValidationError):
-            validate_story_data(story)
+    def test_unknown_fields_are_rejected(self):
+        story, checks, inventory = valid_package()
+        story["rooms"]["start"]["exits"] = {}
+        with self.assertRaisesRegex(
+            StoryValidationError,
+            r"story\.rooms\.start: unknown field 'exits'",
+        ):
+            validate_package_data(story, checks, inventory)
+
+    def test_item_room_reference_is_checked(self):
+        story, checks, inventory = valid_package()
+        inventory["room_items"]["missing"] = ["key"]
+        with self.assertRaisesRegex(
+            StoryValidationError,
+            r"inventory\.room_items\.missing: unknown room",
+        ):
+            validate_package_data(story, checks, inventory)

@@ -1,0 +1,94 @@
+:root {
+  font-family: system-ui, sans-serif;
+  color-scheme: light dark;
+}
+
+body {
+  margin: 0;
+  max-width: 1400px;
+  margin-inline: auto;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #8886;
+}
+
+main {
+  padding: 1rem 1.25rem 3rem;
+}
+
+button,
+select {
+  font: inherit;
+  padding: 0.45rem 0.7rem;
+}
+
+button {
+  cursor: pointer;
+}
+
+.toolbar {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.card {
+  border: 1px solid #8886;
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 0.75rem 0;
+}
+
+.actions,
+.inventory {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.action {
+  min-width: 12rem;
+}
+
+.editor-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.editor-grid > div {
+  min-width: 0;
+}
+
+textarea {
+  width: 100%;
+  min-height: 34rem;
+  box-sizing: border-box;
+  font-family: ui-monospace, monospace;
+  padding: 0.75rem;
+}
+
+pre {
+  white-space: pre-wrap;
+}
+
+.hint {
+  opacity: 0.75;
+}
+
+.active {
+  font-weight: 700;
+}
+
+@media (max-width: 950px) {
+  .editor-grid {
+    grid-template-columns: 1fr;
+  }
+}
