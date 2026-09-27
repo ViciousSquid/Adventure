@@ -1,7 +1,11 @@
-import random
-from .diceroll_enums import DiceColor, AnimationStyle
+from __future__ import annotations
+
+import re
+
 from flask import url_for
-from datetime import datetime
+
+from .diceroll_enums import AnimationStyle
+
 
 class DiceType:
     D4 = "d4"
@@ -11,29 +15,45 @@ class DiceType:
     D12 = "d12"
     D20 = "d20"
 
+
 class DiceAnimator:
+    """Presentation-only adapter from DiceResult data to the existing HTML animation."""
+
     def __init__(self, dice_image_path="static/dice_imgs"):
         self.dice_image_path = dice_image_path
         self.animation_style = AnimationStyle.SHAKE
 
     def animate_dice_roll_html(self, dice_notation, dice_color, roll_result):
-        number_of_dice = int(dice_notation.split("d")[0])
-        dice_type = dice_notation.split("d")[1]
+        match = re.search(r"(\d+)d(\d+)", str(dice_notation))
+        if not match:
+            raise ValueError(f"Invalid dice notation: {dice_notation}")
 
-        roll_results = roll_result['roll_details']
-        roll_sum = roll_result['roll_result']
+        dice_type = match.group(2)
+        roll_results = roll_result.get(
+            "roll_details",
+            roll_result.get("individual_rolls", ()),
+        )
 
         dice_images = []
         for result in roll_results:
             if dice_type == "6":
-                png_file = url_for('static', filename=f'dice_imgs/d6_{result}.png')
-                dice_image = f'<div class="dice-image" style="background-image: url(\'{png_file}\');"></div>'
+                png_file = url_for("static", filename=f"dice_imgs/d6_{result}.png")
+                dice_image = (
+                    '<div class="dice-image" '
+                    f"style=\"background-image: url('{png_file}');\"></div>"
+                )
             else:
-                png_file = url_for('static', filename=f'dice_imgs/blank_d{dice_type}.png')
-                dice_image = f'<div class="dice-image" style="background-image: url(\'{png_file}\');"><div class="dice-number">{result}</div></div>'
+                png_file = url_for(
+                    "static", filename=f"dice_imgs/blank_d{dice_type}.png"
+                )
+                dice_image = (
+                    '<div class="dice-image" '
+                    f"style=\"background-image: url('{png_file}');\">"
+                    f'<div class="dice-number">{result}</div></div>'
+                )
             dice_images.append(dice_image)
 
-        animation_html = f"""
+        return f"""
         <div class="dice-animation">
             <style>
                 .dice-animation {{
@@ -102,5 +122,3 @@ class DiceAnimator:
             <div class="dice-notation">{dice_notation}</div>
         </div>
         """
-
-        return animation_html
