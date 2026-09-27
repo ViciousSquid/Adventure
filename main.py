@@ -5,7 +5,7 @@ import threading
 import webbrowser
 from pathlib import Path
 
-from server import run
+from server import create_server
 from storage.repository import WorldRepository
 
 ROOT = Path(__file__).resolve().parent
@@ -31,12 +31,13 @@ def main() -> None:
         args=(url,),
     ).start()
     print("Adventure server starting...")
-    run(
+    server = create_server(
         repository,
         host=host,
         port=port,
         trace=trace,
     )
+    server.serve_forever()
 
 
 if __name__ == "__main__":
