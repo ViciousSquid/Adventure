@@ -438,7 +438,9 @@ function renderGame(result) {
     if (diceCard) storyCard.appendChild(diceCard);
   }
 
-  storyCard.appendChild(renderChoices(result));
+  if (!result.awaiting_roll) {
+    storyCard.appendChild(renderChoices(result));
+  }
   column.appendChild(storyCard);
 
   const itemsHere = currentPackage.inventory.room_items[currentState.current_room] || [];
