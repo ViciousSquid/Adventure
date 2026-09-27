@@ -92,3 +92,349 @@ pre {
     grid-template-columns: 1fr;
   }
 }
+
+
+.editor-view-tabs {
+  display: flex;
+  gap: 0.4rem;
+  margin: 1rem 0 0.75rem;
+  border-bottom: 1px solid #8886;
+  padding-bottom: 0.5rem;
+}
+
+.editor-view-tabs button.active {
+  font-weight: 700;
+}
+
+.graph-editor {
+  border: 1px solid #8886;
+  border-radius: 10px;
+  overflow: hidden;
+  background:
+    linear-gradient(#8882 1px, transparent 1px),
+    linear-gradient(90deg, #8882 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.graph-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.55rem;
+  border-bottom: 1px solid #8886;
+  background: #8881;
+}
+
+.graph-toolbar-spacer {
+  flex: 1;
+}
+
+.graph-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 330px;
+  min-height: 720px;
+}
+
+.graph-stage {
+  position: relative;
+  overflow: hidden;
+  min-height: 720px;
+  outline: none;
+  cursor: grab;
+  background-color: #0000;
+}
+
+.graph-stage.panning {
+  cursor: grabbing;
+}
+
+.graph-edges,
+.graph-node-layer {
+  position: absolute;
+  inset: 0;
+  transform-origin: 0 0;
+  overflow: visible;
+}
+
+.graph-edges {
+  pointer-events: none;
+}
+
+.graph-edges path {
+  fill: none;
+  stroke: #888c;
+  stroke-width: 1.8;
+}
+
+.graph-edges marker path {
+  fill: #888c;
+  stroke: none;
+}
+
+.graph-edge-skill-link {
+  stroke: #9b7cf7;
+}
+
+.graph-edge-success {
+  stroke: #58a46b;
+}
+
+.graph-edge-failure {
+  stroke: #d46a6a;
+}
+
+.graph-edge-contains {
+  stroke: #5f96c7;
+  stroke-dasharray: 6 5;
+}
+
+.graph-edge-requirement {
+  stroke: #c78c45;
+  stroke-dasharray: 4 5;
+}
+
+.graph-edge-revisit {
+  stroke: #8e8eaa;
+  stroke-dasharray: 3 5;
+}
+
+.graph-edge-start {
+  stroke: #c5aa45;
+  stroke-width: 2.2;
+}
+
+.graph-edge.selected {
+  stroke-width: 3.2;
+}
+
+.graph-edge-label {
+  font: 11px ui-monospace, monospace;
+  fill: currentColor;
+  paint-order: stroke;
+  stroke: Canvas;
+  stroke-width: 4px;
+  stroke-linejoin: round;
+}
+
+.graph-node {
+  position: absolute;
+  width: 230px;
+  box-sizing: border-box;
+  border: 1px solid #8889;
+  border-radius: 9px;
+  padding: 0.65rem;
+  background: Canvas;
+  box-shadow: 0 5px 18px #0004;
+  user-select: none;
+  cursor: grab;
+}
+
+.graph-node.dragging {
+  cursor: grabbing;
+  z-index: 20;
+}
+
+.graph-node.selected {
+  border-color: currentColor;
+  box-shadow: 0 0 0 2px currentColor, 0 8px 22px #0005;
+  z-index: 10;
+}
+
+.node-world {
+  border-color: #c5aa45;
+}
+
+.node-room {
+  border-color: #6587bc;
+}
+
+.node-skill {
+  border-color: #9b7cf7;
+}
+
+.node-item {
+  border-color: #5f96c7;
+}
+
+.node-revisit {
+  border-color: #8e8eaa;
+}
+
+.graph-node-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.node-kind {
+  text-transform: uppercase;
+  font: 10px ui-monospace, monospace;
+  opacity: 0.65;
+}
+
+.graph-node strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.graph-node-subtitle {
+  font: 11px ui-monospace, monospace;
+  opacity: 0.65;
+  margin-top: 0.2rem;
+}
+
+.graph-node-body {
+  font-size: 0.85rem;
+  line-height: 1.3;
+  margin-top: 0.5rem;
+  opacity: 0.8;
+}
+
+.graph-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-top: 0.55rem;
+}
+
+.graph-badges span {
+  font: 9px ui-monospace, monospace;
+  border: 1px solid #8887;
+  border-radius: 999px;
+  padding: 0.1rem 0.3rem;
+}
+
+.graph-help {
+  position: absolute;
+  left: 0.75rem;
+  bottom: 0.75rem;
+  padding: 0.35rem 0.55rem;
+  border: 1px solid #8885;
+  border-radius: 6px;
+  background: Canvas;
+  opacity: 0.78;
+  font-size: 0.78rem;
+  pointer-events: none;
+}
+
+.graph-inspector {
+  overflow: auto;
+  border-left: 1px solid #8886;
+  background: Canvas;
+  padding: 0.8rem;
+}
+
+.inspector-title h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.inspector-title p {
+  margin: 0.2rem 0 0.9rem;
+  font: 11px ui-monospace, monospace;
+  opacity: 0.7;
+  word-break: break-word;
+}
+
+.inspector-section {
+  border-top: 1px solid #8885;
+  padding: 0.8rem 0;
+}
+
+.inspector-section:first-of-type {
+  border-top: 0;
+}
+
+.inspector-section h3 {
+  margin: 0 0 0.6rem;
+  font-size: 0.88rem;
+}
+
+.inspector-section label {
+  display: block;
+  margin: 0.5rem 0;
+  font-size: 0.78rem;
+}
+
+.inspector-section input,
+.inspector-section select,
+.inspector-section textarea {
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 0.25rem;
+  padding: 0.4rem;
+}
+
+.inspector-section textarea {
+  min-height: 5rem;
+  font-family: inherit;
+}
+
+.inspector-section .inspector-code {
+  min-height: 9rem;
+  font-family: ui-monospace, monospace;
+}
+
+.check-row {
+  display: flex !important;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.check-row input {
+  width: auto !important;
+  margin: 0 !important;
+}
+
+.inspector-card {
+  border: 1px solid #8885;
+  border-radius: 7px;
+  padding: 0.55rem;
+  margin: 0.6rem 0;
+}
+
+.row-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+}
+
+.compact {
+  padding: 0.2rem 0.45rem;
+  font-size: 0.75rem;
+}
+
+.danger {
+  border-color: #b54a4a;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.inspector-note {
+  font-size: 0.78rem;
+  opacity: 0.68;
+}
+
+.linkish {
+  display: block;
+  width: 100%;
+  margin: 0.25rem 0;
+  text-align: left;
+}
+
+@media (max-width: 1100px) {
+  .graph-main {
+    grid-template-columns: 1fr;
+  }
+
+  .graph-inspector {
+    border-left: 0;
+    border-top: 1px solid #8886;
+    max-height: 520px;
+  }
+}
