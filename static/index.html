@@ -25,32 +25,55 @@
   </section>
 
   <section id="editPanel" hidden>
-    <div class="toolbar">
-      <button id="newWorld">New World</button>
-      <select id="editWorldSelect"></select>
-      <button id="loadWorld">Load</button>
-      <button id="validateWorld">Validate</button>
-      <button id="saveWorld">Save Canonical ZIP</button>
+    <div class="toolbar editor-toolbar">
+      <button id="newWorld" class="toolbar-action toolbar-action-mint">＋ New Story</button>
+      <select id="editWorldSelect" aria-label="Story to edit"></select>
+      <button id="loadWorld">Open</button>
+      <button id="validateWorld">Check Story</button>
+      <button id="saveWorld" class="toolbar-action toolbar-action-orange">Save Story</button>
+      <button id="fullscreenEditor" class="fullscreen-button" type="button">Fullscreen</button>
     </div>
 
-    <div class="editor-grid">
-      <div>
-        <h2>story.json</h2>
-        <textarea id="storyJson" spellcheck="false"></textarea>
-      </div>
-      <div>
-        <h2>skill_checks.json</h2>
-        <textarea id="checksJson" spellcheck="false"></textarea>
-      </div>
-      <div>
-        <h2>inventory.json</h2>
-        <textarea id="inventoryJson" spellcheck="false"></textarea>
-      </div>
+    <div class="editor-view-tabs">
+      <button id="graphViewTab" class="active">Story Map</button>
+      <button id="dataViewTab">Advanced Data</button>
     </div>
+
+    <div class="editor-legend" aria-label="Story map legend">
+      <span class="legend-title">STORY MAP</span>
+      <span class="legend-chip legend-room"><i></i> Room</span>
+      <span class="legend-chip legend-exit"><i></i> Exit</span>
+      <span class="legend-chip legend-skill"><i></i> Skill Check</span>
+      <span class="legend-chip legend-item"><i></i> Pickup</span>
+      <span class="legend-chip legend-revisit"><i></i> Revisit</span>
+    </div>
+
+    <section id="graphView">
+      <div id="graphEditor" class="graph-editor"></div>
+    </section>
+
+    <section id="dataView" hidden>
+      <div class="editor-grid">
+        <div>
+          <h2>story.json</h2>
+          <textarea id="storyJson" spellcheck="false"></textarea>
+        </div>
+        <div>
+          <h2>skill_checks.json</h2>
+          <textarea id="checksJson" spellcheck="false"></textarea>
+        </div>
+        <div>
+          <h2>inventory.json</h2>
+          <textarea id="inventoryJson" spellcheck="false"></textarea>
+        </div>
+      </div>
+    </section>
+
     <p class="hint">
-      The editor works directly on the three canonical data domains consumed
-      by the VM. Existing assets are preserved when a legacy world is saved
-      as canonical.
+      Build your story visually. Rooms are the scenes, exits are the choices,
+      skill checks are the dice gates, and pickups are the things your player can carry.
+      Advanced Data remains available when you need exact JSON control. Existing assets
+      are preserved when a legacy world is saved as canonical.
     </p>
     <pre id="editStatus"></pre>
   </section>

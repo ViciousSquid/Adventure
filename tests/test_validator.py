@@ -112,6 +112,28 @@ class StoryValidationTests(unittest.TestCase):
                 inventory,
             )
 
+
+    def test_rich_description_html_is_validated(self):
+        story, checks, inventory = valid_package()
+        story["rooms"]["start"]["description_html"] = (
+            "<p><strong>Hello</strong></p>"
+            '<img src="assets/rich_text/door.png" style="width:320px">'
+        )
+        validated = validate_package_data(story, checks, inventory)
+        self.assertIn(
+            "description_html",
+            validated[0]["rooms"]["start"],
+        )
+
+    def test_executable_rich_description_html_is_rejected(self):
+        story, checks, inventory = valid_package()
+        story["rooms"]["start"]["description_html"] = "<script>alert(1)</script>"
+        with self.assertRaisesRegex(
+            StoryValidationError,
+            "unsupported executable HTML element",
+        ):
+            validate_package_data(story, checks, inventory)
+
     def test_unknown_fields_are_rejected(self):
         story, checks, inventory = valid_package()
         story["rooms"]["start"]["exits"] = {}

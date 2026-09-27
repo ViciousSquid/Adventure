@@ -8,7 +8,14 @@ from typing import Any
 DICE_EXPRESSION = re.compile(r"^\s*\d+d\d+(?:\s*[+-]\s*(?:\d+d\d+|\d+))*\s*$")
 
 TOP_LEVEL = {"schema_version", "name", "start_room", "rooms", "connections", "revisits", "metadata"}
-ROOM_FIELDS = {"description", "image", "show_map", "message", "name"}
+ROOM_FIELDS = {
+    "description",
+    "description_html",
+    "image",
+    "show_map",
+    "message",
+    "name",
+}
 CONNECTION_FIELDS = {"from", "to", "label", "skill_check", "requires_item"}
 SKILL_FIELDS = {"dice_type", "target", "description", "success", "failure"}
 OUTCOME_FIELDS = {"description", "to"}
@@ -89,6 +96,15 @@ def _validate_story(
         _unknown_fields(room, ROOM_FIELDS, path, errors)
         if not isinstance(room.get("description"), str):
             errors.append(f"{path}.description: must be a string")
+        if "description_html" in room:
+            if not isinstance(room["description_html"], str):
+                errors.append(f"{path}.description_html: must be a string")
+            else:
+                _validate_rich_text(
+                    room["description_html"],
+                    f"{path}.description_html",
+                    errors,
+                )
         if "image" in room and room["image"] is not None and not isinstance(room["image"], str):
             errors.append(f"{path}.image: must be a string or null")
         if "show_map" in room and not isinstance(room["show_map"], bool):
@@ -163,6 +179,20 @@ def _validate_story(
     metadata = story.get("metadata", {})
     if not isinstance(metadata, dict):
         errors.append("story.metadata: must be an object")
+
+
+def _validate_rich_text(html: str, path: str, errors: list[str]) -> None:
+    lowered = html.lower()
+    if "<script" in lowered or "<iframe" in lowered or "<object" in lowered:
+        errors.append(f"{path}: unsupported executable HTML element")
+    if "javascript:" in lowered or "vbscript:" in lowered:
+        errors.append(f"{path}: executable URL is not allowed")
+    if re.search(r"\son[a-z]+\s*=", lowered):
+        errors.append(f"{path}: inline event handlers are not allowed")
+    if "srcdoc=" in lowered:
+        errors.append(f"{path}: srcdoc is not allowed")
+    if "url(" in lowered:
+        errors.append(f"{path}: CSS url() is not allowed")
 
 
 def _validate_skill_checks(

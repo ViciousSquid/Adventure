@@ -80,6 +80,16 @@ class EngineTests(unittest.TestCase):
         self.assertEqual(state.history_rooms, ["end"])
         self.assertEqual(state.visit_counts["end"], 1)
 
+    def test_pending_skill_check_blocks_other_actions_until_rolled(self):
+        engine = AdventureEngine(make_story())
+        state = engine.new_game()
+        pending = engine.step(state, "start__door")
+        self.assertTrue(pending.awaiting_roll)
+        blocked = engine.step(state, "start__north")
+        self.assertFalse(blocked.ok)
+        self.assertEqual(blocked.error, "pending_roll")
+        self.assertEqual(state.current_room, "start")
+
     def test_skill_check_is_deterministic_from_state(self):
         engine = AdventureEngine(make_story(), rng=random.Random(7))
         a = engine.new_game()

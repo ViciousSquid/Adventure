@@ -50,6 +50,14 @@ class AdventureEngine:
                 )
             return self._resolve_pending_check(state)
 
+        if state.pending_check:
+            return self._result(
+                state,
+                ok=False,
+                text="Resolve the pending skill check before choosing another action.",
+                error="pending_roll",
+            )
+
         if action.startswith("acquire:"):
             return self.acquire_item(state, action.partition(":")[2])
 
