@@ -438,3 +438,206 @@ pre {
     max-height: 520px;
   }
 }
+
+
+.graph-node {
+  overflow: visible;
+}
+
+.graph-ports {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.graph-port {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  box-sizing: border-box;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  background: Canvas;
+  pointer-events: auto;
+  cursor: crosshair;
+  z-index: 5;
+  transition: transform 80ms ease, box-shadow 80ms ease;
+}
+
+.graph-port:hover {
+  transform: scale(1.35);
+  box-shadow: 0 0 0 3px #8884;
+}
+
+.port-in {
+  color: #6e7781;
+}
+
+.port-out {
+  color: #c49a45;
+}
+
+.port-right {
+  right: -7px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.port-right:hover {
+  transform: translateY(-50%) scale(1.35);
+}
+
+.port-left {
+  left: -7px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.port-left:hover {
+  transform: translateY(-50%) scale(1.35);
+}
+
+.port-top {
+  top: -7px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.port-top:hover {
+  transform: translateX(-50%) scale(1.35);
+}
+
+.port-bottom {
+  bottom: -7px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.port-bottom:hover {
+  transform: translateX(-50%) scale(1.35);
+}
+
+.graph-port.success {
+  color: #58a46b;
+  top: 33%;
+}
+
+.graph-port.failure {
+  color: #d46a6a;
+  left: 72%;
+}
+
+.node-skill .graph-port.success::after,
+.node-skill .graph-port.failure::after {
+  position: absolute;
+  left: 15px;
+  white-space: nowrap;
+  font: 9px ui-monospace, monospace;
+  opacity: 0.75;
+}
+
+.node-skill .graph-port.success::after {
+  content: "success";
+  top: -3px;
+}
+
+.node-skill .graph-port.failure::after {
+  content: "failure";
+  top: -3px;
+}
+
+.node-room .port-right::after {
+  content: "exit";
+  position: absolute;
+  left: 14px;
+  top: -3px;
+  white-space: nowrap;
+  font: 9px ui-monospace, monospace;
+  opacity: 0.65;
+}
+
+.node-room .port-bottom::after {
+  content: "pickup";
+  position: absolute;
+  left: 14px;
+  top: 8px;
+  white-space: nowrap;
+  font: 9px ui-monospace, monospace;
+  opacity: 0.65;
+}
+
+.node-room .port-top::after {
+  content: "require";
+  position: absolute;
+  left: 14px;
+  top: -7px;
+  white-space: nowrap;
+  font: 9px ui-monospace, monospace;
+  opacity: 0.65;
+}
+
+.node-exit .port-right::after {
+  content: "target";
+  position: absolute;
+  left: 14px;
+  top: -3px;
+  white-space: nowrap;
+  font: 9px ui-monospace, monospace;
+  opacity: 0.65;
+}
+
+.node-exit .port-bottom::after {
+  content: "check";
+  position: absolute;
+  left: 14px;
+  top: 8px;
+  white-space: nowrap;
+  font: 9px ui-monospace, monospace;
+  opacity: 0.65;
+}
+
+.node-item .port-right::after {
+  content: "pickup";
+  position: absolute;
+  left: 14px;
+  top: -3px;
+  white-space: nowrap;
+  font: 9px ui-monospace, monospace;
+  opacity: 0.65;
+}
+
+.graph-stage.wiring .graph-port {
+  box-shadow: 0 0 0 3px #8883;
+}
+
+.graph-edge-exit-link {
+  stroke: #c49a45;
+  stroke-width: 2.4;
+}
+
+.graph-edge-skill-link {
+  stroke: #9b7cf7;
+  stroke-width: 2.4;
+}
+
+.graph-edge-transition {
+  stroke: #6587bc;
+  stroke-width: 2.2;
+}
+
+.graph-edge-success {
+  stroke: #58a46b;
+  stroke-width: 2.2;
+}
+
+.graph-edge-failure {
+  stroke: #d46a6a;
+  stroke-width: 2.2;
+}
+
+.graph-edge-temp {
+  stroke: #c49a45;
+  stroke-width: 2.5;
+  stroke-dasharray: 7 6;
+  opacity: 0.9;
+}
