@@ -1,8 +1,11 @@
+import {GraphEditor} from "/editor-graph.js";
+
 const $ = (id) => document.getElementById(id);
 
 let currentWorld = null;
 let currentState = null;
 let currentPackage = null;
+let graphEditor = null;
 
 async function api(url, options = {}) {
   const response = await fetch(url, {
@@ -47,7 +50,11 @@ async function startGame() {
 async function step(action) {
   const data = await api("/api/game/step", {
     method: "POST",
-    body: JSON.stringify({world: currentWorld, state: currentState, action}),
+    body: JSON.stringify({
+      world: currentWorld,
+      state: currentState,
+      action,
+    }),
   });
   currentState = data.state;
   renderGame(data.result);
@@ -56,7 +63,10 @@ async function step(action) {
 async function roll() {
   const data = await api("/api/game/roll", {
     method: "POST",
-    body: JSON.stringify({world: currentWorld, state: currentState}),
+    body: JSON.stringify({
+      world: currentWorld,
+      state: currentState,
+    }),
   });
   currentState = data.state;
   renderGame(data.result);
@@ -120,7 +130,8 @@ function renderGame(result) {
     for (const itemId of items) {
       if (currentState.collected_items.includes(itemId)) continue;
       const button = document.createElement("button");
-      button.textContent = currentPackage.inventory.items[itemId]?.name || itemId;
+      button.textContent =
+        currentPackage.inventory.items[itemId]?.name || itemId;
       button.onclick = () => step("acquire:" + itemId);
       actions.appendChild(button);
     }
@@ -135,7 +146,8 @@ function renderGame(result) {
   inventoryActions.className = "inventory";
   for (const itemId of currentState.inventory) {
     const button = document.createElement("button");
-    button.textContent = "Use " + (currentPackage.inventory.items[itemId]?.name || itemId);
+    button.textContent =
+      "Use " + (currentPackage.inventory.items[itemId]?.name || itemId);
     button.onclick = () => step("use:" + itemId);
     inventoryActions.appendChild(button);
   }
@@ -143,11 +155,39 @@ function renderGame(result) {
   card.appendChild(inventory);
 
   const history = document.createElement("pre");
-  history.textContent = "Room: " + currentState.current_room + "\nHistory: " +
+  history.textContent =
+    "Room: " +
+    currentState.current_room +
+    "\nHistory: " +
     JSON.stringify(currentState.action_history, null, 2);
   card.appendChild(history);
 
   root.appendChild(card);
+}
+
+function syncEditorText(packageData) {
+  $("storyJson").value = pretty(packageData.story);
+  $("checksJson").value = pretty(packageData.skill_checks);
+  $("inventoryJson").value = pretty(packageData.inventory);
+}
+
+function showEditorStatus(message) {
+  $("editStatus").textContent = message;
+}
+
+function ensureGraphEditor() {
+  if (graphEditor) return graphEditor;
+  if (!currentPackage) return null;
+  graphEditor = new GraphEditor({
+    mount: $("graphEditor"),
+    packageData: currentPackage,
+    onChange: (packageData) => {
+      currentPackage = packageData;
+      syncEditorText(packageData);
+    },
+    onStatus: showEditorStatus,
+  });
+  return graphEditor;
 }
 
 async function loadEditorWorld() {
@@ -155,32 +195,55 @@ async function loadEditorWorld() {
   if (!world) return;
   const data = await api("/api/world/" + encodeURIComponent(world));
   currentPackage = data;
-  $("storyJson").value = pretty(data.story);
-  $("checksJson").value = pretty(data.skill_checks);
-  $("inventoryJson").value = pretty(data.inventory);
-  $("editStatus").textContent =
-    "Loaded " + world + " (" + data.source_format +
-    "). Saving creates or updates " + world +
-    ".canonical.zip without modifying the legacy source.";
+  syncEditorText(data);
+  if (graphEditor) graphEditor.setPackage(data);
+  else ensureGraphEditor();
+  showEditorStatus(
+    "Loaded " +
+      world +
+      " (" +
+      data.source_format +
+      "). Saving creates or updates " +
+      world +
+      ".canonical.zip without modifying the legacy source."
+  );
 }
 
 function newWorld() {
-  const story = {
-    schema_version: 3,
-    name: "New_World",
-    start_room: "start",
-    rooms: {start: {description: "A new world.", show_map: true}},
-    connections: {},
-    revisits: {},
-    metadata: {},
+  const packageData = {
+    world: "New_World",
+    source_format: "canonical",
+    story: {
+      schema_version: 3,
+      name: "New_World",
+      start_room: "start",
+      rooms: {
+        start: {
+          description: "A new world.",
+          show_map: true,
+        },
+      },
+      connections: {},
+      revisits: {},
+      metadata: {},
+    },
+    skill_checks: {
+      schema_version: 1,
+      skill_checks: {},
+    },
+    inventory: {
+      schema_version: 1,
+      items: {},
+      room_items: {},
+      room_requirements: {},
+    },
   };
-  const checks = {schema_version: 1, skill_checks: {}};
-  const inventory = {schema_version: 1, items: {}, room_items: {}, room_requirements: {}};
-  $("storyJson").value = pretty(story);
-  $("checksJson").value = pretty(checks);
-  $("inventoryJson").value = pretty(inventory);
-  $("editStatus").textContent = "New canonical world.";
-  currentPackage = {assets: []};
+  currentPackage = packageData;
+  syncEditorText(packageData);
+  if (graphEditor) graphEditor.setPackage(packageData);
+  else ensureGraphEditor();
+  setEditorView(true);
+  showEditorStatus("New canonical world.");
 }
 
 function parseEditor() {
@@ -195,13 +258,42 @@ function parseEditor() {
   }
 }
 
+function syncGraphFromData() {
+  const parsed = parseEditor();
+  currentPackage = {
+    ...(currentPackage || {}),
+    ...parsed,
+  };
+  if (graphEditor) graphEditor.setPackage(currentPackage);
+  else ensureGraphEditor();
+  showEditorStatus("Graph rebuilt from the Data view.");
+}
+
+function setEditorView(graph) {
+  $("graphView").hidden = !graph;
+  $("dataView").hidden = graph;
+  $("graphViewTab").classList.toggle("active", graph);
+  $("dataViewTab").classList.toggle("active", !graph);
+  if (graph) {
+    try {
+      syncGraphFromData();
+    } catch (error) {
+      showEditorStatus(error.message);
+      $("graphView").hidden = true;
+      $("dataView").hidden = false;
+      $("graphViewTab").classList.remove("active");
+      $("dataViewTab").classList.add("active");
+    }
+  }
+}
+
 async function validateEditor() {
   const payload = parseEditor();
   const result = await api("/api/editor/validate", {
     method: "POST",
     body: JSON.stringify(payload),
   });
-  $("editStatus").textContent = result.valid ? "Canonical world is valid." : "Invalid.";
+  showEditorStatus(result.valid ? "Canonical world is valid." : "Invalid.");
 }
 
 async function saveEditor() {
@@ -213,7 +305,19 @@ async function saveEditor() {
       preserve_from: currentPackage?.world || null,
     }),
   });
-  $("editStatus").textContent = "Saved " + result.path;
+  currentPackage = {
+    ...(currentPackage || {}),
+    ...payload,
+    world: payload.story.name,
+    source_format: "canonical",
+  };
+  syncEditorText(currentPackage);
+  if (graphEditor) graphEditor.setPackage(currentPackage);
+  showEditorStatus(
+    "Saved " +
+      result.path +
+      ". Legacy sources remain unchanged; canonical output is now authoritative."
+  );
   await loadStories();
   $("editWorldSelect").value = payload.story.name;
 }
@@ -223,10 +327,15 @@ function setTab(editing) {
   $("editPanel").hidden = !editing;
   $("playTab").classList.toggle("active", !editing);
   $("editTab").classList.toggle("active", editing);
+  if (editing && currentPackage) {
+    ensureGraphEditor();
+  }
 }
 
 $("playTab").onclick = () => setTab(false);
 $("editTab").onclick = () => setTab(true);
+$("graphViewTab").onclick = () => setEditorView(true);
+$("dataViewTab").onclick = () => setEditorView(false);
 $("newGame").onclick = () => startGame().catch(showError);
 $("newWorld").onclick = newWorld;
 $("loadWorld").onclick = () => loadEditorWorld().catch(showError);
@@ -235,12 +344,13 @@ $("saveWorld").onclick = () => saveEditor().catch(showError);
 
 function showError(error) {
   const message = error instanceof Error ? error.message : String(error);
-  $("editStatus").textContent = message;
+  showEditorStatus(message);
   $("game").textContent = message;
 }
 
 loadStories()
   .then(() => {
     if ($("worldSelect").options.length) startGame().catch(showError);
+    else newWorld();
   })
   .catch(showError);
