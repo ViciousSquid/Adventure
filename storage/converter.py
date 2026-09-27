@@ -243,6 +243,8 @@ class LegacyConverter:
                     "items",
                     "item_needed",
                     "revisits",
+                    "revisit_content",
+                    "revisit_count",
                     "show_all_revisits",
                 },
                 room_path,
@@ -300,8 +302,11 @@ class LegacyConverter:
                 item_values.add(required)
 
             raw_revisits = room.get("revisits", [])
-            if raw_revisits:
-                if not isinstance(raw_revisits, list):
+            legacy_revisit_present = (
+                "revisit_content" in room or "revisit_count" in room
+            )
+            if raw_revisits or legacy_revisit_present:
+                if raw_revisits and not isinstance(raw_revisits, list):
                     raise ConversionError(
                         f"{room_path}.revisits: must be a list"
                     )
@@ -311,7 +316,7 @@ class LegacyConverter:
                     ),
                     "entries": [],
                 }
-                for index, revisit in enumerate(raw_revisits):
+                for index, revisit in enumerate(raw_revisits or []):
                     entry_path = (
                         f"{room_path}.revisits[{index}]"
                     )
@@ -335,6 +340,21 @@ class LegacyConverter:
                     if not isinstance(content, str):
                         raise ConversionError(
                             f"{entry_path}.content: must be a string"
+                        )
+                    story["revisits"][room_id]["entries"].append(
+                        {"count": count, "content": content}
+                    )
+
+                if legacy_revisit_present:
+                    count = room.get("revisit_count", 0)
+                    content = room.get("revisit_content", "")
+                    if not isinstance(count, int) or count < 0:
+                        raise ConversionError(
+                            f"{room_path}.revisit_count: must be a non-negative integer"
+                        )
+                    if not isinstance(content, str):
+                        raise ConversionError(
+                            f"{room_path}.revisit_content: must be a string"
                         )
                     story["revisits"][room_id]["entries"].append(
                         {"count": count, "content": content}
