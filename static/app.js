@@ -218,30 +218,6 @@ function renderInventory(parent) {
     " carried · click an item to use it";
   card.appendChild(count);
 
-  const pending = currentState.pending_check;
-  if (pending) {
-    const check = currentPackage.skill_checks?.skill_checks?.[pending.skill_check_id];
-    if (check) {
-      const checkCard = document.createElement("section");
-      checkCard.className = "skill-roll-card";
-      checkCard.style.margin = "1rem 0 0";
-      appendSectionTitle(checkCard, "PENDING CHECK", check.description || "Make the check");
-      const target = document.createElement("p");
-      target.className = "utility-note";
-      target.textContent =
-        (check.dice_type || "1d20") + " against " + (check.target ?? 10);
-      checkCard.appendChild(target);
-
-      const rollButton = document.createElement("button");
-      rollButton.className = "roll-button";
-      rollButton.type = "button";
-      rollButton.textContent = "Roll " + (check.dice_type || "1d20");
-      rollButton.onclick = () => roll().catch(showError);
-      checkCard.appendChild(rollButton);
-      card.appendChild(checkCard);
-    }
-  }
-
   return card;
 }
 
@@ -249,10 +225,7 @@ function renderChoices(result) {
   const choiceArea = document.createElement("section");
   choiceArea.className = "choice-area";
 
-  const heading = document.createElement("div");
-  heading.className = "choice-heading";
   appendSectionTitle(choiceArea, "CHOOSE", "What do you do?");
-  choiceArea.appendChild(heading);
 
   const list = document.createElement("div");
   list.className = "choice-list";
