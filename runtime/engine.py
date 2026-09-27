@@ -190,8 +190,8 @@ class AdventureEngine:
         branch = check.get("success" if success else "failure", {})
         destination = branch.get("to") or connection["to"] or connection["from"]
         description = (
-            branch.get("description")
-            or check.get("description")
+            check.get("description")
+            or branch.get("description")
             or ("You succeeded!" if success else "You failed!")
         )
 
