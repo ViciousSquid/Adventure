@@ -97,102 +97,383 @@ function resolveDescriptionHtml(html, world) {
   );
 }
 
+function roomNarrative(room) {
+  if (room.description_html) {
+    return resolveDescriptionHtml(room.description_html, currentWorld);
+  }
+  const article = document.createElement("p");
+  article.textContent = room.description || "You are here.";
+  return article.outerHTML;
+}
+
+function appendSectionTitle(parent, kicker, title) {
+  const kickerEl = document.createElement("div");
+  kickerEl.className = "section-kicker";
+  kickerEl.textContent = kicker;
+  parent.appendChild(kickerEl);
+
+  const titleEl = document.createElement("h3");
+  titleEl.textContent = title;
+  parent.appendChild(titleEl);
+}
+
+function renderDiceResult(result) {
+  const dice = result.dice_results?.[result.dice_results.length - 1];
+  if (!dice) return null;
+
+  const card = document.createElement("section");
+  card.className = "skill-roll-card";
+
+  const header = document.createElement("div");
+  header.className = "skill-roll-header";
+
+  const left = document.createElement("div");
+  const kicker = document.createElement("div");
+  kicker.className = "section-kicker";
+  kicker.textContent = "SKILL CHECK";
+  left.appendChild(kicker);
+
+  const target = document.createElement("div");
+  target.className = "skill-roll-target";
+  target.textContent = dice.expression + (dice.target != null ? " · target " + dice.target : "");
+  left.appendChild(target);
+  header.appendChild(left);
+
+  const resultTotal = document.createElement("div");
+  resultTotal.className =
+    "dice-total " + (dice.success ? "success" : "failure");
+  resultTotal.textContent = String(dice.total);
+  header.appendChild(resultTotal);
+  card.appendChild(header);
+
+  const stage = document.createElement("div");
+  stage.className = "dice-stage";
+  (dice.individual_rolls || []).forEach((value, index) => {
+    const die = document.createElement("span");
+    die.className = "die";
+    die.style.animationDelay = (index * 45) + "ms";
+    die.textContent = String(value);
+    stage.appendChild(die);
+  });
+
+  if (dice.modifier) {
+    const modifier = document.createElement("span");
+    modifier.className = "choice-tag";
+    modifier.textContent = (dice.modifier > 0 ? "+" : "") + dice.modifier + " modifier";
+    stage.appendChild(modifier);
+  }
+
+  card.appendChild(stage);
+  return card;
+}
+
+function renderInventory(parent) {
+  const card = document.createElement("aside");
+  card.className = "utility-card";
+
+  appendSectionTitle(
+    card,
+    "INVENTORY",
+    "What you carry"
+  );
+
+  const slots = document.createElement("div");
+  slots.className = "slot-grid";
+
+  const held = currentState.inventory || [];
+  const slotCount = Math.max(8, held.length);
+  for (let index = 0; index < slotCount; index += 1) {
+    const slot = document.createElement("div");
+    slot.className = "inventory-slot" + (held[index] ? " filled" : "");
+
+    const number = document.createElement("span");
+    number.className = "slot-index";
+    number.textContent = String(index + 1).padStart(2, "0");
+    slot.appendChild(number);
+
+    if (held[index]) {
+      const itemId = held[index];
+      const item = currentPackage.inventory.items[itemId] || {};
+      const button = document.createElement("button");
+      button.type = "button";
+      button.title = "Use " + (item.name || itemId);
+      button.textContent = item.name || itemId;
+      button.onclick = () => step("use:" + itemId).catch(showError);
+      slot.appendChild(button);
+    } else {
+      const empty = document.createElement("span");
+      empty.className = "utility-note";
+      empty.textContent = "empty";
+      slot.appendChild(empty);
+    }
+
+    slots.appendChild(slot);
+  }
+
+  card.appendChild(slots);
+
+  const count = document.createElement("p");
+  count.className = "utility-note";
+  count.textContent = held.length + " item" + (held.length === 1 ? "" : "s") +
+    " carried · click an item to use it";
+  card.appendChild(count);
+
+  const pending = currentState.pending_check;
+  if (pending) {
+    const check = currentPackage.skill_checks?.skill_checks?.[pending.skill_check_id];
+    if (check) {
+      const checkCard = document.createElement("section");
+      checkCard.className = "skill-roll-card";
+      checkCard.style.margin = "1rem 0 0";
+      appendSectionTitle(checkCard, "PENDING CHECK", check.description || "Make the check");
+      const target = document.createElement("p");
+      target.className = "utility-note";
+      target.textContent =
+        (check.dice_type || "1d20") + " against " + (check.target ?? 10);
+      checkCard.appendChild(target);
+
+      const rollButton = document.createElement("button");
+      rollButton.className = "roll-button";
+      rollButton.type = "button";
+      rollButton.textContent = "Roll " + (check.dice_type || "1d20");
+      rollButton.onclick = () => roll().catch(showError);
+      checkCard.appendChild(rollButton);
+      card.appendChild(checkCard);
+    }
+  }
+
+  return card;
+}
+
+function renderChoices(result) {
+  const choiceArea = document.createElement("section");
+  choiceArea.className = "choice-area";
+
+  const heading = document.createElement("div");
+  heading.className = "choice-heading";
+  appendSectionTitle(choiceArea, "CHOOSE", "What do you do?");
+  choiceArea.appendChild(heading);
+
+  const list = document.createElement("div");
+  list.className = "choice-list";
+
+  for (const [index, choice] of result.choices.entries()) {
+    const hasSkill = !!choice.skill_check;
+    const requiredId = choice.requires_item;
+    const required = requiredId
+      ? currentPackage.inventory.items[requiredId]
+      : null;
+    const locked = !!requiredId && !(currentState.inventory || []).includes(requiredId);
+
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className =
+      "choice-button" +
+      (hasSkill ? " skill" : "") +
+      (locked ? " locked" : "");
+    button.title = locked
+      ? "Requires " + (required?.name || requiredId)
+      : hasSkill
+        ? "Roll " + choice.skill_check.dice_type + " against " + choice.skill_check.target
+        : "Choose this path";
+
+    const mark = document.createElement("span");
+    mark.className = "choice-mark";
+    mark.textContent = hasSkill ? "✦" : String.fromCharCode(65 + (index % 26));
+    button.appendChild(mark);
+
+    const label = document.createElement("span");
+    label.textContent = choice.label;
+    button.appendChild(label);
+
+    const meta = document.createElement("span");
+    meta.className = "choice-meta";
+
+    if (hasSkill) {
+      const tag = document.createElement("span");
+      tag.className = "choice-tag skill";
+      tag.textContent =
+        choice.skill_check.dice_type + " ≥ " + choice.skill_check.target;
+      meta.appendChild(tag);
+    }
+
+    if (requiredId) {
+      const tag = document.createElement("span");
+      tag.className = "choice-tag locked";
+      tag.textContent = locked
+        ? "Needs " + (required?.name || requiredId)
+        : "Uses " + (required?.name || requiredId);
+      meta.appendChild(tag);
+    }
+
+    button.appendChild(meta);
+
+    if (locked) {
+      button.disabled = true;
+    } else {
+      button.onclick = () => step(choice.id).catch(showError);
+    }
+    list.appendChild(button);
+  }
+
+  if (!result.choices.length) {
+    const end = document.createElement("p");
+    end.className = "utility-note";
+    end.textContent = "The story ends here.";
+    list.appendChild(end);
+  }
+
+  choiceArea.appendChild(list);
+  return choiceArea;
+}
+
 function renderGame(result) {
   const root = $("game");
   const room = currentPackage.story.rooms[currentState.current_room];
   root.innerHTML = "";
 
-  const card = document.createElement("div");
-  card.className = "card";
+  const shell = document.createElement("div");
+  shell.className = "game-shell";
 
-  const title = document.createElement("h2");
-  title.textContent = room.name || currentState.current_room;
-  card.appendChild(title);
+  const column = document.createElement("div");
+  column.className = "story-column";
+
+  const storyCard = document.createElement("article");
+  storyCard.className = "story-card";
+
+  const hero = document.createElement("div");
+  hero.className = "story-hero" + (room.image ? " has-image" : "");
 
   if (room.image) {
     const image = document.createElement("img");
     image.src = assetUrl(currentWorld, room.image);
     image.alt = "";
-    image.style.maxWidth = "100%";
-    image.style.maxHeight = "360px";
-    card.appendChild(image);
+    image.loading = "eager";
+    hero.appendChild(image);
   }
 
-  const text = document.createElement("div");
-  if (
-    room.description_html &&
-    result.text === room.description &&
-    result.dice_results.length === 0
-  ) {
-    text.innerHTML = resolveDescriptionHtml(room.description_html, currentWorld);
-  } else {
+  const overlay = document.createElement("div");
+  overlay.className = "story-hero-overlay";
+
+  const kicker = document.createElement("div");
+  kicker.className = "story-kicker";
+  kicker.textContent = "ROOM";
+  overlay.appendChild(kicker);
+
+  const title = document.createElement("h2");
+  title.className = "story-title";
+  title.textContent = room.name || currentState.current_room;
+  overlay.appendChild(title);
+
+  hero.appendChild(overlay);
+  storyCard.appendChild(hero);
+
+  const body = document.createElement("div");
+  body.className = "story-body";
+  body.innerHTML = roomNarrative(room);
+  storyCard.appendChild(body);
+
+  const hadDice = Array.isArray(result.dice_results) && result.dice_results.length > 0;
+  const isRoomText =
+    !hadDice &&
+    result.text &&
+    result.text === (room.description || "");
+
+  if (result.text && !isRoomText && !result.awaiting_roll) {
+    const event = document.createElement("section");
+    const dice = result.dice_results?.[0];
+    event.className =
+      "story-event " +
+      (dice?.success === true ? "success" : dice?.success === false ? "failure" : "");
+
+    const kicker = document.createElement("div");
+    kicker.className = "section-kicker";
+    kicker.textContent = dice
+      ? (dice.success ? "CHECK PASSED" : "CHECK FAILED")
+      : "STORY";
+    event.appendChild(kicker);
+
+    const text = document.createElement("p");
     text.textContent = result.text;
+    event.appendChild(text);
+    storyCard.appendChild(event);
   }
-  card.appendChild(text);
 
   if (result.awaiting_roll) {
+    const pending = currentState.pending_check;
+    const check = currentPackage.skill_checks?.skill_checks?.[pending?.skill_check_id];
+    const card = document.createElement("section");
+    card.className = "skill-roll-card";
+    const heading = document.createElement("div");
+    heading.className = "skill-roll-header";
+
+    const copy = document.createElement("div");
+    const kicker = document.createElement("div");
+    kicker.className = "section-kicker";
+    kicker.textContent = "SKILL CHECK";
+    copy.appendChild(kicker);
+
+    const title = document.createElement("strong");
+    title.textContent = check?.description || "The path demands a roll.";
+    copy.appendChild(title);
+    heading.appendChild(copy);
+
+    const meta = document.createElement("div");
+    meta.className = "skill-roll-target";
+    meta.textContent =
+      (check?.dice_type || "1d20") + " ≥ " + (check?.target ?? 10);
+    heading.appendChild(meta);
+    card.appendChild(heading);
+
     const rollButton = document.createElement("button");
+    rollButton.className = "roll-button";
+    rollButton.type = "button";
     rollButton.textContent = "Roll dice";
-    rollButton.onclick = roll;
+    rollButton.onclick = () => roll().catch(showError);
     card.appendChild(rollButton);
-  } else {
-    const actions = document.createElement("div");
-    actions.className = "actions";
-    for (const choice of result.choices) {
+
+    storyCard.appendChild(card);
+  } else if (hadDice) {
+    const diceCard = renderDiceResult(result);
+    if (diceCard) storyCard.appendChild(diceCard);
+  }
+
+  storyCard.appendChild(renderChoices(result));
+  column.appendChild(storyCard);
+
+  const itemsHere = currentPackage.inventory.room_items[currentState.current_room] || [];
+  const available = itemsHere.filter((itemId) =>
+    !currentState.collected_items.includes(itemId) &&
+    !currentState.inventory.includes(itemId)
+  );
+
+  if (available.length) {
+    const findCard = document.createElement("section");
+    findCard.className = "item-find-card";
+
+    appendSectionTitle(findCard, "FOUND HERE", "Things you can take");
+
+    const list = document.createElement("div");
+    list.className = "item-find-list";
+
+    available.forEach((itemId) => {
+      const item = currentPackage.inventory.items[itemId] || {};
       const button = document.createElement("button");
-      button.className = "action";
-      button.textContent = choice.label;
-      button.onclick = () => step(choice.id);
-      actions.appendChild(button);
-    }
-    card.appendChild(actions);
+      button.type = "button";
+      button.className = "item-find";
+      button.textContent = "＋ " + (item.name || itemId);
+      button.onclick = () => step("acquire:" + itemId).catch(showError);
+      list.appendChild(button);
+    });
+
+    findCard.appendChild(list);
+    column.appendChild(findCard);
   }
 
-  const items = currentPackage.inventory.room_items[currentState.current_room] || [];
-  if (items.length) {
-    const itemSection = document.createElement("div");
-    itemSection.className = "card";
-    itemSection.innerHTML = "<h3>Items here</h3>";
-    const actions = document.createElement("div");
-    actions.className = "inventory";
-    for (const itemId of items) {
-      if (currentState.collected_items.includes(itemId)) continue;
-      const button = document.createElement("button");
-      button.textContent =
-        currentPackage.inventory.items[itemId]?.name || itemId;
-      button.onclick = () => step("acquire:" + itemId);
-      actions.appendChild(button);
-    }
-    itemSection.appendChild(actions);
-    card.appendChild(itemSection);
-  }
-
-  const inventory = document.createElement("div");
-  inventory.className = "card";
-  inventory.innerHTML = "<h3>Inventory</h3>";
-  const inventoryActions = document.createElement("div");
-  inventoryActions.className = "inventory";
-  for (const itemId of currentState.inventory) {
-    const button = document.createElement("button");
-    button.textContent =
-      "Use " + (currentPackage.inventory.items[itemId]?.name || itemId);
-    button.onclick = () => step("use:" + itemId);
-    inventoryActions.appendChild(button);
-  }
-  inventory.appendChild(inventoryActions);
-  card.appendChild(inventory);
-
-  const history = document.createElement("pre");
-  history.textContent =
-    "Room: " +
-    currentState.current_room +
-    "\nHistory: " +
-    JSON.stringify(currentState.action_history, null, 2);
-  card.appendChild(history);
-
-  root.appendChild(card);
+  shell.appendChild(column);
+  shell.appendChild(renderInventory(shell));
+  root.appendChild(shell);
 }
-
 function syncEditorText(packageData) {
   $("storyJson").value = pretty(packageData.story);
   $("checksJson").value = pretty(packageData.skill_checks);
