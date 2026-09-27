@@ -119,7 +119,11 @@ function renderGame(result) {
   }
 
   const text = document.createElement("div");
-  if (room.description_html && result.text === room.description) {
+  if (
+    room.description_html &&
+    result.text === room.description &&
+    result.dice_results.length === 0
+  ) {
     text.innerHTML = resolveDescriptionHtml(room.description_html, currentWorld);
   } else {
     text.textContent = result.text;
