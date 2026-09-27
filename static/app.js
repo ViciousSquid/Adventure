@@ -1,4 +1,5 @@
 import {GraphEditor} from "/editor-graph.js";
+import {sanitizeRichHtml} from "/rich-text-editor.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -6,6 +7,7 @@ let currentWorld = null;
 let currentState = null;
 let currentPackage = null;
 let graphEditor = null;
+let editorAssets = {};
 
 async function api(url, options = {}) {
   const response = await fetch(url, {
@@ -77,6 +79,24 @@ function assetUrl(world, name) {
   return "/api/world/" + encodeURIComponent(world) + "/asset/" + encoded;
 }
 
+function pendingAssetPayload() {
+  const result = {};
+  for (const [name, record] of Object.entries(editorAssets)) {
+    if (!record?.dataUrl) continue;
+    const comma = record.dataUrl.indexOf(",");
+    if (comma < 0) continue;
+    result[name] = record.dataUrl.slice(comma + 1);
+  }
+  return result;
+}
+
+function resolveDescriptionHtml(html, world) {
+  return sanitizeRichHtml(
+    html,
+    (asset) => assetUrl(world, asset)
+  );
+}
+
 function renderGame(result) {
   const root = $("game");
   const room = currentPackage.story.rooms[currentState.current_room];
@@ -98,8 +118,12 @@ function renderGame(result) {
     card.appendChild(image);
   }
 
-  const text = document.createElement("p");
-  text.textContent = result.text;
+  const text = document.createElement("div");
+  if (room.description_html && result.text === room.description) {
+    text.innerHTML = resolveDescriptionHtml(room.description_html, currentWorld);
+  } else {
+    text.textContent = result.text;
+  }
   card.appendChild(text);
 
   if (result.awaiting_roll) {
@@ -181,6 +205,11 @@ function ensureGraphEditor() {
   graphEditor = new GraphEditor({
     mount: $("graphEditor"),
     packageData: currentPackage,
+    assets: editorAssets,
+    assetUrl: (name) => assetUrl(
+      currentPackage?.world || currentPackage?.story?.name || "",
+      name
+    ),
     onChange: (packageData) => {
       currentPackage = packageData;
       syncEditorText(packageData);
@@ -195,6 +224,7 @@ async function loadEditorWorld() {
   if (!world) return;
   const data = await api("/api/world/" + encodeURIComponent(world));
   currentPackage = data;
+  editorAssets = {};
   syncEditorText(data);
   if (graphEditor) graphEditor.setPackage(data);
   else ensureGraphEditor();
@@ -210,6 +240,7 @@ async function loadEditorWorld() {
 }
 
 function newWorld() {
+  editorAssets = {};
   const packageData = {
     world: "New_World",
     source_format: "canonical",
@@ -302,6 +333,7 @@ async function saveEditor() {
     method: "POST",
     body: JSON.stringify({
       ...payload,
+      assets: pendingAssetPayload(),
       preserve_from: currentPackage?.world || null,
     }),
   });
@@ -311,6 +343,7 @@ async function saveEditor() {
     world: payload.story.name,
     source_format: "canonical",
   };
+  editorAssets = {};
   syncEditorText(currentPackage);
   if (graphEditor) graphEditor.setPackage(currentPackage);
   showEditorStatus(
@@ -332,6 +365,30 @@ function setTab(editing) {
   }
 }
 
+function updateFullscreenLabel() {
+  const button = $("fullscreenEditor");
+  if (!button) return;
+  button.textContent =
+    document.fullscreenElement === $("editPanel")
+      ? "Exit Fullscreen"
+      : "Fullscreen";
+}
+
+async function toggleFullscreen() {
+  const panel = $("editPanel");
+  if (document.fullscreenElement) {
+    await document.exitFullscreen();
+    updateFullscreenLabel();
+    return;
+  }
+  if (!panel.requestFullscreen) {
+    showEditorStatus("Fullscreen is not available in this browser.");
+    return;
+  }
+  await panel.requestFullscreen();
+  updateFullscreenLabel();
+}
+
 $("playTab").onclick = () => setTab(false);
 $("editTab").onclick = () => setTab(true);
 $("graphViewTab").onclick = () => setEditorView(true);
@@ -341,6 +398,8 @@ $("newWorld").onclick = newWorld;
 $("loadWorld").onclick = () => loadEditorWorld().catch(showError);
 $("validateWorld").onclick = () => validateEditor().catch(showError);
 $("saveWorld").onclick = () => saveEditor().catch(showError);
+$("fullscreenEditor").onclick = () => toggleFullscreen().catch(showError);
+document.addEventListener("fullscreenchange", updateFullscreenLabel);
 
 function showError(error) {
   const message = error instanceof Error ? error.message : String(error);

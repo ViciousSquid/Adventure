@@ -1,3 +1,5 @@
+import {RichTextEditor} from "/rich-text-editor.js";
+
 
 const esc = function(value) {
   return String(value == null ? "" : value)
@@ -21,6 +23,24 @@ export class GraphEditor {
     this.pkg = options.packageData;
     this.onChange = options.onChange;
     this.onStatus = options.onStatus;
+    this.assets = options.assets || {};
+    this.assetUrl = options.assetUrl || ((name) => name);
+    this.richTextTarget = null;
+    this.richTextEditor = new RichTextEditor({
+      assets: this.assets,
+      resolveAsset: (name) => this.assetUrl(name),
+      onStatus: (message) => this.onStatus(message),
+      onSave: ({html, text}) => {
+        if (!this.richTextTarget) return;
+        var room = this.pkg.story.rooms[this.richTextTarget];
+        if (!room) return;
+        room.description = text;
+        if (html) room.description_html = html;
+        else delete room.description_html;
+        this.richTextTarget = null;
+        this._changed("Room description updated.");
+      }
+    });
     this.selected = "world";
     this.scale = 1;
     this.panX = 30;
@@ -905,7 +925,16 @@ export class GraphEditor {
         '<label>Room ID<input data-field="room.id" value="' + esc(roomId) + '"></label>' +
         '<button data-inspector-action="rename-room">Rename room</button>' +
         '<label>Display name<input data-field="room.name" value="' + esc(room.name || "") + '"></label>' +
-        '<label>Description<textarea data-field="room.description">' + esc(room.description || "") + "</textarea></label>" +
+        '<div class="rich-description-card">' +
+          '<div class="row-between"><strong>Description</strong>' +
+            '<button class="description-edit-button" data-inspector-action="edit-description">Open rich editor</button>' +
+          '</div>' +
+          '<div class="rich-description-preview">' +
+            esc(room.description || "No description.").slice(0, 420) +
+          '</div>' +
+          (room.description_html ? '<div class="rich-description-state">Rich text + media</div>' : '<div class="rich-description-state">Plain text</div>') +
+        '</div>' +
+        '<label>Plain description fallback<textarea data-field="room.description">' + esc(room.description || "") + "</textarea></label>" +
         '<label>Image asset<input data-field="room.image" value="' + esc(room.image || "") + '" placeholder="assets/example.png"></label>' +
         '<label>Message<textarea data-field="room.message">' + esc(room.message || "") + "</textarea></label>" +
         '<label class="check-row"><input type="checkbox" data-field="room.show_map"' + (room.show_map ? " checked" : "") + '> Show map</label>' +
@@ -1137,6 +1166,10 @@ export class GraphEditor {
     if (!room) return;
     if (parts[0] === "name") room.name = String(value);
     if (parts[0] === "description") room.description = String(value);
+    if (parts[0] === "description_html") {
+      if (String(value)) room.description_html = String(value);
+      else delete room.description_html;
+    }
     if (parts[0] === "image") {
       if (String(value)) room.image = String(value);
       else delete room.image;
@@ -1213,6 +1246,20 @@ export class GraphEditor {
         this._renderNodes();
         this._renderInspector();
         this._renderEdges();
+        return;
+      }
+      if (action === "edit-description") {
+        var roomId = this._selectedId();
+        var room = this.pkg.story.rooms[roomId];
+        if (!room) throw new Error("Select a room before opening its description.");
+        this.richTextTarget = roomId;
+        var origin = Array.from(this.nodeLayer.querySelectorAll(".graph-node"))
+          .find((node) => node.dataset.nodeKey === this.selected);
+        this.richTextEditor.open({
+          roomId: roomId,
+          room: room,
+          originElement: origin || this.inspector
+        });
         return;
       }
       if (action === "rename-room") this._renameRoom(this._selectedId());
