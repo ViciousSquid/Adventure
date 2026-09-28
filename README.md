@@ -26,6 +26,8 @@ A modern interactive story engine for designing, editing, and playing branching 
 - Active Development: A basic inventory system is currently in active development.
 
 ## Browser / PWA build
+> **Browser build hosting:** The PWA is designed to be served as a real web application (GitHub Pages or another static HTTPS host). Do not open `index.html` through a raw/CDN file URL; those services may serve HTML as `text/plain` instead of rendering it.
+
 
 The `pwa-pyodide` branch adds a browser-native application path. It runs the narrative VM inside Pyodide/WebAssembly in a Web Worker, keeps stories in browser storage, and imports/exports canonical world ZIPs without requiring Python to be installed on the user's machine.
 
