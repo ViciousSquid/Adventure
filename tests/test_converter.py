@@ -167,6 +167,54 @@ class ConverterTests(unittest.TestCase):
                 "end",
             )
 
+    def test_legacy_skill_check_exits_and_exit_description_are_preserved(self):
+        converter = LegacyConverter()
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "LegacyRichExit.zip"
+            story = {
+                "name": "LegacyRichExit",
+                "start_room": "start",
+                "rooms": {
+                    "start": {
+                        "description": "Start",
+                        "exits": {
+                            "leave": {
+                                "room": "end",
+                                "description": "You leave the chamber.",
+                            },
+                        },
+                    },
+                    "investigation": {
+                        "description": "Investigation",
+                        "skill_check": {
+                            "dice_type": "1d8",
+                            "target": 5,
+                            "success": {
+                                "description": "Success.",
+                                "exits": {"clue": "end"},
+                            },
+                            "failure": {"description": "Failure."},
+                        },
+                        "exits": {},
+                    },
+                    "end": {"description": "End", "exits": {}},
+                },
+            }
+            story["rooms"]["start"]["exits"]["investigate"] = "investigation"
+            with ZipFile(source, "w") as archive:
+                archive.writestr("story.json", json.dumps(story))
+
+            converted = converter.convert_to_world(source)
+
+            self.assertEqual(
+                converted.story["connections"]["start__leave"]["description"],
+                "You leave the chamber.",
+            )
+            self.assertEqual(
+                converted.skill_checks["skill_checks"]["skill__room__investigation"]["success"]["exits"],
+                {"clue": "end"},
+            )
+
     def test_legacy_revisit_fields_are_converted(self):
         converter = LegacyConverter()
         with tempfile.TemporaryDirectory() as tmp:
