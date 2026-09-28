@@ -113,6 +113,31 @@ class EngineTests(unittest.TestCase):
         result = engine.step(state, "roll")
         self.assertEqual(result.text, "The check resolves.")
 
+    def test_room_skill_check_is_armed_and_resolves(self):
+        data = make_story().to_dict()
+        data["story"]["rooms"]["start"]["skill_check"] = "door"
+        engine = AdventureEngine(
+            Story.from_package(data["story"], data["skill_checks"], data["inventory"]),
+            rng=random.Random(123),
+        )
+        state = engine.new_game()
+
+        observed = engine.observe(state)
+        self.assertTrue(observed.awaiting_roll)
+        self.assertEqual(
+            state.pending_check,
+            {
+                "kind": "room",
+                "room_id": "start",
+                "skill_check_id": "door",
+            },
+        )
+
+        rolled = engine.step(state, "roll")
+        self.assertFalse(rolled.awaiting_roll)
+        self.assertIn(state.current_room, {"start", "end"})
+        self.assertIsNone(state.pending_check)
+
     def test_revisit_content_is_state_driven(self):
         engine = AdventureEngine(make_story())
         state = engine.new_game()
