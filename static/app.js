@@ -1,6 +1,6 @@
 import {GraphEditor} from "./editor-graph.js";
 import {sanitizeRichHtml} from "./rich-text-editor.js";
-import {runtime} from "./runtime-bridge.js";
+import {runtime} from "./runtime-bridge.js?v=world-catalogue-1";
 
 const $ = (id) => document.getElementById(id);
 
