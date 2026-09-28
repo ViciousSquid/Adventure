@@ -104,6 +104,7 @@ jobs:
           source_root = Path("adventures")
           output_root = Path("static/worlds")
           manifest = []
+          failures = []
           converter = LegacyConverter()
 
           for source in sorted(source_root.glob("*.zip")):
@@ -120,32 +121,45 @@ jobs:
                       allow_lossy=False,
                       force=True,
                   )
-              except Exception:
+              except Exception as exc:
                   if destination.exists():
                       destination.unlink()
-                  raise
+                  failures.append({
+                      "id": source.stem,
+                      "source": source.name,
+                      "format": "legacy",
+                      "available": False,
+                      "error": str(exc),
+                  })
+                  print(f"SKIPPED {source.name}: {exc}")
+                  continue
 
               manifest.append({
                   "id": source.stem,
                   "url": "./worlds/" + destination.name,
                   "source": source.name,
                   "format": "canonical",
+                  "available": True,
               })
 
               report_path.unlink(missing_ok=True)
               destination.with_name(destination.name + ".report.txt").unlink(missing_ok=True)
 
           if not manifest:
-              raise SystemExit("No Adventure worlds were converted for the browser build.")
+              raise SystemExit("No Adventure worlds could be converted for the browser build.")
 
+          catalogue = manifest + failures
           (output_root / "manifest.json").write_text(
-              json.dumps(manifest, indent=2, ensure_ascii=False) + "\n",
+              json.dumps(catalogue, indent=2, ensure_ascii=False) + "\n",
               encoding="utf-8",
           )
 
-          print(f"Built {len(manifest)} browser worlds:")
+          print(f"Built {len(manifest)} browser worlds.")
+          print(f"Skipped {len(failures)} broken/unavailable worlds.")
           for item in manifest:
               print(f"  - {item['id']}")
+          for item in failures:
+              print(f"  - UNAVAILABLE: {item['id']} :: {item['error']}")
           PY
 
       - name: Upload Pages artifact
