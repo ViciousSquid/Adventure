@@ -151,11 +151,18 @@ class AdventureEngine:
     def _execute_action(self, state: GameState, action: str) -> ExecutionResult:
         connection = self._connection_for_action(state.current_room, action)
         if connection is None:
-            return self._result(
+            dynamic = self._dynamic_room_skill_exit(state, action)
+            if dynamic is None:
+                return self._result(
+                    state,
+                    ok=False,
+                    text="You can't go that way.",
+                    error="invalid_action",
+                )
+            return self._transition(
                 state,
-                ok=False,
-                text="You can't go that way.",
-                error="invalid_action",
+                action,
+                dynamic,
             )
 
         required = connection.get("requires_item")
@@ -186,7 +193,12 @@ class AdventureEngine:
                 awaiting_roll=True,
             )
 
-        return self._transition(state, action, connection["to"])
+        return self._transition(
+            state,
+            action,
+            connection["to"],
+            text_override=connection.get("description"),
+        )
 
     def _resolve_pending_check(self, state: GameState) -> ExecutionResult:
         pending = state.pending_check or {}
@@ -212,7 +224,10 @@ class AdventureEngine:
 
         if pending.get("kind") == "room":
             room_id = pending["room_id"]
+            success_exits = branch.get("exits") or {}
             destination = branch.get("to") or room_id
+            if success_exits:
+                self._mark_skill_check_resolved(state, pending["skill_check_id"])
             if destination == room_id:
                 return self._result(
                     state,
@@ -237,10 +252,42 @@ class AdventureEngine:
             dice_result=roll,
         )
 
+    def _skill_check_is_resolved(self, state: GameState, skill_id: str) -> bool:
+        resolved = state.variables.get("resolved_skill_checks", {})
+        return isinstance(resolved, dict) and bool(resolved.get(skill_id))
+
+    def _mark_skill_check_resolved(self, state: GameState, skill_id: str) -> None:
+        resolved = state.variables.get("resolved_skill_checks")
+        if not isinstance(resolved, dict):
+            resolved = {}
+            state.variables["resolved_skill_checks"] = resolved
+        resolved[skill_id] = True
+
+    def _dynamic_room_skill_exit(
+        self,
+        state: GameState,
+        action: str,
+    ) -> str | None:
+        room = self.story.room(state.current_room)
+        skill_id = room.get("skill_check")
+        if not skill_id or not self._skill_check_is_resolved(state, skill_id):
+            return None
+        check = self.story.skill_check(skill_id)
+        exits = check.get("success", {}).get("exits", {})
+        prefix = f"{state.current_room}__skill__"
+        for label, destination in exits.items():
+            if f"{prefix}{label}" == action:
+                return destination
+        return None
+
     def _arm_room_skill_check(self, state: GameState) -> None:
         room = self.story.room(state.current_room)
         skill_id = room.get("skill_check")
-        if not skill_id or state.pending_check:
+        if (
+            not skill_id
+            or state.pending_check
+            or self._skill_check_is_resolved(state, skill_id)
+        ):
             return
         state.pending_check = {
             "kind": "room",
@@ -345,6 +392,19 @@ class AdventureEngine:
                     "target": check.get("target", 10),
                 }
             choices.append(choice)
+
+        room_skill_id = self.story.room(state.current_room).get("skill_check")
+        if room_skill_id and self._skill_check_is_resolved(state, room_skill_id):
+            check = self.story.skill_check(room_skill_id)
+            for label, destination in check.get("success", {}).get("exits", {}).items():
+                choices.append(
+                    {
+                        "id": f"{state.current_room}__skill__{label}",
+                        "label": label,
+                        "to": destination,
+                    }
+                )
+
         return tuple(choices)
 
     def _connection_for_action(
