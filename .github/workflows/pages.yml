@@ -148,6 +148,12 @@ jobs:
               temporary.unlink(missing_ok=True)
           PY
 
+      - name: Repair incomplete legacy story worlds with authored content
+        shell: bash
+        run: |
+          set -euo pipefail
+          python tools/repair_legacy_stories.py
+
       - name: Build browser world catalogue
         shell: bash
         run: |
