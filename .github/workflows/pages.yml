@@ -148,36 +148,6 @@ jobs:
               temporary.unlink(missing_ok=True)
           PY
 
-      - name: Inspect Enigma room references
-        shell: bash
-        run: |
-          set -euo pipefail
-          python - <<'PY'
-          import json
-          from zipfile import ZipFile
-
-          path = "adventures/Enigma_of_the_Timekeeper.zip"
-          with ZipFile(path) as archive:
-              story = json.loads(
-                  archive.read("story.json").decode("utf-8"),
-                  strict=False,
-              )
-
-          print("ENIGMA_ROOMS=" + json.dumps(sorted(story.get("rooms", {})), ensure_ascii=False))
-          for room_id in ("laboratory", "basement", "library_tower"):
-              check = story["rooms"][room_id]["skill_check"]
-              print(
-                  "ENIGMA_CHECK=" + json.dumps(
-                      {
-                          "room": room_id,
-                          "success": check.get("success", {}),
-                          "failure": check.get("failure", {}),
-                      },
-                      ensure_ascii=False,
-                  )
-              )
-          PY
-
       - name: Build browser world catalogue
         shell: bash
         run: |
