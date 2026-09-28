@@ -173,11 +173,16 @@ jobs:
           output_root = Path("static/worlds")
           manifest = []
           failures = []
+          seen_ids = set()
           converter = LegacyConverter()
 
           for source in sorted(source_root.glob("*.zip")):
               if not source.is_file():
                   continue
+              world_id = source.stem
+              if world_id in seen_ids:
+                  raise SystemExit(f"Duplicate world id in source catalogue: {world_id}")
+              seen_ids.add(world_id)
 
               destination = output_root / f"{source.stem}.canonical.zip"
               report_path = destination.with_name(destination.name + ".report.json")
@@ -217,6 +222,9 @@ jobs:
               raise SystemExit("No Adventure worlds could be converted for the browser build.")
 
           catalogue = manifest + failures
+          ids = [item["id"] for item in catalogue]
+          if len(ids) != len(set(ids)):
+              raise SystemExit("Duplicate world id in browser catalogue.")
           (output_root / "manifest.json").write_text(
               json.dumps(catalogue, indent=2, ensure_ascii=False) + "\n",
               encoding="utf-8",
