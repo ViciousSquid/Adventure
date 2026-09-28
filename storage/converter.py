@@ -246,6 +246,7 @@ class LegacyConverter:
                     "revisit_content",
                     "revisit_count",
                     "show_all_revisits",
+                    "skill_check",
                 },
                 room_path,
                 report,
@@ -274,6 +275,20 @@ class LegacyConverter:
             if canonical_room.get("image"):
                 canonical_room["image"] = self._canonical_asset_name(
                     canonical_room["image"]
+                )
+
+            if "skill_check" in room:
+                skill_id = f"skill__room__{room_id}"
+                if skill_id in checks["skill_checks"]:
+                    raise ConversionError(
+                        f"{room_path}.skill_check: duplicate generated skill check id"
+                    )
+                canonical_room["skill_check"] = skill_id
+                checks["skill_checks"][skill_id] = self._convert_skill_check(
+                    room["skill_check"],
+                    f"{room_path}.skill_check",
+                    report,
+                    allow_lossy,
                 )
 
             story["rooms"][room_id] = canonical_room
@@ -389,13 +404,20 @@ class LegacyConverter:
                 elif isinstance(target, dict):
                     self._check_unknown(
                         target,
-                        {"skill_check", "requires_item", "to"},
+                        {"skill_check", "requires_item", "to", "room"},
                         f"{room_path}.exits.{action_id}",
                         report,
                         allow_lossy,
                     )
-                    if isinstance(target.get("to"), str):
-                        connection["to"] = target["to"]
+                    destination = target.get("to", target.get("room"))
+                    if isinstance(target.get("to"), str) and isinstance(target.get("room"), str):
+                        if target["to"] != target["room"]:
+                            raise ConversionError(
+                                f"{room_path}.exits.{action_id}: "
+                                "conflicting 'to' and legacy 'room' destinations"
+                            )
+                    if isinstance(destination, str):
+                        connection["to"] = destination
 
                     required_item = target.get("requires_item")
                     if required_item:
