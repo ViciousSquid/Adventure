@@ -300,21 +300,30 @@ def _collect_missing_destinations(story: dict[str, Any]) -> list[str]:
     rooms = story.get("rooms") or {}
     missing: set[str] = set()
 
-    def visit(value: Any) -> None:
+    def visit_destination(value: Any) -> None:
+        if isinstance(value, str):
+            if value not in rooms:
+                missing.add(value)
+            return
         if isinstance(value, dict):
             for key, child in value.items():
-                if key in {"room", "to"} and isinstance(child, str):
-                    if child not in rooms:
-                        missing.add(child)
-                else:
-                    visit(child)
-        elif isinstance(value, list):
+                if key in {"room", "to"}:
+                    visit_destination(child)
+                elif key == "skill_check":
+                    visit_destination(child)
+            return
+        if isinstance(value, list):
             for child in value:
-                visit(child)
+                visit_destination(child)
 
     for room in rooms.values():
-        if isinstance(room, dict):
-            visit(room.get("exits", {}))
+        if not isinstance(room, dict):
+            continue
+        exits = room.get("exits", {})
+        if isinstance(exits, dict):
+            for target in exits.values():
+                visit_destination(target)
+
     return sorted(missing)
 
 
