@@ -138,16 +138,32 @@ class Story:
                         "description": check.get("success", {}).get("description", ""),
                         "room": check.get("success", {}).get("to"),
                     }
+                    if check.get("success", {}).get("exits"):
+                        legacy_check["success"]["exits"] = dict(
+                            check["success"]["exits"]
+                        )
                     legacy_check["failure"] = {
                         "description": check.get("failure", {}).get("description", ""),
                         "room": check.get("failure", {}).get("to"),
                     }
+                    if check.get("failure", {}).get("exits"):
+                        legacy_check["failure"]["exits"] = dict(
+                            check["failure"]["exits"]
+                        )
                     target_data: Any = {"skill_check": legacy_check}
                     if connection.get("requires_item"):
                         target_data["requires_item"] = connection["requires_item"]
+                    if connection.get("description"):
+                        target_data["description"] = connection["description"]
                     exits[action_id] = target_data
                 else:
-                    exits[action_id] = target
+                    if connection.get("description"):
+                        exits[action_id] = {
+                            "description": connection["description"],
+                            "room": target,
+                        }
+                    else:
+                        exits[action_id] = target
             result["exits"] = exits
             if room.get("skill_check"):
                 check = checks[room["skill_check"]]
