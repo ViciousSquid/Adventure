@@ -1,0 +1,152 @@
+name: Publish repaired story sources
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout pull request branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Repair malformed legacy source packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from tempfile import NamedTemporaryFile
+          from zipfile import ZIP_DEFLATED, ZipFile
+
+          def rewrite_story(path: Path, transform):
+              with ZipFile(path, "r") as source:
+                  story = transform(source.read("story.json").decode("utf-8"))
+                  json.loads(story, strict=False)
+                  members = [
+                      (info.filename, source.read(info.filename))
+                      for info in source.infolist()
+                      if not info.is_dir() and info.filename != "story.json"
+                  ]
+              with NamedTemporaryFile(prefix=f".{path.stem}.", suffix=".zip", dir=path.parent, delete=False) as handle:
+                  temporary = Path(handle.name)
+              try:
+                  with ZipFile(temporary, "w", compression=ZIP_DEFLATED) as target:
+                      target.writestr("story.json", story.encode("utf-8"))
+                      for name, payload in members:
+                          target.writestr(name, payload)
+                  temporary.replace(path)
+              finally:
+                  temporary.unlink(missing_ok=True)
+
+          def repair_crashed(story):
+              story = story.replace("\r\n", "\n")
+              if '"continue_investigating": "apex_predator"' not in story:
+                  raise SystemExit("Crashed_Shipwreck.zip corruption signature was not found")
+              story = story.replace(
+                  '"continue_investigating": "apex_predator"',
+                  '"continue_investigating": "apex_predator",',
+                  1,
+              )
+              story = story.replace(
+                  '"exits": {}\n}\n},\n"cosmic_core"',
+                  '"exits": {}\n},\n"cosmic_core"',
+                  1,
+              )
+              story = story.replace(
+                  '"exits": {}\n}\n},\n"triumphant_victory"',
+                  '"exits": {}\n},\n"triumphant_victory"',
+                  1,
+              )
+              return story
+
+          def repair_catacombs(story):
+              payload = json.loads(story, strict=False)
+              try:
+                  target = (
+                      payload["rooms"]["main_chamber"]["exits"]
+                      ["Examine the Sarcophagus"]["skill_check"]
+                      ["failure"]["room"]
+                  )
+              except KeyError as exc:
+                  raise SystemExit(
+                      f"Forgotten Catacombs corruption signature was not found: {exc}"
+                  )
+              if target != "choice_area":
+                  raise SystemExit(
+                      f"Forgotten Catacombs repair signature changed: {target!r}"
+                  )
+              payload["rooms"]["main_chamber"]["exits"][
+                  "Examine the Sarcophagus"
+              ]["skill_check"]["failure"]["room"] = "main_chamber"
+              return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+
+          rewrite_story(Path("adventures/Crashed_Shipwreck.zip"), repair_crashed)
+          rewrite_story(Path("adventures/Forgotten_Catacombs.zip"), repair_catacombs)
+          print("Repaired malformed source packages.")
+          PY
+          python tools/repair_legacy_stories.py
+
+      - name: Make Pages build source-authoritative
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path(".github/workflows/pages.yml")
+          text = path.read_text(encoding="utf-8")
+          step_names = [
+              "      - name: Repair known malformed legacy world package\n",
+              "      - name: Repair known malformed Forgotten Catacombs world package\n",
+              "      - name: Repair incomplete legacy story worlds with authored content\n",
+          ]
+          for name in step_names:
+              start = text.find(name)
+              if start < 0:
+                  raise SystemExit(f"Expected workflow step not found: {name.strip()}")
+              end = text.find("\n      - name: ", start + len(name))
+              if end < 0:
+                  raise SystemExit(f"Could not find end of workflow step: {name.strip()}")
+              text = text[:start] + text[end + 1:]
+          path.write_text(text, encoding="utf-8")
+          PY
+
+      - name: Verify unique story source ids
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          ids = [path.stem for path in Path("adventures").glob("*.zip")]
+          if len(ids) != len(set(ids)):
+              raise SystemExit(f"Duplicate story source ids: {ids}")
+          print(f"Unique story source ids: {len(ids)}")
+          PY
+
+      - name: Commit repaired source packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add adventures/Crashed_Shipwreck.zip \
+                  adventures/Forgotten_Catacombs.zip \
+                  adventures/Curse_of_the_Crimson_Cutlass.zip \
+                  adventures/Enigma_of_the_Timekeeper.zip \
+                  adventures/Whispers_of_the\ Forgotten_City.zip \
+                  .github/workflows/pages.yml
+          if git diff --cached --quiet; then
+            echo "No repaired source changes to commit."
+            exit 0
+          fi
+          git commit -m "Publish repaired story source packages"
+          git push origin "HEAD:${GITHUB_HEAD_REF}"
