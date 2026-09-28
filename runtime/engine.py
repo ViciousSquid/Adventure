@@ -28,11 +28,13 @@ class AdventureEngine:
         self.trace_enabled = trace
 
     def new_game(self) -> GameState:
-        return GameState.new(
+        state = GameState.new(
             self.story_id,
             self.story.start_room,
             random_seed=self._seed_rng.getrandbits(64),
         )
+        self._arm_room_skill_check(state)
+        return state
 
     def execute(self, state: GameState, action: str) -> ExecutionResult:
         return self.step(state, action)
@@ -68,6 +70,18 @@ class AdventureEngine:
 
     def observe(self, state: GameState) -> ExecutionResult:
         self._validate_state(state)
+        pending = state.pending_check or {}
+        if pending.get("kind") == "room":
+            check = self.story.skill_check(pending["skill_check_id"])
+            return self._result(
+                state,
+                ok=True,
+                text=(
+                    f"Roll {check.get('dice_type', '1d20')} "
+                    f"(target {check.get('target', 10)} or higher)."
+                ),
+                awaiting_roll=True,
+            )
         return self._result(state, ok=True, text=self._room_text(state))
 
     def acquire_item(self, state: GameState, item_id: str) -> ExecutionResult:
@@ -158,6 +172,7 @@ class AdventureEngine:
         if skill_id:
             check = self.story.skill_check(skill_id)
             state.pending_check = {
+                "kind": "connection",
                 "connection_id": action,
                 "source_room": state.current_room,
                 "skill_check_id": skill_id,
@@ -175,7 +190,6 @@ class AdventureEngine:
 
     def _resolve_pending_check(self, state: GameState) -> ExecutionResult:
         pending = state.pending_check or {}
-        connection = self.story.connection(pending["connection_id"])
         check = self.story.skill_check(pending["skill_check_id"])
         target = int(check.get("target", 10))
         seed_material = f"{state.random_seed}:{state.roll_count}".encode("utf-8")
@@ -188,7 +202,6 @@ class AdventureEngine:
 
         success = bool(roll.success)
         branch = check.get("success" if success else "failure", {})
-        destination = branch.get("to") or connection["to"] or connection["from"]
         description = (
             check.get("description")
             or branch.get("description")
@@ -196,6 +209,26 @@ class AdventureEngine:
         )
 
         state.pending_check = None
+
+        if pending.get("kind") == "room":
+            room_id = pending["room_id"]
+            destination = branch.get("to") or room_id
+            if destination == room_id:
+                return self._result(
+                    state,
+                    text=description,
+                    dice_results=(roll,),
+                )
+            return self._transition(
+                state,
+                f"room_skill_check:{room_id}",
+                destination,
+                text_override=description,
+                dice_result=roll,
+            )
+
+        connection = self.story.connection(pending["connection_id"])
+        destination = branch.get("to") or connection["to"] or connection["from"]
         return self._transition(
             state,
             pending["connection_id"],
@@ -203,6 +236,17 @@ class AdventureEngine:
             text_override=description,
             dice_result=roll,
         )
+
+    def _arm_room_skill_check(self, state: GameState) -> None:
+        room = self.story.room(state.current_room)
+        skill_id = room.get("skill_check")
+        if not skill_id or state.pending_check:
+            return
+        state.pending_check = {
+            "kind": "room",
+            "room_id": state.current_room,
+            "skill_check_id": skill_id,
+        }
 
     def _transition(
         self,
@@ -241,12 +285,22 @@ class AdventureEngine:
                 "description", "You are here."
             )
 
+        self._arm_room_skill_check(state)
+        awaiting_roll = bool(state.pending_check and state.pending_check.get("kind") == "room")
+        if awaiting_roll and text is None:
+            check = self.story.skill_check(state.pending_check["skill_check_id"])
+            text = (
+                f"Roll {check.get('dice_type', '1d20')} "
+                f"(target {check.get('target', 10)} or higher)."
+            )
+
         return self._result(
             state,
-            text=text,
+            text=text or "",
             effects=effects,
             transition=destination,
             dice_results=(dice_result,) if dice_result else (),
+            awaiting_roll=awaiting_roll,
         )
 
     def _room_text(self, state: GameState) -> str:
