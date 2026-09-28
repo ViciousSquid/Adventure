@@ -27,7 +27,8 @@ self.onmessage = async (event) => {
     runtime.globals.set("input_operation", operation);
     const raw = runtime.runPython(
       "import browser_runtime, json\n"
-      + "browser_result = browser_runtime.json_call(input_operation, input_payload)\n"
+      + "browser_payload = input_payload.to_py() if hasattr(input_payload, 'to_py') else input_payload\n"
+      + "browser_result = browser_runtime.json_call(input_operation, browser_payload)\n"
       + "json.dumps(browser_result, ensure_ascii=False)"
     );
     const result = JSON.parse(raw);
