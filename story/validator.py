@@ -19,7 +19,7 @@ ROOM_FIELDS = {
 }
 CONNECTION_FIELDS = {"from", "to", "label", "skill_check", "requires_item", "description"}
 SKILL_FIELDS = {"dice_type", "target", "description", "success", "failure"}
-OUTCOME_FIELDS = {"description", "to"}
+OUTCOME_FIELDS = {"description", "to", "exits"}
 INVENTORY_TOP = {"schema_version", "items", "room_items", "room_requirements"}
 ITEM_FIELDS = {"name"}
 
