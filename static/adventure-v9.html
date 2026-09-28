@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1217">
+  <meta name="description" content="Create and play branching narratives.">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <title>Adventure</title>
+  <meta name="adventure-build" content="cdf939b978aec117a24c4ff929b512a3b76f1b05">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+<header>
+  <h1>Adventure</h1>
+  <nav>
+    <button id="playTab" class="active">Play</button>
+    <button id="editTab">Editor</button>
+  </nav>
+</header>
+
+<main>
+  <section id="playPanel">
+    <div class="toolbar">
+      <label>World <select id="worldSelect"></select></label>
+      <button id="newGame">New Game</button>
+      <button id="openStory">Open Story</button>
+      <button id="downloadStory">Download Story</button>
+      <span id="runtimeStatus" class="utility-note">Starting browser runtime…</span>
+    </div>
+    <div id="game"></div>
+  </section>
+
+  <section id="editPanel" hidden>
+    <div class="toolbar editor-toolbar">
+      <button id="newWorld" class="toolbar-action toolbar-action-mint">＋ New Story</button>
+      <select id="editWorldSelect" aria-label="Story to edit"></select>
+      <button id="loadWorld">Open</button>
+      <button id="validateWorld">Check Story</button>
+      <button id="saveWorld" class="toolbar-action toolbar-action-orange">Save Story</button>
+      <button id="fullscreenEditor" class="fullscreen-button" type="button">Fullscreen</button>
+      <button id="openStoryEditor">Open Story</button>
+      <button id="downloadStoryEditor">Download Story</button>
+    </div>
+
+    <div class="editor-view-tabs">
+      <button id="graphViewTab" class="active">Story Map</button>
+      <button id="dataViewTab">Advanced Data</button>
+    </div>
+
+    <div class="editor-legend" aria-label="Story map legend">
+      <span class="legend-title">STORY MAP</span>
+      <span class="legend-chip legend-room"><i></i> Room</span>
+      <span class="legend-chip legend-exit"><i></i> Exit</span>
+      <span class="legend-chip legend-skill"><i></i> Skill Check</span>
+      <span class="legend-chip legend-item"><i></i> Pickup</span>
+      <span class="legend-chip legend-revisit"><i></i> Revisit</span>
+    </div>
+
+    <section id="graphView">
+      <div id="graphEditor" class="graph-editor"></div>
+    </section>
+
+    <section id="dataView" hidden>
+      <div class="editor-grid">
+        <div>
+          <h2>story.json</h2>
+          <textarea id="storyJson" spellcheck="false"></textarea>
+        </div>
+        <div>
+          <h2>skill_checks.json</h2>
+          <textarea id="checksJson" spellcheck="false"></textarea>
+        </div>
+        <div>
+          <h2>inventory.json</h2>
+          <textarea id="inventoryJson" spellcheck="false"></textarea>
+        </div>
+      </div>
+    </section>
+
+    <p class="hint">
+      Build your story visually. Rooms are the scenes, exits are the choices,
+      skill checks are the dice gates, and pickups are the things your player can carry.
+      Advanced Data remains available when you need exact JSON control. Existing assets
+      are preserved when a legacy world is saved as canonical.
+    </p>
+    <pre id="editStatus"></pre>
+  </section>
+<input id="storyFileInput" type="file" accept=".zip,application/zip" hidden>
+</main>
+
+
+<script>
+(async () => {
+  const url = new URL(window.location.href);
+  const resetParam = url.searchParams.has("sw_reset");
+  let changed = false;
+
+  if ("serviceWorker" in navigator) {
+    const registrations = await navigator.serviceWorker.getRegistrations();
+    for (const registration of registrations) {
+      if (new URL(registration.scope).pathname.startsWith("/Adventure/")) {
+        changed = (await registration.unregister()) || changed;
+      }
+    }
+  }
+
+  if ("caches" in window) {
+    const keys = await caches.keys();
+    for (const key of keys) {
+      if (key.startsWith("adventure-shell-")) {
+        changed = (await caches.delete(key)) || changed;
+      }
+    }
+  }
+
+  if (changed && !resetParam) {
+    url.searchParams.set("sw_reset", "1");
+    window.location.replace(url.toString());
+    return;
+  }
+
+  if (resetParam) {
+    url.searchParams.delete("sw_reset");
+    window.history.replaceState(null, "", url.pathname + url.search + url.hash);
+  }
+
+  await import("./app.js?v=cdf939b9");
+})();
+</script>
+</body>
+</html>
