@@ -1,17 +1,22 @@
-const PYODIDE_VERSION = "314.0.7";
-const PYODIDE_INDEX = "https://cdn.jsdelivr.net/pyodide/v" + PYODIDE_VERSION + "/full/";
-let pyodide = null;
+import { loadPyodide } from "https://cdn.jsdelivr.net/pyodide/v314.0.7/full/pyodide.mjs";
+
+const PYODIDE_INDEX = "https://cdn.jsdelivr.net/pyodide/v314.0.7/full/";
+let pyodideReadyPromise = null;
 
 async function ensureRuntime() {
-  if (pyodide) return pyodide;
-  importScripts(PYODIDE_INDEX + "pyodide.js");
-  pyodide = await loadPyodide({indexURL: PYODIDE_INDEX});
-  const response = await fetch("./py/browser_runtime.py");
-  if (!response.ok) throw new Error("Unable to load the Adventure browser runtime.");
-  const source = await response.text();
-  pyodide.FS.writeFile("/browser_runtime.py", source);
-  pyodide.runPython("import sys; sys.path.insert(0, '/'); import browser_runtime");
-  return pyodide;
+  if (!pyodideReadyPromise) {
+    pyodideReadyPromise = loadPyodide({indexURL: PYODIDE_INDEX}).then(async (runtime) => {
+      const response = await fetch("./py/browser_runtime.py");
+      if (!response.ok) {
+        throw new Error("Unable to load the Adventure browser runtime.");
+      }
+      const source = await response.text();
+      runtime.FS.writeFile("/browser_runtime.py", source);
+      runtime.runPython("import sys; sys.path.insert(0, '/'); import browser_runtime");
+      return runtime;
+    });
+  }
+  return pyodideReadyPromise;
 }
 
 self.onmessage = async (event) => {
@@ -30,6 +35,10 @@ self.onmessage = async (event) => {
     runtime.globals.delete("input_payload");
     runtime.globals.delete("input_operation");
   } catch (error) {
-    self.postMessage({id, ok: false, error: error instanceof Error ? error.message : String(error)});
+    self.postMessage({
+      id,
+      ok: false,
+      error: error instanceof Error ? error.message : String(error),
+    });
   }
 };
