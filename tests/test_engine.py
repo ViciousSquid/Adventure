@@ -138,6 +138,42 @@ class EngineTests(unittest.TestCase):
         self.assertIn(state.current_room, {"start", "end"})
         self.assertIsNone(state.pending_check)
 
+    def test_successful_room_skill_check_unlocks_legacy_exits(self):
+        story_data = make_story().to_dict()
+        story_data["story"]["rooms"]["start"]["skill_check"] = "door"
+        story_data["skill_checks"]["skill_checks"]["door"] = {
+            "dice_type": "1d20",
+            "target": 10,
+            "success": {
+                "description": "You find the clue.",
+                "exits": {"Take the clue": "end"},
+            },
+            "failure": {"description": "You find nothing."},
+        }
+        engine = AdventureEngine(
+            Story.from_package(
+                story_data["story"],
+                story_data["skill_checks"],
+                story_data["inventory"],
+            )
+        )
+        state = engine.new_game()
+        state.random_seed = 0
+
+        pending = engine.observe(state)
+        self.assertTrue(pending.awaiting_roll)
+
+        rolled = engine.step(state, "roll")
+        self.assertIsNone(state.pending_check)
+        self.assertEqual(
+            [choice["label"] for choice in rolled.choices],
+            ["Take the clue", "Go north", "Open door"],
+        )
+
+        result = engine.step(state, "start__skill__Take the clue")
+        self.assertTrue(result.ok)
+        self.assertEqual(state.current_room, "end")
+
     def test_revisit_content_is_state_driven(self):
         engine = AdventureEngine(make_story())
         state = engine.new_game()
