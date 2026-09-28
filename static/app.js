@@ -43,7 +43,8 @@ async function api(url, options = {}) {
   }
 
   if (method === "POST" && parsed.pathname === "/api/editor/validate") {
-    return runtime.validate(JSON.parse(options.body || "{}"));
+    await runtime.validate(JSON.parse(options.body || "{}"));
+    return {valid: true};
   }
 
   if (method === "POST" && parsed.pathname === "/api/editor/save") {
