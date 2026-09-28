@@ -1,0 +1,9 @@
+{
+  "name": "Adventure",
+  "short_name": "Adventure",
+  "description": "Create and play branching narratives.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0b1217",
+  "theme_color": "#0b1217"
+}
