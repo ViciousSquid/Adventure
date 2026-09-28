@@ -1,4 +1,4 @@
-const CACHE = "adventure-shell-v6";
+const CACHE = "adventure-shell-v7";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -7,7 +7,7 @@ const APP_SHELL = [
   "./editor-graph.js",
   "./rich-text-editor.js",
   "./runtime-bridge.js",
-  "./pyodide-worker-v3.js",
+  "./pyodide-worker-v4.js",
   "./py/browser_runtime.py",
   "./manifest.webmanifest"
 ];
