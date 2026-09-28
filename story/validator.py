@@ -15,6 +15,7 @@ ROOM_FIELDS = {
     "show_map",
     "message",
     "name",
+    "skill_check",
 }
 CONNECTION_FIELDS = {"from", "to", "label", "skill_check", "requires_item"}
 SKILL_FIELDS = {"dice_type", "target", "description", "success", "failure"}
@@ -113,6 +114,10 @@ def _validate_story(
             errors.append(f"{path}.message: must be a string")
         if "name" in room and not isinstance(room["name"], str):
             errors.append(f"{path}.name: must be a string")
+        if "skill_check" in room:
+            skill_id = room["skill_check"]
+            if not isinstance(skill_id, str) or skill_id not in checks.get("skill_checks", {}):
+                errors.append(f"{path}.skill_check: unknown skill check {skill_id!r}")
 
     connections = story.get("connections", {})
     if not isinstance(connections, dict):
