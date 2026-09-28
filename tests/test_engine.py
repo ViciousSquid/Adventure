@@ -167,7 +167,7 @@ class EngineTests(unittest.TestCase):
         self.assertIsNone(state.pending_check)
         self.assertEqual(
             [choice["label"] for choice in rolled.choices],
-            ["Take the clue", "Go north", "Open door"],
+            ["Go north", "Open door", "Take the clue"],
         )
 
         result = engine.step(state, "start__skill__Take the clue")
