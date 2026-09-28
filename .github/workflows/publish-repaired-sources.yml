@@ -138,6 +138,7 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          rm -f .migration-trigger
           git add adventures/Crashed_Shipwreck.zip \
                   adventures/Forgotten_Catacombs.zip \
                   adventures/Curse_of_the_Crimson_Cutlass.zip \
