@@ -200,7 +200,10 @@ class AdventureEngine:
     def _execute_action(self, state: GameState, action: str) -> dict[str, Any]:
         connection = self.story.get("connections", {}).get(action)
         if not connection or connection.get("from") != state.current_room:
-            return self._result(state, ok=False, text="You can't go that way.", error="invalid_action")
+            dynamic = self._dynamic_room_skill_exit(state, action)
+            if dynamic is None:
+                return self._result(state, ok=False, text="You can't go that way.", error="invalid_action")
+            return self._transition(state, action, dynamic)
         required = connection.get("requires_item")
         if required and required not in state.inventory:
             name = self.inventory.get("items", {}).get(required, {}).get("name", required)
@@ -211,7 +214,12 @@ class AdventureEngine:
             state.pending_check = {"kind": "connection", "connection_id": action, "source_room": state.current_room, "skill_check_id": skill_id}
             return self._result(state, text=f"Roll {check.get('dice_type', '1d20')} (target {check.get('target', 10)} or higher).",
                                 awaiting_roll=True)
-        return self._transition(state, action, connection["to"])
+        return self._transition(
+            state,
+            action,
+            connection["to"],
+            text_override=connection.get("description"),
+        )
 
     def _resolve_pending_check(self, state: GameState) -> dict[str, Any]:
         pending = state.pending_check
@@ -228,7 +236,10 @@ class AdventureEngine:
 
         if pending.get("kind") == "room":
             room_id = pending["room_id"]
+            success_exits = branch.get("exits") or {}
             destination = branch.get("to") or room_id
+            if success_exits:
+                self._mark_skill_check_resolved(state, pending["skill_check_id"])
             if destination == room_id:
                 return self._result(state, text=description, dice_results=(roll,))
             return self._transition(
@@ -243,10 +254,38 @@ class AdventureEngine:
         destination = branch.get("to") or connection["to"] or connection["from"]
         return self._transition(state, pending["connection_id"], destination, text_override=description, dice_result=roll)
 
+    def _skill_check_is_resolved(self, state: GameState, skill_id: str) -> bool:
+        resolved = state.variables.get("resolved_skill_checks", {})
+        return isinstance(resolved, dict) and bool(resolved.get(skill_id))
+
+    def _mark_skill_check_resolved(self, state: GameState, skill_id: str) -> None:
+        resolved = state.variables.get("resolved_skill_checks")
+        if not isinstance(resolved, dict):
+            resolved = {}
+            state.variables["resolved_skill_checks"] = resolved
+        resolved[skill_id] = True
+
+    def _dynamic_room_skill_exit(self, state: GameState, action: str) -> str | None:
+        room = self.story["rooms"][state.current_room]
+        skill_id = room.get("skill_check")
+        if not skill_id or not self._skill_check_is_resolved(state, skill_id):
+            return None
+        check = self.checks[skill_id]
+        exits = check.get("success", {}).get("exits", {})
+        prefix = f"{state.current_room}__skill__"
+        for label, destination in exits.items():
+            if f"{prefix}{label}" == action:
+                return destination
+        return None
+
     def _arm_room_skill_check(self, state: GameState) -> None:
         room = self.story["rooms"][state.current_room]
         skill_id = room.get("skill_check")
-        if not skill_id or state.pending_check:
+        if (
+            not skill_id
+            or state.pending_check
+            or self._skill_check_is_resolved(state, skill_id)
+        ):
             return
         state.pending_check = {
             "kind": "room",
@@ -299,6 +338,19 @@ class AdventureEngine:
                 choice["skill_check"] = {"id": skill_id, "dice_type": check.get("dice_type", "1d20"),
                                           "target": check.get("target", 10)}
             choices.append(choice)
+
+        room_skill_id = self.story["rooms"][state.current_room].get("skill_check")
+        if room_skill_id and self._skill_check_is_resolved(state, room_skill_id):
+            check = self.checks[room_skill_id]
+            for label, destination in check.get("success", {}).get("exits", {}).items():
+                choices.append(
+                    {
+                        "id": f"{state.current_room}__skill__{label}",
+                        "label": label,
+                        "to": destination,
+                    }
+                )
+
         return choices
 
     def _result(self, state: GameState, *, ok: bool = True, text: str = "",
