@@ -21,10 +21,10 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout PWA branch
+      - name: Checkout deployed source
         uses: actions/checkout@v4
         with:
-          ref: pwa-pyodide
+          ref: main-stable
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
@@ -38,4 +38,4 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-# Re-publish the PWA branch after browser runtime updates.
+# GitHub Pages deploys the exact main-stable tree that triggered this workflow.
