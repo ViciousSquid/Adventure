@@ -1,4 +1,4 @@
-const CACHE = "adventure-shell-v7";
+const CACHE = "adventure-shell-v8";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -9,7 +9,8 @@ const APP_SHELL = [
   "./runtime-bridge.js",
   "./pyodide-worker-v4.js",
   "./py/browser_runtime.py",
-  "./manifest.webmanifest"
+  "./manifest.webmanifest",
+  "./worlds/manifest.json"
 ];
 
 self.addEventListener("install", (event) => {
