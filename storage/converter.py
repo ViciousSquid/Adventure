@@ -404,7 +404,7 @@ class LegacyConverter:
                 elif isinstance(target, dict):
                     self._check_unknown(
                         target,
-                        {"skill_check", "requires_item", "to", "room"},
+                        {"skill_check", "requires_item", "to", "room", "description"},
                         f"{room_path}.exits.{action_id}",
                         report,
                         allow_lossy,
@@ -418,6 +418,14 @@ class LegacyConverter:
                             )
                     if isinstance(destination, str):
                         connection["to"] = destination
+
+                    if "description" in target:
+                        if not isinstance(target["description"], str):
+                            raise ConversionError(
+                                f"{room_path}.exits.{action_id}.description: "
+                                "must be a string"
+                            )
+                        connection["description"] = target["description"]
 
                     required_item = target.get("requires_item")
                     if required_item:
@@ -557,7 +565,7 @@ class LegacyConverter:
                 )
             self._check_unknown(
                 outcome,
-                {"description", "room", "to"},
+                {"description", "room", "to", "exits"},
                 f"{path}.{branch}",
                 report,
                 allow_lossy,
@@ -576,6 +584,35 @@ class LegacyConverter:
                 raise ConversionError(
                     f"{path}.{branch}.description: must be a string"
                 )
+
+            if "exits" in outcome:
+                raw_exits = outcome["exits"]
+                if not isinstance(raw_exits, dict):
+                    raise ConversionError(
+                        f"{path}.{branch}.exits: must be an object"
+                    )
+                exits: dict[str, str] = {}
+                for label, target in raw_exits.items():
+                    if isinstance(target, str):
+                        destination = target
+                    elif isinstance(target, dict):
+                        destination = target.get(
+                            "to",
+                            target.get("room"),
+                        )
+                    else:
+                        raise ConversionError(
+                            f"{path}.{branch}.exits.{label}: "
+                            "must be a string or object"
+                        )
+                    if not isinstance(destination, str) or not destination:
+                        raise ConversionError(
+                            f"{path}.{branch}.exits.{label}: "
+                            "missing destination"
+                        )
+                    exits[str(label)] = destination
+                branch_result["exits"] = exits
+
             result[branch] = branch_result
 
         return result
