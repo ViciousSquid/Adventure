@@ -3,9 +3,6 @@ name: Deploy Adventure PWA
 on:
   push:
     branches: ["main-stable"]
-    paths:
-      - ".github/workflows/pages.yml"
-      - "static/**"
   workflow_dispatch:
 
 permissions:
