@@ -17,7 +17,7 @@ ROOM_FIELDS = {
     "name",
     "skill_check",
 }
-CONNECTION_FIELDS = {"from", "to", "label", "skill_check", "requires_item"}
+CONNECTION_FIELDS = {"from", "to", "label", "skill_check", "requires_item", "description"}
 SKILL_FIELDS = {"dice_type", "target", "description", "success", "failure"}
 OUTCOME_FIELDS = {"description", "to"}
 INVENTORY_TOP = {"schema_version", "items", "room_items", "room_requirements"}
@@ -138,6 +138,8 @@ def _validate_story(
                 errors.append(f"{path}.to: room {target!r} does not exist")
             if not isinstance(label, str) or not label:
                 errors.append(f"{path}.label: must be a non-empty string")
+            if "description" in connection and not isinstance(connection["description"], str):
+                errors.append(f"{path}.description: must be a string")
             if "skill_check" in connection:
                 skill_id = connection["skill_check"]
                 if not isinstance(skill_id, str) or skill_id not in checks.get("skill_checks", {}):
@@ -236,6 +238,18 @@ def _validate_skill_checks(
                 errors.append(f"{branch_path}.to: destination {destination!r} does not exist")
             if "description" in outcome and not isinstance(outcome["description"], str):
                 errors.append(f"{branch_path}.description: must be a string")
+            exits = outcome.get("exits")
+            if exits is not None:
+                if not isinstance(exits, dict):
+                    errors.append(f"{branch_path}.exits: must be an object")
+                else:
+                    for label, destination in exits.items():
+                        if not isinstance(label, str) or not label:
+                            errors.append(f"{branch_path}.exits: labels must be non-empty strings")
+                        if not isinstance(destination, str) or destination not in rooms:
+                            errors.append(
+                                f"{branch_path}.exits.{label}: destination {destination!r} does not exist"
+                            )
 
 
 def _validate_inventory(
