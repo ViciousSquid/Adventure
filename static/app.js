@@ -1,5 +1,6 @@
-import {GraphEditor} from "/editor-graph.js";
-import {sanitizeRichHtml} from "/rich-text-editor.js";
+import {GraphEditor} from "./editor-graph.js";
+import {sanitizeRichHtml} from "./rich-text-editor.js";
+import {runtime} from "./runtime-bridge.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -10,13 +11,66 @@ let graphEditor = null;
 let editorAssets = {};
 
 async function api(url, options = {}) {
-  const response = await fetch(url, {
-    headers: {"Content-Type": "application/json", ...(options.headers || {})},
-    ...options,
-  });
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.error || "Request failed");
-  return data;
+  const method = (options.method || "GET").toUpperCase();
+  const parsed = new URL(url, window.location.href);
+  const parts = parsed.pathname.split("/").filter(Boolean);
+
+  if (method === "GET" && parsed.pathname === "/api/stories") {
+    return {stories: await runtime.listStories()};
+  }
+
+  if (method === "GET" && parts[0] === "api" && parts[1] === "world" && parts.length === 3) {
+    return runtime.loadWorld(decodeURIComponent(parts[2]));
+  }
+
+  if (method === "POST" && parsed.pathname === "/api/game/new") {
+    const payload = JSON.parse(options.body || "{}");
+    const packageData = await runtime.loadWorld(payload.world);
+    const state = await runtime.newGame(packageData);
+    return {state, result: await runtime.observe(packageData, state)};
+  }
+
+  if (method === "POST" && parsed.pathname === "/api/game/step") {
+    const payload = JSON.parse(options.body || "{}");
+    const packageData = await runtime.loadWorld(payload.world);
+    return runtime.step(packageData, payload.state, payload.action);
+  }
+
+  if (method === "POST" && parsed.pathname === "/api/game/roll") {
+    const payload = JSON.parse(options.body || "{}");
+    const packageData = await runtime.loadWorld(payload.world);
+    return runtime.roll(packageData, payload.state);
+  }
+
+  if (method === "POST" && parsed.pathname === "/api/editor/validate") {
+    return runtime.validate(JSON.parse(options.body || "{}"));
+  }
+
+  if (method === "POST" && parsed.pathname === "/api/editor/save") {
+    const payload = JSON.parse(options.body || "{}");
+    const pendingAssets = payload.assets || {};
+    const existingAssets = currentPackage?.assets || {};
+    const assets = {...existingAssets};
+    for (const [name, base64] of Object.entries(pendingAssets)) {
+      const prior = editorAssets[name]?.dataUrl;
+      assets[name] = prior && prior.includes(",")
+        ? prior.slice(0, prior.indexOf(",") + 1) + base64
+        : "data:application/octet-stream;base64," + base64;
+    }
+    const packageData = {
+      world: payload.story.name,
+      source_format: "canonical",
+      story: payload.story,
+      skill_checks: payload.skill_checks,
+      inventory: payload.inventory,
+      assets,
+    };
+    const saved = await runtime.saveLocalPackage(packageData);
+    return {saved: true, path: "browser-storage:" + saved.world, world: saved.world,
+            source_format: "canonical", package: saved};
+  }
+
+  throw new Error("Unsupported browser API request: " + method + " " + parsed.pathname);
 }
 
 function pretty(value) {
@@ -75,8 +129,8 @@ async function roll() {
 }
 
 function assetUrl(world, name) {
-  const encoded = name.split("/").map(encodeURIComponent).join("/");
-  return "/api/world/" + encodeURIComponent(world) + "/asset/" + encoded;
+  const assets = currentPackage?.assets || {};
+  return assets[name] || assets[name.replace(/^assets\//, "")] || "";
 }
 
 function pendingAssetPayload() {
@@ -597,11 +651,12 @@ async function saveEditor() {
       preserve_from: currentPackage?.world || null,
     }),
   });
-  currentPackage = {
+  currentPackage = result.package || {
     ...(currentPackage || {}),
     ...payload,
     world: payload.story.name,
     source_format: "canonical",
+    assets: currentPackage?.assets || {},
   };
   editorAssets = {};
   syncEditorText(currentPackage);
@@ -660,6 +715,37 @@ $("validateWorld").onclick = () => validateEditor().catch(showError);
 $("saveWorld").onclick = () => saveEditor().catch(showError);
 $("fullscreenEditor").onclick = () => toggleFullscreen().catch(showError);
 document.addEventListener("fullscreenchange", updateFullscreenLabel);
+
+async function openStoryFile() {
+  const input = $("storyFileInput");
+  input.value = "";
+  input.click();
+}
+
+async function handleStoryFile(file) {
+  if (!file) return;
+  const packageData = await runtime.importZip(file);
+  currentPackage = packageData;
+  editorAssets = {};
+  await loadStories();
+  for (const select of [$("worldSelect"), $("editWorldSelect")]) {
+    select.value = packageData.world;
+  }
+  syncEditorText(packageData);
+  if (graphEditor) graphEditor.setPackage(packageData);
+  showEditorStatus("Imported " + packageData.world + " into local browser storage.");
+}
+
+async function downloadStory() {
+  if (!currentPackage) throw new Error("No story is loaded.");
+  const blob = await runtime.exportZip(currentPackage);
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = currentPackage.story.name + ".canonical.zip";
+  link.click();
+  URL.revokeObjectURL(url);
+}
 
 function showError(error) {
   const message = error instanceof Error ? error.message : String(error);
