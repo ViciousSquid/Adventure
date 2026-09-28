@@ -25,6 +25,14 @@ A modern interactive story engine for designing, editing, and playing branching 
 
 - Active Development: A basic inventory system is currently in active development.
 
+## Browser / PWA build
+
+The `pwa-pyodide` branch adds a browser-native application path. It runs the narrative VM inside Pyodide/WebAssembly in a Web Worker, keeps stories in browser storage, and imports/exports canonical world ZIPs without requiring Python to be installed on the user's machine.
+
+The browser build is platform-independent at the application level: it uses the browser as its runtime rather than producing Windows/macOS/Linux binaries. The initial Pyodide runtime is loaded from the version-pinned official CDN; the application shell itself is cacheable by the included service worker.
+
+The browser build currently accepts canonical world packages containing `story.json`, `skill_checks.json`, and `inventory.json`. The existing desktop/server path remains available while browser support is developed.
+
 ### 🕹️ Included Stories
 Launch the engine and try the following built-in examples:
 
