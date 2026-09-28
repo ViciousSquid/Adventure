@@ -115,6 +115,43 @@
   }
 })();
 </script>
-<script type="module" src="./app.js"></script>
+<script>
+(async () => {
+  const url = new URL(window.location.href);
+  const resetParam = url.searchParams.has("sw_reset");
+  let changed = false;
+
+  if ("serviceWorker" in navigator) {
+    const registrations = await navigator.serviceWorker.getRegistrations();
+    for (const registration of registrations) {
+      if (new URL(registration.scope).pathname.startsWith("/Adventure/")) {
+        changed = (await registration.unregister()) || changed;
+      }
+    }
+  }
+
+  if ("caches" in window) {
+    const keys = await caches.keys();
+    for (const key of keys) {
+      if (key.startsWith("adventure-shell-")) {
+        changed = (await caches.delete(key)) || changed;
+      }
+    }
+  }
+
+  if (changed && !resetParam) {
+    url.searchParams.set("sw_reset", "1");
+    window.location.replace(url.toString());
+    return;
+  }
+
+  if (resetParam) {
+    url.searchParams.delete("sw_reset");
+    window.history.replaceState(null, "", url.pathname + url.search + url.hash);
+  }
+
+  await import("./app.js?v=8");
+})();
+</script>
 </body>
 </html>
