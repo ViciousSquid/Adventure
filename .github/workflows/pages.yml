@@ -29,6 +29,68 @@ jobs:
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
+      - name: Build browser world catalogue
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf static/worlds
+          mkdir -p static/worlds
+          python - <<'PY'
+          from __future__ import annotations
+
+          import json
+          import shutil
+          from pathlib import Path
+
+          from storage.converter import LegacyConverter
+
+          source_root = Path("adventures")
+          output_root = Path("static/worlds")
+          manifest = []
+          converter = LegacyConverter()
+
+          for source in sorted(source_root.glob("*.zip")):
+              if not source.is_file():
+                  continue
+
+              destination = output_root / f"{source.stem}.canonical.zip"
+              report_path = destination.with_name(destination.name + ".report.json")
+
+              try:
+                  converter.convert_file(
+                      source,
+                      destination,
+                      allow_lossy=False,
+                      force=True,
+                  )
+              except Exception:
+                  if destination.exists():
+                      destination.unlink()
+                  raise
+
+              manifest.append({
+                  "id": source.stem,
+                  "url": "./worlds/" + destination.name,
+                  "source": source.name,
+                  "format": "canonical",
+              })
+
+              report_path.unlink(missing_ok=True)
+              destination.with_name(destination.name + ".report.txt").unlink(missing_ok=True)
+
+          if not manifest:
+              raise SystemExit("No Adventure worlds were converted for the browser build.")
+
+          (output_root / "manifest.json").write_text(
+              json.dumps(manifest, indent=2, ensure_ascii=False) + "\n",
+              encoding="utf-8",
+          )
+
+          print(f"Built {len(manifest)} browser worlds:")
+          for item in manifest:
+              print(f"  - {item['id']}")
+          PY
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:
