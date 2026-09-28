@@ -149,6 +149,22 @@ class Story:
                 else:
                     exits[action_id] = target
             result["exits"] = exits
+            if room.get("skill_check"):
+                check = checks[room["skill_check"]]
+                legacy_check = {
+                    key: value
+                    for key, value in check.items()
+                    if key in ("description", "dice_type", "target")
+                }
+                legacy_check["success"] = {
+                    "description": check.get("success", {}).get("description", ""),
+                    "room": check.get("success", {}).get("to"),
+                }
+                legacy_check["failure"] = {
+                    "description": check.get("failure", {}).get("description", ""),
+                    "room": check.get("failure", {}).get("to"),
+                }
+                result["skill_check"] = legacy_check
             if room_id in room_items:
                 result["items"] = list(room_items[room_id])
             if room_id in room_requirements:
