@@ -1,4 +1,4 @@
-const CACHE = "adventure-shell-v5";
+const CACHE = "adventure-shell-v6";
 const APP_SHELL = [
   "./",
   "./index.html",
