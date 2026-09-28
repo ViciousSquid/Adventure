@@ -55,6 +55,38 @@ class BrowserRuntimeTests(unittest.TestCase):
         self.assertTrue(result["ok"])
         self.assertEqual(state.current_room, "end")
 
+    def test_room_skill_check_unlocks_legacy_exits(self):
+        package = make_package()
+        package["story"]["rooms"]["start"]["skill_check"] = "door"
+        package["skill_checks"]["skill_checks"]["door"] = {
+            "dice_type": "1d20",
+            "target": 10,
+            "success": {
+                "description": "You find the clue.",
+                "exits": {"Take the clue": "end"},
+            },
+            "failure": {"description": "You find nothing."},
+        }
+
+        state = browser_runtime.AdventureEngine(package).new_game()
+        state.random_seed = 0
+        self.assertTrue(
+            browser_runtime.AdventureEngine(package).observe(state)["awaiting_roll"]
+        )
+
+        result = browser_runtime.AdventureEngine(package).step(state, "roll")
+        self.assertIn(
+            {"id": "start__skill__Take the clue", "label": "Take the clue", "to": "end"},
+            result["choices"],
+        )
+
+        stepped = browser_runtime.AdventureEngine(package).step(
+            state,
+            "start__skill__Take the clue",
+        )
+        self.assertTrue(stepped["ok"])
+        self.assertEqual(state.current_room, "end")
+
     def test_canonical_zip_round_trip(self):
         package = make_package()
         payload = browser_runtime.package_to_zip(package)
