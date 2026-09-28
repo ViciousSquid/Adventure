@@ -120,6 +120,53 @@ class ConverterTests(unittest.TestCase):
                 b"A summary",
             )
 
+    def test_legacy_room_skill_check_and_room_exit_alias_are_converted(self):
+        converter = LegacyConverter()
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "LegacySkill.zip"
+            story = {
+                "name": "LegacySkill",
+                "start_room": "start",
+                "rooms": {
+                    "start": {
+                        "description": "Start",
+                        "skill_check": {
+                            "dice_type": "1d8",
+                            "target": 5,
+                            "success": {
+                                "description": "Passed.",
+                                "room": "end",
+                            },
+                            "failure": {
+                                "description": "Failed.",
+                                "room": "start",
+                            },
+                        },
+                        "exits": {
+                            "legacy_room_alias": {"room": "end"},
+                        },
+                    },
+                    "end": {
+                        "description": "End",
+                        "exits": {},
+                    },
+                },
+            }
+            with ZipFile(source, "w") as archive:
+                archive.writestr("story.json", json.dumps(story))
+
+            converted = converter.convert_to_world(source)
+
+            room = converted.story["rooms"]["start"]
+            self.assertEqual(room["skill_check"], "skill__room__start")
+            check = converted.skill_checks["skill_checks"]["skill__room__start"]
+            self.assertEqual(check["success"]["to"], "end")
+            self.assertEqual(check["failure"]["to"], "start")
+            self.assertEqual(
+                converted.story["connections"]["start__legacy_room_alias"]["to"],
+                "end",
+            )
+
     def test_legacy_revisit_fields_are_converted(self):
         converter = LegacyConverter()
         with tempfile.TemporaryDirectory() as tmp:
