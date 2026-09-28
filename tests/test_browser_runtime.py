@@ -1,5 +1,5 @@
 import importlib.util
-import tempfile
+import sys
 import unittest
 from pathlib import Path
 
@@ -9,6 +9,7 @@ MODULE_PATH = ROOT / "static" / "py" / "browser_runtime.py"
 
 spec = importlib.util.spec_from_file_location("adventure_browser_runtime", MODULE_PATH)
 browser_runtime = importlib.util.module_from_spec(spec)
+sys.modules[spec.name] = browser_runtime
 assert spec.loader is not None
 spec.loader.exec_module(browser_runtime)
 
