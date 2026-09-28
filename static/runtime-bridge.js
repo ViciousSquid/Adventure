@@ -57,24 +57,28 @@ class BrowserRuntime {
 
   async seedBundledStories() {
     try {
-      const response = await fetch("./worlds/manifest.json?v=1", {cache: "no-store"});
+      const response = await fetch("./worlds/manifest.json?v=2", {cache: "no-store"});
       if (!response.ok) throw new Error("Unable to load the bundled world catalogue.");
       const entries = await response.json();
       if (!Array.isArray(entries)) throw new Error("Bundled world catalogue is invalid.");
 
       for (const entry of entries) {
-        if (!entry?.id || !entry?.url) continue;
+        if (!entry?.id || !entry?.url || entry.available === false) continue;
         const existing = this.worlds.get(entry.id);
         if (existing?.source_format === "canonical") continue;
 
-        const packageResponse = await fetch(entry.url, {cache: "no-store"});
-        if (!packageResponse.ok) {
-          throw new Error("Unable to load bundled world: " + entry.id);
+        try {
+          const packageResponse = await fetch(entry.url, {cache: "no-store"});
+          if (!packageResponse.ok) {
+            throw new Error("HTTP " + packageResponse.status);
+          }
+          const bytes = [...new Uint8Array(await packageResponse.arrayBuffer())];
+          const packageData = await this.call("zip_read", bytes);
+          packageData.source_format = "built-in";
+          await this.putPackage(packageData);
+        } catch (error) {
+          console.warn("Unable to load bundled world " + entry.id + ":", error);
         }
-        const bytes = [...new Uint8Array(await packageResponse.arrayBuffer())];
-        const packageData = await this.call("zip_read", bytes);
-        packageData.source_format = "built-in";
-        await this.putPackage(packageData);
       }
 
       if (!this.worlds.size) {
