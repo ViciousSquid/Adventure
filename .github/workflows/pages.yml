@@ -41,11 +41,17 @@ jobs:
           path = Path("adventures/Crashed_Shipwreck.zip")
           with ZipFile(path, "r") as source:
               story = source.read("story.json").decode("utf-8")
+              story = story.replace("\r\n", "\n")
               if '"continue_investigating": "apex_predator"' not in story:
                   raise SystemExit("Crashed_Shipwreck.zip corruption signature was not found")
               story = story.replace(
                   '"continue_investigating": "apex_predator"',
                   '"continue_investigating": "apex_predator",',
+                  1,
+              )
+              story = story.replace(
+                  '"exits": {}\n}\n},\n"triumphant_victory"',
+                  '"exits": {}\n},\n"triumphant_victory"',
                   1,
               )
               members = [
