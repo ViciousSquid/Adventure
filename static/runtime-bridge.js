@@ -4,7 +4,7 @@ const STORE_NAME = "worlds";
 
 class BrowserRuntime {
   constructor() {
-    this.worker = new Worker("./pyodide-worker-v2.js", {type: "module"});
+    this.worker = new Worker("./pyodide-worker-v3.js", {type: "module"});
     this.pending = new Map();
     this.nextId = 1;
     this.worlds = new Map();
