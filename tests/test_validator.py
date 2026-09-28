@@ -156,6 +156,21 @@ class StoryValidationTests(unittest.TestCase):
                 inventory,
             )
 
+    def test_skill_check_success_exits_are_validated(self):
+        story, checks, inventory = valid_package()
+        checks["skill_checks"]["door"] = {
+            "dice_type": "1d20",
+            "target": 10,
+            "success": {"exits": {"Continue": "end"}},
+            "failure": {"description": "No luck."},
+        }
+        story["rooms"]["start"]["skill_check"] = "door"
+        validated = validate_package_data(story, checks, inventory)
+        self.assertEqual(
+            validated[1]["skill_checks"]["door"]["success"]["exits"],
+            {"Continue": "end"},
+        )
+
     def test_item_room_reference_is_checked(self):
         story, checks, inventory = valid_package()
         inventory["room_items"]["missing"] = ["key"]
