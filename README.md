@@ -6,10 +6,7 @@ A modern interactive story engine for designing, editing, and playing branching 
 
 
 
-(  DOWNLOAD HERE: https://github.com/ViciousSquid/Adventure/releases )
-
-![image](https://github.com/ViciousSquid/Adventure/assets/161540961/7d236ef0-9129-4b63-8e12-9b104d54bc01)
-
+## NO INSTALL REQUIRED! <BR> Just visit: [https://vicioussquid.github.io/Adventure/](https://vicioussquid.github.io/Adventure/)
 
 
 #### Key Features
@@ -29,11 +26,6 @@ A modern interactive story engine for designing, editing, and playing branching 
 > **Browser build hosting:** The PWA is designed to be served as a real web application (GitHub Pages or another static HTTPS host). Do not open `index.html` through a raw/CDN file URL; those services may serve HTML as `text/plain` instead of rendering it.
 
 
-The `pwa-pyodide` branch adds a browser-native application path. It runs the narrative VM inside Pyodide/WebAssembly in a Web Worker, keeps stories in browser storage, and imports/exports canonical world ZIPs without requiring Python to be installed on the user's machine.
-
-The browser build is platform-independent at the application level: it uses the browser as its runtime rather than producing Windows/macOS/Linux binaries. The initial Pyodide runtime is loaded from the version-pinned official CDN; the application shell itself is cacheable by the included service worker.
-
-The browser build currently accepts canonical world packages containing `story.json`, `skill_checks.json`, and `inventory.json`. The existing desktop/server path remains available while browser support is developed.
 
 ### 🕹️ Included Stories
 Launch the engine and try the following built-in examples:
@@ -42,7 +34,7 @@ Launch the engine and try the following built-in examples:
 
 - NOIR – A deeper look at narrative choices and atmosphere.
 
-#### ⚠️ Note: Cosmic Paradox is currently undergoing a mechanical overhaul and is temporarily broken
+
 
 ### Quick Start
 Adventure structures games using clean, manageable data layouts. Here is a quick look at how a branching room with a stat check is defined:
