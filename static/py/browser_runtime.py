@@ -143,10 +143,20 @@ class AdventureEngine:
         self.story_id = str(self.story["name"])
 
     def new_game(self) -> GameState:
-        return GameState.new(self.story_id, self.story["start_room"])
+        state = GameState.new(self.story_id, self.story["start_room"])
+        self._arm_room_skill_check(state)
+        return state
 
     def observe(self, state: GameState) -> dict[str, Any]:
         self._validate_state(state)
+        pending = state.pending_check or {}
+        if pending.get("kind") == "room":
+            check = self.checks[pending["skill_check_id"]]
+            return self._result(
+                state,
+                text=f"Roll {check.get('dice_type', '1d20')} (target {check.get('target', 10)} or higher).",
+                awaiting_roll=True,
+            )
         return self._result(state, text=self._room_text(state))
 
     def step(self, state: GameState, action: str) -> dict[str, Any]:
@@ -198,14 +208,13 @@ class AdventureEngine:
         skill_id = connection.get("skill_check")
         if skill_id:
             check = self.checks[skill_id]
-            state.pending_check = {"connection_id": action, "source_room": state.current_room, "skill_check_id": skill_id}
+            state.pending_check = {"kind": "connection", "connection_id": action, "source_room": state.current_room, "skill_check_id": skill_id}
             return self._result(state, text=f"Roll {check.get('dice_type', '1d20')} (target {check.get('target', 10)} or higher).",
                                 awaiting_roll=True)
         return self._transition(state, action, connection["to"])
 
     def _resolve_pending_check(self, state: GameState) -> dict[str, Any]:
         pending = state.pending_check
-        connection = self.story["connections"][pending["connection_id"]]
         check = self.checks[pending["skill_check_id"]]
         target = int(check.get("target", 10))
         seed_material = f"{state.random_seed}:{state.roll_count}".encode("utf-8")
@@ -214,10 +223,36 @@ class AdventureEngine:
         roll = DiceEngine(random.Random(seed)).roll(check.get("dice_type", "1d20"), target=target)
         success = bool(roll.success)
         branch = check.get("success" if success else "failure", {})
-        destination = branch.get("to") or connection["to"] or connection["from"]
         description = check.get("description") or branch.get("description") or ("You succeeded!" if success else "You failed!")
         state.pending_check = None
+
+        if pending.get("kind") == "room":
+            room_id = pending["room_id"]
+            destination = branch.get("to") or room_id
+            if destination == room_id:
+                return self._result(state, text=description, dice_results=(roll,))
+            return self._transition(
+                state,
+                f"room_skill_check:{room_id}",
+                destination,
+                text_override=description,
+                dice_result=roll,
+            )
+
+        connection = self.story["connections"][pending["connection_id"]]
+        destination = branch.get("to") or connection["to"] or connection["from"]
         return self._transition(state, pending["connection_id"], destination, text_override=description, dice_result=roll)
+
+    def _arm_room_skill_check(self, state: GameState) -> None:
+        room = self.story["rooms"][state.current_room]
+        skill_id = room.get("skill_check")
+        if not skill_id or state.pending_check:
+            return
+        state.pending_check = {
+            "kind": "room",
+            "room_id": state.current_room,
+            "skill_check_id": skill_id,
+        }
 
     def _transition(self, state: GameState, action: str, destination: str, *,
                     text_override: str | None = None, dice_result: DiceResult | None = None) -> dict[str, Any]:
@@ -229,8 +264,11 @@ class AdventureEngine:
         effects = ({"type": "transition", "from": source, "to": destination},)
         state.action_history.append(ActionRecord(action, source, destination, effects, dice_result))
         text = text_override if text_override is not None else self.story["rooms"][destination].get("description", "You are here.")
+        self._arm_room_skill_check(state)
+        awaiting_roll = bool(state.pending_check and state.pending_check.get("kind") == "room")
         return self._result(state, text=text, effects=effects, transition=destination,
-                            dice_results=(dice_result,) if dice_result else ())
+                            dice_results=(dice_result,) if dice_result else (),
+                            awaiting_roll=awaiting_roll)
 
     def _room_text(self, state: GameState) -> str:
         room = self.story["rooms"][state.current_room]
@@ -290,6 +328,12 @@ def validate_package(package: Mapping[str, Any]) -> dict[str, Any]:
     rooms = story.get("rooms")
     if not isinstance(rooms, dict) or not rooms: errors.append("story.rooms must be a non-empty object"); rooms = {}
     if story.get("start_room") not in rooms: errors.append("story.start_room does not exist")
+    for room_id, room in rooms.items():
+        if not isinstance(room, dict):
+            continue
+        skill_id = room.get("skill_check")
+        if skill_id and skill_id not in checks.get("skill_checks", {}):
+            errors.append(f"room {room_id!r} references unknown skill check {skill_id!r}")
     connections = story.get("connections", {})
     if not isinstance(connections, dict): errors.append("story.connections must be an object"); connections = {}
     items = inventory.get("items", {})
