@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Adventure cache reset</title>
+</head>
+<body>
+<p>Resetting Adventure's cached service worker…</p>
+<script>
+(async () => {
+  if ("serviceWorker" in navigator) {
+    for (const registration of await navigator.serviceWorker.getRegistrations()) {
+      try { await registration.unregister(); } catch (_) {}
+    }
+  }
+  if ("caches" in window) {
+    for (const key of await caches.keys()) {
+      try { await caches.delete(key); } catch (_) {}
+    }
+  }
+  location.replace("./adventure-v9.html?build=cdf939b9");
+})();
+</script>
+</body>
+</html>
