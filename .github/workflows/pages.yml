@@ -86,6 +86,68 @@ jobs:
               temporary.unlink(missing_ok=True)
           PY
 
+      - name: Repair known malformed Forgotten Catacombs world package
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from tempfile import NamedTemporaryFile
+          from zipfile import ZIP_DEFLATED, ZipFile
+
+          path = Path("adventures/Forgotten_Catacombs.zip")
+          with ZipFile(path, "r") as source:
+              story = json.loads(
+                  source.read("story.json").decode("utf-8"),
+                  strict=False,
+              )
+              try:
+                  target = (
+                      story["rooms"]["main_chamber"]["exits"]
+                      ["Examine the Sarcophagus"]["skill_check"]
+                      ["failure"]["room"]
+                  )
+              except KeyError as exc:
+                  raise SystemExit(
+                      f"Forgotten Catacombs corruption signature was not found: {exc}"
+                  )
+              if target != "choice_area":
+                  raise SystemExit(
+                      f"Forgotten Catacombs repair signature changed: {target!r}"
+                  )
+              story["rooms"]["main_chamber"]["exits"][
+                  "Examine the Sarcophagus"
+              ]["skill_check"]["failure"]["room"] = "main_chamber"
+              story_text = json.dumps(
+                  story,
+                  indent=2,
+                  ensure_ascii=False,
+              ) + "\n"
+              members = [
+                  (info.filename, source.read(info.filename))
+                  for info in source.infolist()
+                  if not info.is_dir() and info.filename != "story.json"
+              ]
+
+          with NamedTemporaryFile(
+              prefix=".Forgotten_Catacombs.",
+              suffix=".zip",
+              dir=path.parent,
+              delete=False,
+          ) as handle:
+              temporary = Path(handle.name)
+
+          try:
+              with ZipFile(temporary, "w", compression=ZIP_DEFLATED) as target_archive:
+                  target_archive.writestr("story.json", story_text.encode("utf-8"))
+                  for name, payload in members:
+                      target_archive.writestr(name, payload)
+              temporary.replace(path)
+          finally:
+              temporary.unlink(missing_ok=True)
+          PY
+
       - name: Build browser world catalogue
         shell: bash
         run: |
