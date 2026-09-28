@@ -38,12 +38,58 @@ class BrowserRuntime {
     });
     for (const record of records) this.worlds.set(record.world, record.package);
     this.db = db;
-    if (!this.worlds.size) {
-      await this.seedBuiltins();
+    await this.seedBundledStories();
+  }
+
+  async putPackage(packageData) {
+    const normalized = structuredClone(packageData);
+    this.worlds.set(normalized.world, normalized);
+    if (this.db) {
+      await new Promise((resolve, reject) => {
+        const request = this.db.transaction(STORE_NAME, "readwrite")
+          .objectStore(STORE_NAME).put({world: normalized.world, package: normalized});
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(request.error || new Error("Unable to save story"));
+      });
+    }
+    return normalized;
+  }
+
+  async seedBundledStories() {
+    try {
+      const response = await fetch("./worlds/manifest.json?v=1", {cache: "no-store"});
+      if (!response.ok) throw new Error("Unable to load the bundled world catalogue.");
+      const entries = await response.json();
+      if (!Array.isArray(entries)) throw new Error("Bundled world catalogue is invalid.");
+
+      for (const entry of entries) {
+        if (!entry?.id || !entry?.url) continue;
+        const existing = this.worlds.get(entry.id);
+        if (existing?.source_format === "canonical") continue;
+
+        const packageResponse = await fetch(entry.url, {cache: "no-store"});
+        if (!packageResponse.ok) {
+          throw new Error("Unable to load bundled world: " + entry.id);
+        }
+        const bytes = [...new Uint8Array(await packageResponse.arrayBuffer())];
+        const packageData = await this.call("zip_read", bytes);
+        packageData.source_format = "built-in";
+        await this.putPackage(packageData);
+      }
+
+      if (!this.worlds.size) {
+        await this.seedFallbackWorld();
+      }
+    } catch (error) {
+      if (!this.worlds.size) {
+        await this.seedFallbackWorld();
+      } else {
+        console.warn("Bundled Adventure world catalogue unavailable:", error);
+      }
     }
   }
 
-  async seedBuiltins() {
+  async seedFallbackWorld() {
     const packageData = {
       world: "Three_Choices",
       source_format: "built-in",
@@ -52,22 +98,10 @@ class BrowserRuntime {
         name: "Three_Choices",
         start_room: "start",
         rooms: {
-          start: {
-            name: "Crossroads",
-            description: "Three paths leave a quiet crossroads. The road behind you is already fading into the dusk.",
-          },
-          forest: {
-            name: "Forest",
-            description: "The forest closes around you. Somewhere beyond the trees, something is watching.",
-          },
-          tower: {
-            name: "Tower",
-            description: "An old tower rises above the road. A narrow door stands open.",
-          },
-          river: {
-            name: "River",
-            description: "A cold river blocks the trail. Flat stones form a precarious crossing.",
-          },
+          start: {name: "Crossroads", description: "Three paths leave a quiet crossroads. The road behind you is already fading into the dusk."},
+          forest: {name: "Forest", description: "The forest closes around you. Somewhere beyond the trees, something is watching."},
+          tower: {name: "Tower", description: "An old tower rises above the road. A narrow door stands open."},
+          river: {name: "River", description: "A cold river blocks the trail. Flat stones form a precarious crossing."},
         },
         connections: {
           start__forest: {from: "start", to: "forest", label: "Enter the forest"},
@@ -84,15 +118,7 @@ class BrowserRuntime {
       inventory: {schema_version: 1, items: {}, room_items: {}, room_requirements: {}},
       assets: {},
     };
-    this.worlds.set(packageData.world, packageData);
-    if (this.db) {
-      await new Promise((resolve, reject) => {
-        const request = this.db.transaction(STORE_NAME, "readwrite")
-          .objectStore(STORE_NAME).put({world: packageData.world, package: packageData});
-        request.onsuccess = () => resolve();
-        request.onerror = () => reject(request.error || new Error("Unable to seed built-in story"));
-      });
-    }
+    await this.putPackage(packageData);
   }
 
   async listStories() {
@@ -113,16 +139,7 @@ class BrowserRuntime {
     const normalized = structuredClone(packageData);
     normalized.world = normalized.story.name;
     normalized.source_format = "canonical";
-    this.worlds.set(normalized.world, normalized);
-    if (this.db) {
-      await new Promise((resolve, reject) => {
-        const request = this.db.transaction(STORE_NAME, "readwrite").objectStore(STORE_NAME)
-          .put({world: normalized.world, package: normalized});
-        request.onsuccess = () => resolve();
-        request.onerror = () => reject(request.error || new Error("Unable to save story"));
-      });
-    }
-    return normalized;
+    return this.putPackage(normalized);
   }
 
   async importZip(file) {
