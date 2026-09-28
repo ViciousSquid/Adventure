@@ -113,6 +113,15 @@ class StoryValidationTests(unittest.TestCase):
             )
 
 
+    def test_room_skill_check_reference_is_validated(self):
+        story, checks, inventory = valid_package()
+        story["rooms"]["start"]["skill_check"] = "missing_check"
+        with self.assertRaisesRegex(
+            StoryValidationError,
+            r"story\.rooms\.start\.skill_check",
+        ):
+            validate_package_data(story, checks, inventory)
+
     def test_rich_description_html_is_validated(self):
         story, checks, inventory = valid_package()
         story["rooms"]["start"]["description_html"] = (
