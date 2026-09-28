@@ -38,6 +38,61 @@ class BrowserRuntime {
     });
     for (const record of records) this.worlds.set(record.world, record.package);
     this.db = db;
+    if (!this.worlds.size) {
+      await this.seedBuiltins();
+    }
+  }
+
+  async seedBuiltins() {
+    const packageData = {
+      world: "Three_Choices",
+      source_format: "built-in",
+      story: {
+        schema_version: 3,
+        name: "Three_Choices",
+        start_room: "start",
+        rooms: {
+          start: {
+            name: "Crossroads",
+            description: "Three paths leave a quiet crossroads. The road behind you is already fading into the dusk.",
+          },
+          forest: {
+            name: "Forest",
+            description: "The forest closes around you. Somewhere beyond the trees, something is watching.",
+          },
+          tower: {
+            name: "Tower",
+            description: "An old tower rises above the road. A narrow door stands open.",
+          },
+          river: {
+            name: "River",
+            description: "A cold river blocks the trail. Flat stones form a precarious crossing.",
+          },
+        },
+        connections: {
+          start__forest: {from: "start", to: "forest", label: "Enter the forest"},
+          start__tower: {from: "start", to: "tower", label: "Approach the tower"},
+          start__river: {from: "start", to: "river", label: "Follow the river"},
+          forest__start: {from: "forest", to: "start", label: "Return to the crossroads"},
+          tower__start: {from: "tower", to: "start", label: "Return to the crossroads"},
+          river__start: {from: "river", to: "start", label: "Return to the crossroads"},
+        },
+        revisits: {},
+        metadata: {},
+      },
+      skill_checks: {schema_version: 1, skill_checks: {}},
+      inventory: {schema_version: 1, items: {}, room_items: {}, room_requirements: {}},
+      assets: {},
+    };
+    this.worlds.set(packageData.world, packageData);
+    if (this.db) {
+      await new Promise((resolve, reject) => {
+        const request = this.db.transaction(STORE_NAME, "readwrite")
+          .objectStore(STORE_NAME).put({world: packageData.world, package: packageData});
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(request.error || new Error("Unable to seed built-in story"));
+      });
+    }
   }
 
   async listStories() {
