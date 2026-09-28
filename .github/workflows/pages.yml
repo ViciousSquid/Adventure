@@ -29,21 +29,47 @@ jobs:
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
-      - name: Inspect legacy world JSON before browser conversion
+      - name: Repair known malformed legacy world package
         shell: bash
         run: |
           set -euo pipefail
           python - <<'PY'
           from pathlib import Path
-          from zipfile import ZipFile
+          from tempfile import NamedTemporaryFile
+          from zipfile import ZIP_DEFLATED, ZipFile
 
           path = Path("adventures/Crashed_Shipwreck.zip")
-          with ZipFile(path) as archive:
-              text = archive.read("story.json").decode("utf-8")
-          print("===== Crashed_Shipwreck/story.json =====")
-          for number, line in enumerate(text.splitlines(), 1):
-              print(f"{number:03d}: {line}")
-          print("===== end story.json =====")
+          with ZipFile(path, "r") as source:
+              story = source.read("story.json").decode("utf-8")
+              if '"continue_investigating": "apex_predator"\n' not in story:
+                  raise SystemExit("Crashed_Shipwreck.zip corruption signature was not found")
+              story = story.replace(
+                  '"continue_investigating": "apex_predator"\n',
+                  '"continue_investigating": "apex_predator",\n',
+                  1,
+              )
+              members = [
+                  (info.filename, source.read(info.filename))
+                  for info in source.infolist()
+                  if not info.is_dir() and info.filename != "story.json"
+              ]
+
+          with NamedTemporaryFile(
+              prefix=".Crashed_Shipwreck.",
+              suffix=".zip",
+              dir=path.parent,
+              delete=False,
+          ) as handle:
+              temporary = Path(handle.name)
+
+          try:
+              with ZipFile(temporary, "w", compression=ZIP_DEFLATED) as target:
+                  target.writestr("story.json", story.encode("utf-8"))
+                  for name, payload in members:
+                      target.writestr(name, payload)
+              temporary.replace(path)
+          finally:
+              temporary.unlink(missing_ok=True)
           PY
 
       - name: Build browser world catalogue
