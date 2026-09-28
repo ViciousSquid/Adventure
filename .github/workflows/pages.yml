@@ -154,19 +154,17 @@ jobs:
           set -euo pipefail
           python tools/repair_legacy_stories.py
 
-      - name: Persist repaired legacy story sources
-        shell: bash
-        run: |
-          set -euo pipefail
-          if git diff --quiet -- adventures; then
-            echo "No legacy source repairs to persist."
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add adventures/
-          git commit -m "fix: repair incomplete legacy story sources [skip ci]"
-          git push origin HEAD:main-stable
+      - name: Package repaired legacy story sources
+        uses: actions/upload-artifact@v4
+        with:
+          name: repaired-legacy-sources
+          path: |
+            adventures/Crashed_Shipwreck.zip
+            adventures/Forgotten_Catacombs.zip
+            adventures/Curse_of_the_Crimson_Cutlass.zip
+            adventures/Enigma_of_the_Timekeeper.zip
+            adventures/Whispers_of_the Forgotten_City.zip
+          retention-days: 1
 
       - name: Build browser world catalogue
         shell: bash
