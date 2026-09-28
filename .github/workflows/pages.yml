@@ -29,6 +29,23 @@ jobs:
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
+      - name: Inspect legacy world JSON before browser conversion
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+
+          path = Path("adventures/Crashed_Shipwreck.zip")
+          with ZipFile(path) as archive:
+              text = archive.read("story.json").decode("utf-8")
+          print("===== Crashed_Shipwreck/story.json =====")
+          for number, line in enumerate(text.splitlines(), 1):
+              print(f"{number:03d}: {line}")
+          print("===== end story.json =====")
+          PY
+
       - name: Build browser world catalogue
         shell: bash
         run: |
