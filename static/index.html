@@ -88,6 +88,33 @@
 <input id="storyFileInput" type="file" accept=".zip,application/zip" hidden>
 </main>
 
+<script>
+(async () => {
+  if (!("serviceWorker" in navigator)) return;
+  const registrations = await navigator.serviceWorker.getRegistrations();
+  let changed = false;
+  for (const registration of registrations) {
+    if (new URL(registration.scope).pathname.startsWith("/Adventure/")) {
+      changed = (await registration.unregister()) || changed;
+    }
+  }
+  if ("caches" in window) {
+    const keys = await caches.keys();
+    for (const key of keys) {
+      if (key.startsWith("adventure-shell-")) {
+        changed = (await caches.delete(key)) || changed;
+      }
+    }
+  }
+  if (changed) {
+    const url = new URL(window.location.href);
+    if (!url.searchParams.has("sw_reset")) {
+      url.searchParams.set("sw_reset", "1");
+      window.location.replace(url.toString());
+    }
+  }
+})();
+</script>
 <script type="module" src="./app.js"></script>
 </body>
 </html>
