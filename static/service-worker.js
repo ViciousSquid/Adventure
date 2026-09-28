@@ -7,7 +7,7 @@ const APP_SHELL = [
   "./editor-graph.js",
   "./rich-text-editor.js",
   "./runtime-bridge.js",
-  "./pyodide-worker-v2.js",
+  "./pyodide-worker-v3.js",
   "./py/browser_runtime.py",
   "./manifest.webmanifest"
 ];
