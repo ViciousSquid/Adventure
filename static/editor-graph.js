@@ -1,4 +1,4 @@
-import {RichTextEditor} from "/rich-text-editor.js";
+import {RichTextEditor} from "./rich-text-editor.js";
 
 
 const esc = function(value) {
