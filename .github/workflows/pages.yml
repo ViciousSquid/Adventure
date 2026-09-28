@@ -50,14 +50,17 @@ jobs:
                   1,
               )
               import re
-              story, repaired_braces = re.subn(
-                  r'("exits": \{\}\n)(\s*\})(\s*\},\s*"triumphant_victory")',
-                  r'\1\3',
-                  story,
-                  count=1,
+              story = story.replace(
+                  '"exits": {}\n}\n},\n"cosmic_core"',
+                  '"exits": {}\n},\n"cosmic_core"',
+                  1,
               )
-              if repaired_braces != 1:
-                  raise SystemExit("Crashed_Shipwreck.zip extra-brace signature was not found")
+              story = story.replace(
+                  '"exits": {}\n}\n},\n"triumphant_victory"',
+                  '"exits": {}\n},\n"triumphant_victory"',
+                  1,
+              )
+              json.loads(story, strict=False)
               members = [
                   (info.filename, source.read(info.filename))
                   for info in source.infolist()
