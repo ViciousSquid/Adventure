@@ -2,10 +2,10 @@
 setlocal
 
 rem Adventure launcher for Windows users.
-rem This opens the browser-based Adventure application without requiring
-rem PowerShell, Windows Terminal, Python, or a command prompt.
+rem No PowerShell, Windows Terminal, Python, or command prompt knowledge is required.
+rem The application is served as the browser-based PWA from the pwa-pyodide branch.
 
-set "URL=https://vicioussquid.github.io/Adventure/"
+set "URL=https://cdn.jsdelivr.net/gh/ViciousSquid/Adventure@pwa-pyodide/static/index.html"
 
 start "" "%URL%"
 
