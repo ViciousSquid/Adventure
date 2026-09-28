@@ -6,7 +6,7 @@ let pyodideReadyPromise = null;
 async function ensureRuntime() {
   if (!pyodideReadyPromise) {
     pyodideReadyPromise = loadPyodide({indexURL: PYODIDE_INDEX}).then(async (runtime) => {
-      const response = await fetch("./py/browser_runtime.py?v=7");
+      const response = await fetch("./py/browser_runtime.py?v=8");
       if (!response.ok) {
         throw new Error("Unable to load the Adventure browser runtime.");
       }
