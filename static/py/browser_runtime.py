@@ -337,6 +337,13 @@ def package_to_zip(package: Mapping[str, Any]) -> bytes:
     return buffer.getvalue()
 
 def json_call(operation: str, payload: Any) -> Any:
+    # Pyodide may pass JavaScript objects through as JsProxy instances.
+    # Normalize JSON-shaped JavaScript objects before using Python mapping syntax.
+    if hasattr(payload, "as_py_json"):
+        payload = payload.as_py_json()
+    elif hasattr(payload, "to_py"):
+        payload = payload.to_py()
+
     if operation == "new_game":
         return AdventureEngine(payload["package"]).new_game().to_dict()
     if operation == "observe":
