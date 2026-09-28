@@ -3,8 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1217">
+  <meta name="description" content="Create and play branching narratives.">
+  <link rel="manifest" href="./manifest.webmanifest">
   <title>Adventure</title>
-  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
 <header>
@@ -20,6 +23,9 @@
     <div class="toolbar">
       <label>World <select id="worldSelect"></select></label>
       <button id="newGame">New Game</button>
+      <button id="openStory">Open Story</button>
+      <button id="downloadStory">Download Story</button>
+      <span id="runtimeStatus" class="utility-note">Starting browser runtime…</span>
     </div>
     <div id="game"></div>
   </section>
@@ -32,6 +38,8 @@
       <button id="validateWorld">Check Story</button>
       <button id="saveWorld" class="toolbar-action toolbar-action-orange">Save Story</button>
       <button id="fullscreenEditor" class="fullscreen-button" type="button">Fullscreen</button>
+      <button id="openStoryEditor">Open Story</button>
+      <button id="downloadStoryEditor">Download Story</button>
     </div>
 
     <div class="editor-view-tabs">
@@ -77,8 +85,9 @@
     </p>
     <pre id="editStatus"></pre>
   </section>
+<input id="storyFileInput" type="file" accept=".zip,application/zip" hidden>
 </main>
 
-<script type="module" src="/app.js"></script>
+<script type="module" src="./app.js"></script>
 </body>
 </html>
