@@ -1,4 +1,4 @@
-const PYODIDE_VERSION = "0.314.0.7";
+const PYODIDE_VERSION = "314.0.7";
 const PYODIDE_INDEX = "https://cdn.jsdelivr.net/pyodide/v" + PYODIDE_VERSION + "/full/";
 let pyodide = null;
 
