@@ -74,3 +74,6 @@ Adventure structures games using clean, manageable data layouts. Here is a quick
 
 Love books? Love reading? If you want to craft your own interactive worlds, you are highly encouraged to submit your stories via a Pull Request to be featured directly in this repository!
 
+
+
+<!-- Pages deployment trigger -->

@@ -2,10 +2,7 @@ name: Deploy Adventure PWA
 
 on:
   push:
-    branches: ["pwa-pyodide"]
-    paths:
-      - "static/**"
-      - ".github/workflows/pages.yml"
+    branches: ["main-stable"]
   workflow_dispatch:
 
 permissions:
@@ -40,3 +37,5 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+# Re-publish the PWA branch after browser runtime updates.
