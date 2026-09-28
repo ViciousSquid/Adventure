@@ -10,7 +10,7 @@ def read_legacy_zip(path: str | Path) -> tuple[dict[str, Any], dict[str, bytes]]
     source = Path(path)
     with zipfile.ZipFile(source, "r") as archive:
         try:
-            story = json.loads(archive.read("story.json").decode("utf-8"))
+            story = json.loads(archive.read("story.json").decode("utf-8"), strict=False)
         except KeyError as exc:
             raise ValueError(f"{source.name}: legacy package does not contain story.json") from exc
         except (UnicodeDecodeError, json.JSONDecodeError) as exc:
